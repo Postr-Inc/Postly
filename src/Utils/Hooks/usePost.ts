@@ -8,7 +8,7 @@ export default function usePost(postData: any) {
     postData?.comments?.length || 0
   );
   let [views, setViews] = createSignal<any[]>(postData.views || []);
-  function updateLikes(userid: string, isComment: boolean = false) {
+  function updateLikes(userid: string, isComment: boolean = false, cacheKey: string) {
     let index = likes().findIndex((like) => like === userid);
     if (index === -1) {
       setLikes([...likes(), userid]);
@@ -16,6 +16,9 @@ export default function usePost(postData: any) {
       let newLikes = likes().filter((like) => like !== userid);
       setLikes(newLikes);
     }
+    api.updateCache(isComment ? "comments" : "posts", postData.id, {
+      likes: likes(),  
+    })
     api
       .collection(isComment ? "comments" : "posts")
       .update(postData.id, { likes: likes() });
