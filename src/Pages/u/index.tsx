@@ -48,6 +48,7 @@ export default function User() {
   let [notFound, setNotFound] = createSignal(false);
   let [feedLoading, setFeedLoading] = createSignal(false);
   let [totalPages, setTotalPages] = createSignal(0); 
+  const [feed, setFeed] = createSignal("posts");
   createEffect(() => {
     api.checkAuth()
     window.onbeforeunload = function () {
@@ -131,6 +132,7 @@ export default function User() {
 
   function swapFeed(type: string) {
     setFeedLoading(true)
+    setCurrentPage(1)
     switch (type) {
       case "posts":
         handleFeed("posts", params, currentPage(), user(), {
@@ -384,6 +386,7 @@ export default function User() {
                 onClick={() => {
                   setView("posts");
                   swapFeed("posts");
+                  setFeed("posts");
                 }}
               >
                 Posts
@@ -396,18 +399,19 @@ export default function User() {
               </p>
               <p
                 onClick={() => {
-                  setView("Replies")
+                  setView("comments")
                   swapFeed("Replies")
-                  console.log("replies")
+                  setFeed("Replies")
                 }} class="flex flex-col  cursor-pointer">
                 Replies
-                <Show when={view() === "Replies"}>
+                <Show when={view() === "comments"}>
                   <span class="bg-blue-500 w-full text-white p-[0.15rem] rounded-full  "></span>
                 </Show>
               </p>
               <p onClick={() => {
                 setView("Likes")
                 swapFeed("Likes")
+                setFeed("likes")
               }} class="flex flex-col  cursor-pointer">
                 Likes
                 <Show when={view() === "Likes"}>
@@ -434,6 +438,7 @@ export default function User() {
                     <For each={posts()}>
                       {(item: any, index: any) => {
                         let copiedObj = { ...item };
+                        console.log("copiedObj", copiedObj);
                         return (
                           <div
                             class={joinClass(
@@ -457,11 +462,13 @@ export default function User() {
                               route={route}
                               files={copiedObj.files}
                               isPoll={copiedObj.isPoll}
+                              isComment={copiedObj.collectionName === "comments"}
                               pollOptions={copiedObj.pollOptions}
                               isRepost={copiedObj.isRepost}
                               pollVotes={copiedObj.pollVotes}
                               pollEnds={copiedObj.pollEnds}
                               whoVoted={copiedObj.whoVoted || []}
+                              currentPage={feed()}
                               params={params}
                             />{" "}
                           </div>
