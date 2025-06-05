@@ -28,6 +28,7 @@ export default class SDK {
     
      window.onbeforeunload = function () {
       // clear app cache
+      console.log("Clearing app cache");
       caches.keys().then((keys) => {
         keys.forEach((key) => {
           caches.delete(key);
@@ -67,6 +68,7 @@ export default class SDK {
               
               if(Array.isArray(cacheDataJSON.value)){
                   const payload = cacheDataJSON.value 
+                  console.log("Post to update", payload, id, data);
                   const post = payload.find((e: any)=> e.id === id); 
                   if(post){
                       const index = payload.indexOf(post); 
@@ -76,7 +78,7 @@ export default class SDK {
                   } 
               }else{
                   const post = cacheDataJSON.value 
-                  console.log(id, post)
+                  console.log("Post to update", post, id, data);
                   if(post.id === id){
                       cacheDataJSON.value.payload = {...post, ...data}
                   }
@@ -85,6 +87,31 @@ export default class SDK {
             }
             
             break;
+          case "comments":
+            for(let cache of cacheData){ 
+              const cacheDataJSON = await (await caches.open(key)).match(cache).then((res)=> res?.json());
+              
+              if(Array.isArray(cacheDataJSON.value)){
+                  const payload = cacheDataJSON.value 
+                  console.log("Post to update", payload, id, data);
+                  const post = payload.find((e: any)=> e.id === id); 
+                  if(post){
+                      const index = payload.indexOf(post); 
+                      payload[index] = {...post, ...data}
+                      cacheDataJSON.value.payload = payload;
+                      set(cache.url, cacheDataJSON.value, new Date().getTime() + 3600);
+                  } 
+              }else{
+                  const post = cacheDataJSON.value 
+                  console.log("Post to update", post, id, data);
+                  if(post.id === id){
+                      cacheDataJSON.value.payload = {...post, ...data}
+                  }
+                  set(cache.url, cacheDataJSON.value, new Date().getTime() + 3600);
+              }
+            }
+            
+          break;
           case "users":
             for(let cache of cacheData){ 
              // find user by id
@@ -416,59 +443,8 @@ export default class SDK {
 
        update: async (id: string, data: any, options?: {cacheKey?: string, expand?:any[]}) => {
         return new Promise(async (resolve, reject)=> {
-            // update cache
-            const { set, get, remove, clear } = useCache();
-            const keys = await caches.keys(); 
-            for(let key of keys){
-                const cacheData = await (await caches.open(key)).keys(); 
-                switch(name){
-                  case "posts":
-                    for(let cache of cacheData){ 
-                      const cacheDataJSON = await (await caches.open(key)).match(cache).then((res)=> res?.json());
-                      
-                      if(Array.isArray(cacheDataJSON.value)){
-                          const payload = cacheDataJSON.value 
-                          const post = payload.find((e: any)=> e.id === id); 
-                          if(post){
-                              const index = payload.indexOf(post); 
-                              payload[index] = {...post, ...data}
-                              cacheDataJSON.value.payload = payload;
-                              set(cache.url, cacheDataJSON.value, new Date().getTime() + 3600);
-                          } 
-                      }else{
-                          const post = cacheDataJSON.value  
-                          if(post.id === id){
-                              cacheDataJSON.value.payload = {...post, ...data}
-                          } 
-                          set(cache.url, cacheDataJSON.value, new Date().getTime() + 3600);
-                      }
-                    }
-                    
-                    break;
-                  case "users":
-                    for(let cache of cacheData){ 
-                      if(cache.url.includes(options?.cacheKey as any)){
-                          // now grab the data
-                          var cacheDataJSON = await (await caches.open(key)).match(cache).then((res)=> res?.json()); 
-                          if(Array.isArray(cacheDataJSON.value)){
-                            cacheDataJSON.value = cacheDataJSON.value.map((e: any)=> e.id === id ? {...e, ...data} : e)
-                          }else{
-                            // if update data is a buffer convert to base64
-                            if(data.avatar){
-                              data.avatar = Buffer.from(data.avatar).toString('base64');
-                            }else if(data.banner){
-                              data.banner = Buffer.from(data.banner).toString('base64');
-                            }
-                            cacheDataJSON.value = {...cacheDataJSON.value, ...data}
-                          }
-                          set(cache.url, cacheDataJSON.value, new Date().getTime() + 3600);
-                           
-                      }
-                  }
-                }
-                
-            }
-            
+           
+            this.updateCache(name,id, data)
             let out = await this.sendMsg({
                 type: GeneralTypes.UPDATE,
                 payload: {
@@ -520,9 +496,7 @@ export default class SDK {
 
       get: async (id: string, options?:{expand?: string[], cacheKey?: string}) => {
         return new Promise(async (resolve, reject)=>{
-          let cacheKey =  options?.cacheKey || `${this.serverURL}/api/collections/${name}/${id}`;
-          let cacheData = await useCache().get(cacheKey); 
-          if(cacheData) return resolve(cacheData.payload); 
+          
           let out = await this.sendMsg({
             type: GeneralTypes.GET,
             payload: {
@@ -535,8 +509,7 @@ export default class SDK {
             },
             callback:""
           }) as any;
-          if(out.opCode !== HttpCodes.OK) return reject(out)
-           useCache().set(cacheKey, out, new Date().getTime() + 3600);  
+          if(out.opCode !== HttpCodes.OK) return reject(out);
            resolve(out.payload) 
         })
       },
