@@ -39,16 +39,19 @@ async function handleFeed(
 export default function User() {
   const { params, route, navigate, goBack } = useNavigation("/u/:id");
   const u = useParams();
+  const queryParams = new URLSearchParams(window.location.search);
   const [user, setUser] = createSignal(null, { equals: false }) as any;
   const { theme } = useTheme();
-  const [view, setView] = createSignal("posts") as any;
+   const savedFeed = queryParams.get("feed") === "posts" ? 1 :  queryParams.get("feed") === "Replies" ? 2 : queryParams.get("feed") === "likes" ? 3 : 1
+  const [view, setView] = createSignal(savedFeed === 1 ? "posts" : savedFeed === 2 ? "comments" : savedFeed === 3 ? "Likes" : "posts");
   let [loading, setLoading] = createSignal(true); 
-  let [posts, setPosts] = createSignal([]);
-  const [currentPage, setCurrentPage] = createSignal(0);
+  let [posts, setPosts] = createSignal([]); 
+  const [currentPage, setCurrentPage] = createSignal(1);
   let [notFound, setNotFound] = createSignal(false);
   let [feedLoading, setFeedLoading] = createSignal(false);
   let [totalPages, setTotalPages] = createSignal(0); 
-  const [feed, setFeed] = createSignal("posts");
+  const [feed, setFeed] = createSignal(savedFeed === 1 ? "posts" : savedFeed === 2 ? "Replies" : savedFeed === 3 ? "likes" : "posts");
+  console.log("feed", feed())
   createEffect(() => {
     api.checkAuth()
     window.onbeforeunload = function () {
@@ -387,6 +390,8 @@ export default function User() {
                   setView("posts");
                   swapFeed("posts");
                   setFeed("posts");
+                  //set query params to posts
+                  navigate(`/u/${params().id}?feed=posts`);
                 }}
               >
                 Posts
@@ -402,6 +407,7 @@ export default function User() {
                   setView("comments")
                   swapFeed("Replies")
                   setFeed("Replies")
+                  navigate(`/u/${params().id}?feed=Replies`)
                 }} class="flex flex-col  cursor-pointer">
                 Replies
                 <Show when={view() === "comments"}>
@@ -412,6 +418,7 @@ export default function User() {
                 setView("Likes")
                 swapFeed("Likes")
                 setFeed("likes")
+                navigate(`/u/${params().id}?feed=likes`)
               }} class="flex flex-col  cursor-pointer">
                 Likes
                 <Show when={view() === "Likes"}>
@@ -475,9 +482,9 @@ export default function User() {
                         );
                       }}
                     </For> : <div class="flex flex-col  p-5  mb-5 items-center justify-center">
-                      <h1 class="text-3xl">No posts</h1>
+                      <h1 class="text-3xl">No {feed() === "posts" ? "Posts" : feed() === "Replies" ? "Replies" : feed() === "likes" ? "Likes" : "Snippets"} Found</h1>
                       <p>
-                        {user().username} has no posts yet
+                        {user().username}  {feed() === "posts" ? "hasn't posted anything yet." : feed() === "Replies" ? "hasn't replied to any posts yet." : feed() === "likes" ? "hasn't liked any posts yet." : "hasn't posted any snippets yet."}
                       </p>
                     </div> 
                   }
