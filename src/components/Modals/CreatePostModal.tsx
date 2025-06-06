@@ -73,7 +73,7 @@ export default function CreatePostModal() {
       data.files = filesData;
     } 
      try {
-      console.log(collection(), window.location.pathname.split("/")[3])
+      
       collection() === "createPost" && (data.post = window.location.pathname.split("/")[3]);
       collection() === "comments" && (data.mainComment = window.location.pathname.split("/")[3])
       let res = await api.collection(collection() == "createPost" ? "posts" : "comments").create(data, {
