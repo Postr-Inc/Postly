@@ -47,6 +47,7 @@ export default function useFeed(collection: string, options?: { _for?: string, f
   const [error, setError] = createSignal(null);
   const [hasMore, setHasMore] = createSignal(true);
   const [refresh, setRefresh] = createSignal(false);
+  const [totalPages, setTotalPages] = createSignal(0)
 
   function reset() {
     setPosts([]);
@@ -69,26 +70,28 @@ export default function useFeed(collection: string, options?: { _for?: string, f
         return;
       }
     
+ 
       // Check if the user is not at the bottom of the page
-      if (window.innerHeight + window.scrollY  < document.body.offsetHeight) {
+      if (window.innerHeight + window.scrollY  <  document.body.offsetHeight - 100) {
+        console.log("not at bottom, returning");
         return
       } 
  
-    
-       
+     
       // Check if there are more pages to fetch
       if (hasMore()) {
         console.log("fetching more"); 
         setLoading(true); // Set loading to true before fetching
         try {
           const currentPageValue = currentPage() + 1;
-          setCurrentPage(currentPageValue);
-          console.log("fetching page " + currentPageValue);
+          setCurrentPage(currentPageValue); 
           const data = await list(collection, currentPage, feed, options) as any; 
           setPosts([...posts(), ...data?.items]);
-    
-          // Update hasMore if there are no more pages to load
-          if (data?.totalPages <= currentPageValue) {
+          if(data.totalPages){
+            setTotalPages(data.totalPages)
+          } 
+          if (totalPages() <= currentPageValue) {
+            console.log("no more pages to load");
             setHasMore(false);
           }
         } catch (e) { 
