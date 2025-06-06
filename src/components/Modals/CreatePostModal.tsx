@@ -27,6 +27,7 @@ export default function CreatePostModal() {
   let [params, setParams] = createSignal<any>(null);
   let [isPosting, setIsPosting] = createSignal(false);
   let [files, setFiles] = createSignal<any>([], { equals: false });
+  const [collection, setCollection] = createSignal(window.location.pathname.split("/")[2]  === "posts" ? "createPost" : "comments") 
   let [postData, setPostData] = createSignal<any>({
     content: "",
     links: [],
@@ -42,6 +43,10 @@ export default function CreatePostModal() {
     whoCanSee: "public",
   });
 
+  let [Drafts, setDrafts] = createSignal(
+    localStorage.getItem("postDrafts") ? JSON.parse(localStorage.getItem("drafts") as any) : [] 
+  )
+
   async function createPost() {
     if(isPosting()) return;
     setIsPosting(true);  
@@ -56,6 +61,9 @@ export default function CreatePostModal() {
         let reader = new FileReader();
         reader.readAsArrayBuffer(file);
         return new Promise((resolve, reject) => {
+          if(fileObj.size > 100000){
+            reject("File way too big")
+          }
           reader.onload = () => {
             resolve({ data: Array.from(new Uint8Array(reader.result as ArrayBuffer)), ...fileObj });
           };
@@ -65,13 +73,28 @@ export default function CreatePostModal() {
       data.files = filesData;
     } 
      try {
-      let res = await api.collection(window.hasOwnProperty("modal") ? window?.modal : "posts").create(data);
+      console.log(collection(), window.location.pathname.split("/")[3])
+      collection() === "createPost" && (data.post = window.location.pathname.split("/")[3]);
+      collection() === "comments" && (data.mainComment = window.location.pathname.split("/")[3])
+      let res = await api.collection(collection() == "createPost" ? "posts" : "comments").create(data, {
+        expand: [
+          "author",
+          "author.following",
+          "author.followers",
+          "author.TypeOfContentPosted",
+          "likes",
+          "repost.likes",
+          "repost.author",
+          "repost"
+        ],
+      })  
       setPostData({
         content: "",
         links: [],
         tags: [],
         isRepost: false,
-        isPoll: false,
+        isPoll: false, 
+        hashtags: [],
         pollOptions: [
           { choice: 1, content: "" , votes: []},
           { choice: 2, content: "", votes: [] },
@@ -81,7 +104,22 @@ export default function CreatePostModal() {
       });
       setFiles([]);
       setIsPosting(false);
-      navigate(`/view/posts/${res.id}`);
+      if( collection() === "comments") {
+        document.getElementById("createPostModal")?.close();
+        window.dispatchEvent(
+          new CustomEvent("commentCreated", {
+            detail: res,
+          })
+        );
+        // update the post in db
+        const postId = window.location.pathname.split("/")[3]; 
+        await api.collection(collection() === "createPost" ? "posts" : "comments").update(postId,{
+           ...({comments: [...(api.collection(collection() == "createPost" ? "posts" : "comments").get(postId) as any).comments, (res as any).id]}) 
+        });
+      }else{
+        navigate(`/view/posts/${(res as any).id}`);
+      }
+      
      } catch (error) {
       setIsPosting(false);
       console.log("Error", error);
@@ -344,7 +382,7 @@ export default function CreatePostModal() {
            */}
           <span>{postData().content.length} / 200</span>
           <button class="btn-sm bg-blue-500 text-white rounded-full  " onClick={createPost}>
-            {isPosting() ? "Posting..." : "Post"}
+            {isPosting() ? "Posting..." : collection() === "posts" ? "Post" : "Create Comment"}
           </button>
         </div>
       </div>
