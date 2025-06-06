@@ -25,6 +25,30 @@ export default class SDK {
      */
     this.statisticalData = JSON.parse(localStorage.getItem("postr_statistical") || "{}");
    
+    // autoroll new token every hour
+     setInterval(()=>{
+      if(localStorage.getItem("postr_auth")){
+        let auth = JSON.parse(localStorage.getItem("postr_auth") || "{}");
+        if(auth.token){
+          this.sendMsg({
+            type: GeneralTypes.AUTH_ROLL_TOKEN,
+            byWebsocket: true,
+            payload: { 
+               ...auth,
+               type: "auth_roll_token",
+            },
+            security: {
+                token: auth.token,
+            },
+          })
+
+        }else{
+          console.log("Token expired, reauthenticating");
+          localStorage.removeItem("postr_auth");
+          window.location.href = "/auth/login";
+        }
+      }
+     }, 3600000) // every hour
     
      window.onbeforeunload = function () {
       // clear app cache
@@ -67,8 +91,7 @@ export default class SDK {
               const cacheDataJSON = await (await caches.open(key)).match(cache).then((res)=> res?.json());
               
               if(Array.isArray(cacheDataJSON.value)){
-                  const payload = cacheDataJSON.value 
-                  console.log("Post to update", payload, id, data);
+                  const payload = cacheDataJSON.value  
                   const post = payload.find((e: any)=> e.id === id); 
                   if(post){
                       const index = payload.indexOf(post); 
@@ -77,8 +100,7 @@ export default class SDK {
                       set(cache.url, cacheDataJSON.value, new Date().getTime() + 3600);
                   } 
               }else{
-                  const post = cacheDataJSON.value 
-                  console.log("Post to update", post, id, data);
+                  const post = cacheDataJSON.value  
                   if(post.id === id){
                       cacheDataJSON.value.payload = {...post, ...data}
                   }
@@ -92,8 +114,7 @@ export default class SDK {
               const cacheDataJSON = await (await caches.open(key)).match(cache).then((res)=> res?.json());
               
               if(Array.isArray(cacheDataJSON.value)){
-                  const payload = cacheDataJSON.value 
-                  console.log("Post to update", payload, id, data);
+                  const payload = cacheDataJSON.value  
                   const post = payload.find((e: any)=> e.id === id); 
                   if(post){
                       const index = payload.indexOf(post); 
@@ -102,8 +123,7 @@ export default class SDK {
                       set(cache.url, cacheDataJSON.value, new Date().getTime() + 3600);
                   } 
               }else{
-                  const post = cacheDataJSON.value 
-                  console.log("Post to update", post, id, data);
+                  const post = cacheDataJSON.value  
                   if(post.id === id){
                       cacheDataJSON.value.payload = {...post, ...data}
                   }
@@ -146,8 +166,7 @@ export default class SDK {
         },
       });
       this.hasChecked = true;
-      if (res.status !== 200) {
-        console.log("Token invalid, reauthenticating");
+      if (res.status !== 200) { 
         localStorage.removeItem("postr_auth"); 
         window.location.href = "/auth/login"
         return;
@@ -169,11 +188,14 @@ export default class SDK {
   }
 
   handleMessages = (data: any) => { 
-    let _data = JSON.parse(data);  
-    let cb = this.subscriptions.get(_data.callback); 
-    if (cb) {
-      cb(_data.payload);
-    }
+    let _data = JSON.parse(data)  
+    console.log("Received data from WebSocket", _data);
+    if(_data.data && _data.data.callback && this.callbacks.has(_data.data.callback)) { 
+      this.callbacks.get(_data.data.callback)?.(_data.data);
+      console.log("Callback executed for", _data.data.callback);
+      this.callbacks.delete(_data.data.callback); 
+      return;
+    } 
   };
 
 
@@ -274,12 +296,50 @@ export default class SDK {
 
  
 
-  sendMsg = async (msg: any, type: any) => {
-    console.log(msg);
+  sendMsg = async (msg: any, type: any, ) => { 
+    if(!this.ws && msg.byWebsocket){
+      this.wsReconnect();
+    } 
+    if(msg.byWebsocket && this.ws) { 
+      if(this.ws.readyState !== WebSocket.OPEN){
+        return {
+          //@ts-ignore
+          opCode: HttpCodes.INTERNAL_SERVER_ERROR,
+          message: "WebSocket is not open",
+        };
+      } 
+      this.waitUntilSocketIsOpen(() => {
+        let cid = this.callback((data: any) => { 
+          console.log("Received data from WebSocket", data);
+          switch(data.type) {
+            case GeneralTypes.AUTH_ROLL_TOKEN:
+              let newToken = data.token;
+              let authData = JSON.parse(localStorage.getItem("postr_auth") || "{}");
+              authData.token = newToken;
+              localStorage.setItem("postr_auth", JSON.stringify(authData));
+              this.authStore.model = authData; 
+              window.dispatchEvent(this.changeEvent);
+              break;
+          }
+        });
+        msg.callback = cid;
+        this.ws?.send(JSON.stringify(msg)); 
+      });
+      return;
+    }
+
+    
   
     let body;
     let headers;
-  
+    if(!msg.security || !msg.security.token || isTokenExpired(msg.security.token)) {
+      if(!this.authStore.isValid()) {
+        return {
+          opCode: HttpCodes.UNAUTHORIZED,
+          message: "You are not authorized to perform this action",
+        };
+      }
+    } 
     body = JSON.stringify(msg);
     headers = {
       "Content-Type": "application/json",
