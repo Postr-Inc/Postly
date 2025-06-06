@@ -454,9 +454,9 @@ export default class SDK {
         return new Promise(async (resolve, reject) => {
           const { set, get, remove, clear } = useCache();
           const cacheKey = options?.cacheKey || `${this.serverURL}/api/collections/${name}?page=${page}&limit=${limit}`; 
-          const cacheData = shouldCache ?  await get(cacheKey) : null; 
+          const cacheData = shouldCache ?  await get(cacheKey) : null;   
           if (cacheData) return resolve({opCode: HttpCodes.OK, 
-             ...(Array.isArray(cacheData) ? {items: [...cacheData]} : {items: [cacheData.payload]}), totalItems: cacheData.totalItems, totalPages: cacheData.totalPages});
+             ...(Array.isArray(cacheData) ? {items: [...cacheData]} : {items: cacheData.payload}), totalItems: cacheData.totalItems, totalPages: cacheData.totalPages});
           
           let out = await this.sendMsg({
             type: GeneralTypes.LIST,
@@ -472,8 +472,8 @@ export default class SDK {
             },
             callback: "",
           }) as any;   
-          if(out.opCode !== HttpCodes.OK) return reject(out);
-          shouldCache && set(cacheKey, out.payload,  new Date().getTime() + 3600); // cache for 1 hour\ 
+          if(out.opCode !== HttpCodes.OK) return reject(out); 
+          shouldCache && set(cacheKey, out,  new Date().getTime() + 3600); // cache for 1 hour\ 
           resolve({
             opCode:  out.opCode,
             items:  out.payload,
