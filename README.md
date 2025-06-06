@@ -10,8 +10,7 @@
 
 # Feature List
 
-## Upcoming   
-- [ ] Polls
+## Upcoming    
 - [ ] Ability to mute & block creators
 - [ ] Notifications
 - [ ] Search
@@ -21,15 +20,16 @@
 - [ ] Embedding outside content from different platforms
 - [ ] Developer Dashboards 
 - [ ] Messaging 
+- [ ] Embedding content within other applications 
+- [ ] Badges - showcasing who is subscriber and who is verified 
 
 
 ## Features that are finished
 - [x] Reposting & Replies
 - [x] Create content with images
-- [x] View user profiles
-- [x] Embedding content within other applications
+- [x] View user profiles 
+- [x] Polls 
 - [x] Fast navigation
-- [x] Relevant who to follow side view
-- [x] Badges - showcasing who is subscriber and who is verified 
+- [x] Relevant who to follow side view 
 - [x] Rolling our own authentication  
 - [x] Client Side Cache
