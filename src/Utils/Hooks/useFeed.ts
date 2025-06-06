@@ -10,7 +10,7 @@ async function list(collection: any, currentPage: any, feed: any,  options: {fil
         recommended: true,
         order: options.sort || "createdAt",
         filter: options.filter || "",
-        cacheKey:`${collection}_${feed()}_${JSON.stringify(options)}`,
+        cacheKey:`${collection}_${feed()}_${currentPage()}`,
         expand: [
           "comments.likes",
           "comments",
@@ -54,15 +54,60 @@ export default function useFeed(collection: string, options?: { _for?: string, f
     setCurrentPage(1);
     setHasMore(true);
   }
+
+ 
+  function fetchPosts(options: any, reset: boolean){ 
+    if(reset){
+         
+    }
+   list(collection, currentPage, feed, options)
+    .then((data: any) => {  
+      if(reset){
+        setPosts(data.items)
+      }else{
+
+      setPosts([...posts(), ...data.items]);
+      } 
+      // for each post subscribe to the post 
+      for (let i = 0; i < data?.items.length; i++) {
+         api.collection("posts").subscribe(data.items[i].id, {
+          cb(data) { 
+            
+          },
+         });
+      }
+      setLoading(false);
+      let relevantPeople: any[] = []
+      for (let i = 0; i < data?.items.length; i++) {  
+        if(data?.items[i].expand.author.followers.length < 1) continue;
+        let followers = data?.items[i].expand.author.expand.followers
+        if(followers.length < 1) continue;
+        for (let j = 0; j < followers.length; j++) { 
+          if (followers[j].id !== api.authStore.model.id   && relevantPeople.length < 5 && !followers[j].followers.includes(api.authStore.model.id) 
+          && !relevantPeople.find((i)=> i.id === followers[j].id)  
+          ) { 
+            relevantPeople.push(followers[j]);
+          } 
+        }
+      } 
+      //@ts-ignore
+      window.setRelevantPeople && setRelevantPeople(relevantPeople); 
+      if (data.totalPages <= currentPage()) {
+        setHasMore(false);
+      }
+    })
+    .catch((e) => {
+      console.log(e);
+      setError(e);
+    });
+  }
   createEffect(() => {
     window.addEventListener("popstate", () => { 
       setLoading(true);
       setPosts([]);
       setCurrentPage(1);
-      setHasMore(true);
-      setFeed("all");
-    });
-    console.log(feed())
+      setHasMore(true); 
+    }); 
     // HANDLE SCROLLING
     async function handleScroll() { 
       // Prevent fetching if already loading or refreshing
@@ -90,8 +135,9 @@ export default function useFeed(collection: string, options?: { _for?: string, f
           if(data.totalPages){
             setTotalPages(data.totalPages)
           } 
-          if (totalPages() <= currentPageValue) {
+          if (data.totalPages <= currentPageValue) {
             console.log("no more pages to load");
+            console.log(currentPageValue)
             setHasMore(false);
           }
         } catch (e) { 
@@ -107,51 +153,20 @@ export default function useFeed(collection: string, options?: { _for?: string, f
       if (e.touches[0].clientY < 50) {
         setRefresh(true);
       }
-    }
+    } 
     function handleTouchEnd(e: TouchEvent) {
       setRefresh(false);
     }
     window.addEventListener("touchstart", handleTouchStart);
     window.addEventListener("touchend", handleTouchEnd);
-
+    
+    fetchPosts({filter:   feed() === "following" ? `author.followers ~ "${api.authStore.model.id}"` : ''}, true)
     
   });
-  list(collection, currentPage, feed, options)
-    .then((data: any) => { 
-      setPosts([...posts(), ...data.items]);
-      // for each post subscribe to the post 
-      for (let i = 0; i < data?.items.length; i++) {
-         api.collection("posts").subscribe(data.items[i].id, {
-          cb(data) { 
-            
-          },
-         });
-      }
-      setLoading(false);
-      let relevantPeople: any[] = []
-      for (let i = 0; i < data?.items.length; i++) {  
-        if(data?.items[i].expand.author.followers.length < 1) continue;
-        let followers = data?.items[i].expand.author.expand.followers
-        if(followers.length < 1) continue;
-        for (let j = 0; j < followers.length; j++) { 
-          if (followers[j].id !== api.authStore.model.id   && relevantPeople.length < 5 && !followers[j].followers.includes(api.authStore.model.id) 
-          && !relevantPeople.find((i)=> i.id === followers[j].id)  
-          ) {
-            console
-            relevantPeople.push(followers[j]);
-          } 
-        }
-      } 
-      //@ts-ignore
-      window.setRelevantPeople && setRelevantPeople(relevantPeople);
-      console.log(data, currentPage())
-      if (data?.totalPages <= currentPage()) {
-        setHasMore(false);
-      }
-    })
-    .catch((e) => {
-      console.log(e);
-      setError(e);
-    });
+ 
+ 
+  fetchPosts(options, false)
+   
+  
   return { feed, currentPage, posts,  loading, error, hasMore, setFeed, reset, setPosts };
 }
