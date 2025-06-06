@@ -142,6 +142,14 @@ export default function View(props: any) {
   createEffect(() => {
     api.checkAuth();
     window.addEventListener("popstate", fetchP);
+    window.addEventListener("commentCreated", (e) => {
+      let commentData = e.detail;
+      console.log("Comment created event received:", commentData);
+      if (commentData.post === id || (collection === "comments" && commentData.mainComment === id)) {
+        setComments([commentData, ...comments()]);
+         
+      }
+    });
     fetchP();
   }, params()); // Depend on the `id` parameter
 
@@ -269,7 +277,19 @@ export default function View(props: any) {
         <div>
           <For each={comments()}>
             {(comment, index) => (
-              <Post {...{ ...comment, page: route(), navigate, isComment: true }} />
+               <div style={{"margin-bottom": index() === comments().length - 1 ? "100px" : "0px"}} class="border-l-0 border-r-0 p-3 relative">
+                <Post
+                  {...{
+                    ...comment,
+                    page: route(),
+                    navigate,
+                    isComment: true,
+                    postId: post().id,
+                    isReply: collection === "comments",
+                    replyTo: post().expand.author.id,
+                  }}
+                />
+              </div>
             )}
           </For>
         </div>
