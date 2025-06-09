@@ -62,9 +62,7 @@ export default function User() {
     // more on scroll
     window.onscroll = function () {
       if (window.innerHeight + window.scrollY >= document.body.offsetHeight && !feedLoading() && currentPage() < totalPages()) {
-      console.log("reached bottom", currentPage(), totalPages())
-        setCurrentPage(currentPage() + 1);
-        console.log("scrolling")
+        setCurrentPage(currentPage() + 1); 
       }else{
         console.log("not scrolling")
       }
@@ -122,8 +120,7 @@ export default function User() {
   }, [u.id]);
 
   createEffect(() => {
-    console.log("current page", currentPage())
-    window.scrollTo(0, 0);
+    console.log("current page", currentPage()) 
     if (currentPage() > 1) {  
       handleFeed(view(),u, currentPage(), user(), {
         filter: `author.username="${u.id}"`, 
