@@ -32,7 +32,7 @@ async function handleFeed(
   return api.collection(type).list(page, 10, {
     expand: ["author", "likes", "comments", "repost", "repost.author", "author.followers"],
     sort: otherOptions.sort || "-created",
-    cacheKey: `/u/${params().id}_${type}_${page}/${JSON.stringify(otherOptions)}`,
+    cacheKey: `/u/${params.id}_${type}_${page}/${JSON.stringify(otherOptions)}`,
     filter: otherOptions.filter || `author.username="${params().id}"`,
   });
 }
@@ -138,8 +138,9 @@ export default function User() {
     setCurrentPage(1)
     switch (type) {
       case "posts":
-        handleFeed("posts", params, currentPage(), user(), {
-          filter: `author.username="${params().id}"`, 
+        console.log(u.id)
+        handleFeed("posts", u, currentPage(), user(), {
+          filter: `author.username="${u.id}"`, 
         }).then((data: any) => {
           if (data.opCode === HttpCodes.OK) {
             let pinned = data.items.filter((p: any) => p.pinned); 
@@ -150,8 +151,8 @@ export default function User() {
         });
         break;
       case "Replies":
-        handleFeed("comments", params, currentPage(), user(), {
-          filter: `author.username="${params().id}"`, 
+        handleFeed("comments", u, currentPage(), user(), {
+          filter: `author.username="${u.id}"`, 
         }).then((data: any) => {
           console.log(data)
           if (data.opCode === HttpCodes.OK) {
@@ -160,9 +161,9 @@ export default function User() {
         });
         break;
       case "Likes":
-        console.log(`likes.id ="${api.authStore.model.id} && author.username != "${params().id}"`)
-        handleFeed("posts", params, currentPage(), user(), {
-          filter: `likes.id ="${user().id}"`, 
+        console.log(`likes.id ="${api.authStore.model.id} && author.username != "${u.id}"`)
+        handleFeed("posts", u, currentPage(), user(), {
+          filter: `likes.id ="${u.id}"`, 
         }).then((data: any) => {
           if (data.opCode === HttpCodes.OK) {
             console.log(data)
@@ -391,7 +392,7 @@ export default function User() {
                   swapFeed("posts");
                   setFeed("posts");
                   //set query params to posts
-                  navigate(`/u/${params().id}?feed=posts`);
+                  navigate(`/u/${u.id}?feed=posts`);
                 }}
               >
                 Posts
@@ -407,7 +408,7 @@ export default function User() {
                   setView("comments")
                   swapFeed("Replies")
                   setFeed("Replies")
-                  navigate(`/u/${params().id}?feed=Replies`)
+                  navigate(`/u/${u.id}?feed=Replies`)
                 }} class="flex flex-col  cursor-pointer">
                 Replies
                 <Show when={view() === "comments"}>
@@ -418,7 +419,7 @@ export default function User() {
                 setView("Likes")
                 swapFeed("Likes")
                 setFeed("likes")
-                navigate(`/u/${params().id}?feed=likes`)
+                navigate(`/u/${u.id}?feed=likes`)
               }} class="flex flex-col  cursor-pointer">
                 Likes
                 <Show when={view() === "Likes"}>
