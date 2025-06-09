@@ -33,7 +33,7 @@ async function handleFeed(
     expand: ["author", "likes", "comments", "repost", "repost.author", "author.followers"],
     sort: otherOptions.sort || "-created",
     cacheKey: `/u/${params.id}_${type}_${page}/${JSON.stringify(otherOptions)}`,
-    filter: otherOptions.filter || `author.username="${params().id}"`,
+    filter: otherOptions.filter || `author.username="${params.id}"`,
   });
 }
 export default function User() {
@@ -51,17 +51,22 @@ export default function User() {
   let [feedLoading, setFeedLoading] = createSignal(false);
   let [totalPages, setTotalPages] = createSignal(0); 
   const [feed, setFeed] = createSignal(savedFeed === 1 ? "posts" : savedFeed === 2 ? "Replies" : savedFeed === 3 ? "likes" : "posts");
-  console.log("feed", feed())
+  console.log(posts())
+ 
   createEffect(() => {
     api.checkAuth()
+    setCurrentPage(0)
     window.onbeforeunload = function () {
       window.scrollTo(0, 0);
     }
     // more on scroll
     window.onscroll = function () {
-      if (window.innerHeight + window.scrollY >= document.body.offsetHeight) {
+      if (window.innerHeight + window.scrollY >= document.body.offsetHeight && !feedLoading() && currentPage() < totalPages()) {
+      console.log("reached bottom", currentPage(), totalPages())
         setCurrentPage(currentPage() + 1);
         console.log("scrolling")
+      }else{
+        console.log("not scrolling")
       }
     }
 
@@ -95,10 +100,11 @@ export default function User() {
         } 
         if (data.opCode === HttpCodes.OK) {
           setUser(data.items[0]);
-          handleFeed("posts", params, currentPage(), data.items[0], {
-            filter: `author.username="${params().id}"`, 
+          handleFeed("posts", u, currentPage(), data.items[0], {
+            filter: `author.username="${u.id}"`, 
             sort: '-pinned',
           }).then((data: any) => {
+            console.log(currentPage())
             if (data.opCode === HttpCodes.OK) { 
               setPosts(data.items); 
               setTotalPages(data.totalPages); 
@@ -113,14 +119,14 @@ export default function User() {
     //@ts-ignore
     setRelevantText("You might also like") 
     setCurrentPage(1)
-  }, [params().id]);
+  }, [u.id]);
 
   createEffect(() => {
     console.log("current page", currentPage())
-    if (currentPage() > 1) { 
-      console.log("fetching more")
-      handleFeed(view(), params, currentPage(), user(), {
-        filter: `author.username="${params().id}"`, 
+    window.scrollTo(0, 0);
+    if (currentPage() > 1) {  
+      handleFeed(view(),u, currentPage(), user(), {
+        filter: `author.username="${u.id}"`, 
         sort: '-pinned',
       }).then((data: any) => {
         if (data.opCode === HttpCodes.OK) {
@@ -273,7 +279,10 @@ export default function User() {
                 <Match when={user() && user().avatar}>
                   <img
                     src={user().avatar.includes("blob") ? user().avatar : api.cdn.getUrl("users", user().id, user().avatar)}
-                    class="rounded-full xl:w-24 xl:h-24 w-[5rem] h-[5rem] mx-1 border-2  -mt-12 object-cover"
+                    class={`
+                      rounded-full xl:w-24 xl:h-24 w-[5rem] h-[5rem] mx-1 border-2  -mt-12 object-cover
+                     ${theme() === "dark" ? "border-white" : "border-base-200"}  
+                    `}
                   />
                 </Match>
                 <Match when={!user() || !user().avatar}>
