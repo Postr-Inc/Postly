@@ -254,7 +254,9 @@ export default function User() {
             >
               <div>
                 <ArrowLeft
-                  class="p-2 h-[2.2rem] bg-base-200 cursor-pointer rounded-full bg-opacity-50"
+                  class={`p-2 h-[2.2rem] bg-base-200 cursor-pointer rounded-full bg-opacity-50 ${
+                    theme() === "dark" && "fill-white"
+                  }`}
                   onClick={() => goBack()}
                 />
               </div>
