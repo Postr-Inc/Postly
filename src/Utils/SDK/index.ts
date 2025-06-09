@@ -82,78 +82,68 @@ export default class SDK {
 
   updateCache = async (collection: string, id: string, data: any) => {
     const { set, get, remove, clear } = useCache();
-    const keys = await caches.keys(); 
-    for(let key of keys){
-        const cacheData = await (await caches.open(key)).keys(); 
-        switch(collection){
-          case "posts":
-            for(let cache of cacheData){ 
-              const cacheDataJSON = await (await caches.open(key)).match(cache).then((res)=> res?.json());
-              
-              if(Array.isArray(cacheDataJSON.value)){
-                  const payload = cacheDataJSON.value  
-                  const post = payload.find((e: any)=> e.id === id); 
-                  if(post){
-                      const index = payload.indexOf(post); 
-                      payload[index] = {...post, ...data}
-                      cacheDataJSON.value.payload = payload;
-                      set(cache.url, cacheDataJSON.value, new Date().getTime() + 3600);
-                  } 
-              }else{
-                  const post = cacheDataJSON.value  
-                  if(post.id === id){
-                      cacheDataJSON.value.payload = {...post, ...data}
-                  }
-                  set(cache.url, cacheDataJSON.value, new Date().getTime() + 3600);
+    const keys = await caches.keys();
+    for (let key of keys) {
+      const cacheData = await (await caches.open(key)).keys();
+      switch (collection) {
+        case "posts":
+        case "comments":
+          for (let cache of cacheData) {
+            const cacheDataJSON = await (await caches.open(key)).match(cache).then((res) => res?.json());
+            // If value is array
+            if (Array.isArray(cacheDataJSON?.value)) {
+              const payload = cacheDataJSON.value;
+              const item = payload.find((e: any) => e.id === id);
+              if (item) {
+                const index = payload.indexOf(item);
+                payload[index] = { ...item, ...data };
+                cacheDataJSON.value = payload;
+                set(cache.url, cacheDataJSON, new Date().getTime() + 3600);
               }
             }
-            
-            break;
-          case "comments":
-            for(let cache of cacheData){ 
-              const cacheDataJSON = await (await caches.open(key)).match(cache).then((res)=> res?.json());
-              
-              if(Array.isArray(cacheDataJSON.value)){
-                  const payload = cacheDataJSON.value  
-                  const post = payload.find((e: any)=> e.id === id); 
-                  if(post){
-                      const index = payload.indexOf(post); 
-                      payload[index] = {...post, ...data}
-                      cacheDataJSON.value.payload = payload;
-                      set(cache.url, cacheDataJSON.value, new Date().getTime() + 3600);
-                  } 
-              }else{
-                  const post = cacheDataJSON.value  
-                  if(post.id === id){
-                      cacheDataJSON.value.payload = {...post, ...data}
-                  }
-                  set(cache.url, cacheDataJSON.value, new Date().getTime() + 3600);
+            // If value is object but payload is array
+            else if (Array.isArray(cacheDataJSON?.value?.payload)) {
+              const payload = cacheDataJSON.value.payload;
+              const item = payload.find((e: any) => e.id === id);
+              if (item) {
+                const index = payload.indexOf(item);
+                payload[index] = { ...item, ...data };
+                cacheDataJSON.value.payload = payload;
+                set(cache.url, cacheDataJSON.value, new Date().getTime() + 3600);
               }
             }
-            
-          break;
-          case "users":
-            for(let cache of cacheData){ 
-             // find user by id
-              if(cache.url.includes(id)){
-                  // now grab the data
-                  var cacheDataJSON = await (await caches.open(key)).match(cache).then((res)=> res?.json()); 
-                  if(Array.isArray(cacheDataJSON.value)){
-                    cacheDataJSON.value = cacheDataJSON.value.map((e: any)=> e.id === id ? {...e, ...data} : e)
-                  }else{
-                    // if update data is a buffer convert to base64
-                    if(data.avatar){
-                      data.avatar = Buffer.from(data.avatar).toString('base64');
-                    }else if(data.banner){
-                      data.banner = Buffer.from(data.banner).toString('base64');
-                    }
-                    cacheDataJSON.value = {...cacheDataJSON.value, ...data}
-                  }
-                  set(cache.url, cacheDataJSON.value, new Date().getTime() + 3600);
-              }
+            // If value is object and payload is object
+            else if (cacheDataJSON?.value?.payload && cacheDataJSON.value.payload.id === id) {
+              cacheDataJSON.value.payload = { ...cacheDataJSON.value.payload, ...data };
+              set(cache.url, cacheDataJSON.value, new Date().getTime() + 3600);
+            }
+            // If value is object and id matches
+            else if (cacheDataJSON?.value && cacheDataJSON.value.id === id) {
+              cacheDataJSON.value = { ...cacheDataJSON.value, ...data };
+              set(cache.url, cacheDataJSON.value, new Date().getTime() + 3600);
+            }
           }
-        }
-        
+          break;
+        case "users":
+          for (let cache of cacheData) {
+            if (cache.url.includes(id)) {
+              var cacheDataJSON = await (await caches.open(key)).match(cache).then((res) => res?.json());
+              if (Array.isArray(cacheDataJSON?.value)) {
+                cacheDataJSON.value = cacheDataJSON.value.map((e: any) => e.id === id ? { ...e, ...data } : e);
+              } else {
+                // if update data is a buffer convert to base64
+                if (data.avatar) {
+                  data.avatar = Buffer.from(data.avatar).toString('base64');
+                } else if (data.banner) {
+                  data.banner = Buffer.from(data.banner).toString('base64');
+                }
+                cacheDataJSON.value = { ...cacheDataJSON.value, ...data };
+              }
+              set(cache.url, cacheDataJSON.value, new Date().getTime() + 3600);
+            }
+          }
+          break;
+      }
     }
   }
 
