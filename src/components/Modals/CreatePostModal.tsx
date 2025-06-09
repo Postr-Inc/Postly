@@ -27,7 +27,8 @@ export default function CreatePostModal() {
   let [params, setParams] = createSignal<any>(null);
   let [isPosting, setIsPosting] = createSignal(false);
   let [files, setFiles] = createSignal<any>([], { equals: false });
-  const [collection, setCollection] = createSignal(window.location.pathname.split("/")[2]  === "posts" ? "createPost" : "comments") 
+  const [collection, setCollection] = createSignal(window.location.pathname.split("/")[2] === "posts" ? "createPost" : window.location.pathname.split("/")[2] === "posts" ?  "comments" : "createPost") 
+  console.log("Collection", collection());
   let [postData, setPostData] = createSignal<any>({
     content: "",
     links: [],
@@ -46,6 +47,7 @@ export default function CreatePostModal() {
   let [Drafts, setDrafts] = createSignal(
     localStorage.getItem("postDrafts") ? JSON.parse(localStorage.getItem("drafts") as any) : [] 
   )
+ 
 
   async function createPost() {
     if(isPosting()) return;
@@ -135,6 +137,11 @@ export default function CreatePostModal() {
   //@ts-ignore
   window.repost = (post: any) => {
     setPostData({ ...postData(), isRepost: true, repost: post , hidden: ["repostButton"]});
+  }
+  //@ts-ignore
+  window.resetCreatePost = () => {
+    console.log("Resetting create post modal");
+    setCollection(window.location.pathname.split("/")[2] === "posts" ? "createPost" : window.location.pathname.split("/")[2] === "posts" ?  "comments" : "createPost");
   }
 
   createEffect(() => {
@@ -382,7 +389,7 @@ export default function CreatePostModal() {
            */}
           <span>{postData().content.length} / 200</span>
           <button class="btn-sm bg-blue-500 text-white rounded-full  " onClick={createPost}>
-            {isPosting() ? "Posting..." : collection() === "posts" ? "Post" : "Create Comment"}
+            {isPosting() ? "Posting..." : collection() === "createPost" ? "Post" : "Create Comment"}
           </button>
         </div>
       </div>
