@@ -29,12 +29,12 @@ export default function HomeNav({
   return (
     <div
       class={joinClass(
-        " flex flex-col sticky top-0  sm:p-0  md:p-4 z-[9999]",
+        " flex flex-col sticky top-0  sm:p-0   md:p-4 z-[9999]",
         theme() === "dark"
           ? "bg-black z-[99999] text-white  border-[#121212] border border-l-0 border-r-0 border-b-none "
           : "bg-white  border    border-[#f3f3f3]   bg-white ",
         " backdrop-blur-sm ", 
-        mobile() && scrollingDirection() === "up" ? "slide-up-active slide-up  " :  mobile()  ? "slide-up" : ""
+        mobile() && scrollingDirection() === "up" ? "hidden" :  mobile()  ?   "" : "visible"
       )}
     >  
       <div class="flex   w-full sm:p-3  z-[9999999] justify-between ">
