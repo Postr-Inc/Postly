@@ -16,7 +16,7 @@ export default function BottomNav() {
   return (
     <div
       class={joinClass(
-        "fixed bottom-[-2px] sm:bottom-[5px]  z-[999999] w-full", 
+        "fixed bottom-[-2px] sm:bottom-[0px]  z-[999999] w-full", 
         "xl:hidden lg:hidden 2xl:hidden",
       )}
     >
