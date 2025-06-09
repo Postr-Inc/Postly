@@ -26,6 +26,8 @@ export default function BottomNav() {
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="fill-white stroke-white size-6" onClick={() =>{
             //@ts-ignore   
            document.getElementById("createPostModal")?.showModal()
+           //@ts-ignore
+           window.resetCreatePost()
            //@ts-ignore   
            window.modal = "comments" 
         }}>
