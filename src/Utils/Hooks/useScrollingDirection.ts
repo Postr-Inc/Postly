@@ -25,6 +25,13 @@ export default function useScrollingDirection() {
       }, 10); // Delay in milliseconds
     };
 
+    window.onscrollend = () => {
+        var t = setTimeout(()=>{
+           setScrollingDirection("up")
+           clearTimeout(t)
+        }, 1000)
+    }
+
     window.addEventListener("scroll", onScroll);
 
     onCleanup(() => {
