@@ -257,17 +257,24 @@ export default function User() {
             >
               <div>
                 <ArrowLeft
-                  class={`p-2 h-[2.2rem] bg-base-200 cursor-pointer rounded-full bg-opacity-50 ${
-                    theme() === "dark" && "fill-white"
-                  }`}
+                  class={`p-2 h-[2.2rem] bg-base-200 cursor-pointer rounded-full bg-opacity-50 fill-white stroke-white`}
                   onClick={() => goBack()}
                 />
               </div>
 
               <div class="flex flex-row gap-2"> 
-                <Search class="p-2 h-[2.2rem] bg-base-200 rounded-full bg-opacity-50 xl:hidden" />
+                <Search class={
+                  joinClass(
+                    "p-2 h-[2.2rem] bg-base-200 rounded-full bg-opacity-50",
+                    theme() === "dark" ? "fill-white" : "text-white fill-white"
+                  )
+                } />
                    
-                <Ellipse class="p-2 h-[2.2rem] bg-base-200 rounded-full bg-opacity-50 xl:hidden" />
+                <Ellipse class={
+                  joinClass(
+                    "p-2 h-[2.2rem] bg-base-200 rounded-full bg-opacity-50 fill-white"
+                  )
+                } />
               </div>
             </div>
 
