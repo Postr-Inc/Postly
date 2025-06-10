@@ -27,6 +27,9 @@ export default function CreatePostModal() {
   let [params, setParams] = createSignal<any>(null);
   let [isPosting, setIsPosting] = createSignal(false);
   let [files, setFiles] = createSignal<any>([], { equals: false });
+  let [canCommentOnPost, setCanCommentOnPost] = createSignal(true)
+  let [mainPost, setMainPost] = createSignal({})
+  let [replyRule, setReplyRule] = createSignal("public")
   const [collection, setCollection] = createSignal(window.location.pathname.split("/")[2] === "posts" ? "createPost" : window.location.pathname.split("/")[2] === "posts" ?  "comments" : "createPost") 
   console.log("Collection", collection());
   let [postData, setPostData] = createSignal<any>({
@@ -89,6 +92,7 @@ export default function CreatePostModal() {
           "repost.author",
           "repost"
         ],
+        invalidateCache: [`/u/${api.authStore.model.username}`, `/u/${api.authStore.model.username}/comments`],
       })  
       setPostData({
         content: "",
@@ -102,7 +106,7 @@ export default function CreatePostModal() {
           { choice: 2, content: "", votes: [] },
         ],
         pollEnds: new Date(), 
-        whoCanSee: "public",
+        whoCanSee: "public", 
       });
       setFiles([]);
       setIsPosting(false);
@@ -139,10 +143,24 @@ export default function CreatePostModal() {
     setPostData({ ...postData(), isRepost: true, repost: post , hidden: ["repostButton"]});
   }
   //@ts-ignore
-  window.resetCreatePost = () => {
-    console.log("Resetting create post modal");
-    setCollection(window.location.pathname.split("/")[2] === "posts" ? "createPost" : window.location.pathname.split("/")[2] === "posts" ?  "comments" : "createPost");
+  window.resetCreatePost = () => { 
+    setCollection(window.location.pathname.split("/")[2] === "posts" ?  "comments" : "createPost"); 
   }
+
+  //@ts-ignore
+  window.setWhoCanReply = (rule) =>{
+      if(rule == "private"){
+        setCanCommentOnPost(false)
+        setReplyRule(rule)
+      }
+  }
+
+  //@ts-ignore
+  window.setMainPost = (data) => {
+    setMainPost(data)
+  }
+
+  console.log(mainPost())
 
   createEffect(() => {
     console.log(files())
@@ -176,7 +194,8 @@ export default function CreatePostModal() {
               "w-full h-fit  rounded-lg mx-5 resize-none outline-none scroll",
               theme() === "dark" ? "bg-black text-white" : "bg-white"
             )}
-            placeholder="What's on your mind?"
+            placeholder={canCommentOnPost() && replyRule() == "public" || !canCommentOnPost() && mainPost() && mainPost()?.expand.author.id == api.authStore.model.id ? "What is on your mind?" : "Post replies are restricted, only the author can reply"}
+            disabled={!canCommentOnPost()}
             onInput={(e: any) => {
               setPostData({ ...postData(), content: e.target.value });
             }}
