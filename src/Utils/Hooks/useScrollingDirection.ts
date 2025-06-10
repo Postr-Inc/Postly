@@ -3,7 +3,7 @@ import { createEffect, createSignal, onCleanup } from "solid-js";
 export default function useScrollingDirection() {
   const [scrollingDirection, setScrollingDirection] = createSignal("up", { equals: false });
   const [lastScroll, setLastScroll] = createSignal(0);
-  let timeoutId;
+  let timeoutId: string | number | NodeJS.Timeout | undefined;
 
   createEffect(() => {
     const onScroll = () => {
@@ -22,7 +22,7 @@ export default function useScrollingDirection() {
           setScrollingDirection("up");
         }
         setLastScroll(st);
-      }, 10); // Delay in milliseconds
+      }, 100);  
     };
 
     window.onscrollend = () => {
