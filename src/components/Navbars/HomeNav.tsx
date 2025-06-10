@@ -24,17 +24,16 @@ export default function HomeNav({
   const { theme } = useTheme();
   let { scrollingDirection } = useScrollingDirection();
   let { mobile } = useDevice();
-
-  console.log(mobile() && scrollingDirection() === "up");
+ 
   return (
     <div
       class={joinClass(
-        " flex flex-col sticky top-0  sm:p-0   md:p-4 z-[9999]",
+        "flex flex-col sticky top-0 sm:p-0 md:p-4 z-[9999]",
         theme() === "dark"
-          ? "bg-black z-[99999] text-white  border-[#121212] border border-l-0 border-r-0 border-b-none "
-          : "bg-white  border    border-[#f3f3f3]   bg-white ",
-        " backdrop-blur-sm ", 
-        mobile() && scrollingDirection() === "up" ? "hidden" :  mobile()  ?   "" : "visible"
+          ? "bg-black z-[99999] text-white border-[#121212] border border-l-0 border-r-0 border-b-none"
+          : "bg-white border border-[#f3f3f3]",
+        "backdrop-blur-sm",
+        mobile() && scrollingDirection() === "down" ? "hidden" : ""
       )}
     >  
       <div class="flex   w-full sm:p-3  z-[9999999] justify-between ">
@@ -130,7 +129,9 @@ export default function HomeNav({
 
                       <div class="flex gap-4"> 
                         <Bookmark class="w-7 h-7" />
-                        <Settings class="w-7 h-7" />
+                        <Settings class="w-7 h-7 hover:cursor-pointers"  onClick={() => {
+                          navigate("/settings");
+                        }} />
                       </div>
                     </div>
                    
