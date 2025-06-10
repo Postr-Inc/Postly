@@ -76,8 +76,7 @@ export default function Post(props: Props) {
   let { likes, updateLikes, commentLength } = usePost(props);
   let [totalVotes, setTotalVotes] = createSignal(0);
   let [pollVotes, setPollVotes] = createSignal(props.pollVotes || 0);
-  let [pollOptions, setPollOptions] = createSignal([]);
-  console.log(props)
+  let [pollOptions, setPollOptions] = createSignal([]); 
   let [hasVoted, setHasVoted] = createSignal(props.whoVoted && props.whoVoted.includes(api.authStore.model.id) ? true : false);
   let [pollEnds, setPollEnds] = createSignal(new Date());
 
@@ -160,11 +159,14 @@ async function updatePoll() {
       )}
     >
       <Show when={props.pinned && window.location.pathname.includes("/u")}>
-        <div class="flex hero   gap-5  "><svg viewBox="0 0 24 24" aria-hidden="true" class="w-4 h-4
-              fill-black
-        "><g><path d="M7 4.5C7 3.12 8.12 2 9.5 2h5C15.88 2 17 3.12 17 4.5v5.26L20.12 16H13v5l-1 2-1-2v-5H3.88L7 9.76V4.5z"></path></g></svg>Pinned</div>
+        <div class="flex hero   gap-5  "><svg viewBox="0 0 24 24" aria-hidden="true" class={
+          joinClass(
+            "w-4 h-4",
+            theme() == "dark" ? "text-white" : "text-black"
+          )
+        }><g><path d="M7 4.5C7 3.12 8.12 2 9.5 2h5C15.88 2 17 3.12 17 4.5v5.26L20.12 16H13v5l-1 2-1-2v-5H3.88L7 9.76V4.5z"></path></g></svg>Pinned</div>
       </Show>
-      <CardHeader class="flex p-[0.3rem]   mt-2 flex-row gap-3 space-y-0  relative ">
+      <CardHeader class="flex p-[0.3rem]   mt-2 flex-row gap-3  relative ">
 
         <Switch fallback={<></>}>
           <Match when={!props.expand.author.avatar}>
@@ -214,7 +216,7 @@ async function updatePoll() {
         </div>
 
 
-        <Show when={!props.disabled}>
+        <Show when={!props.isComment  && !window.location.pathname.includes("/view")|| props.isComment && window.location.pathname.includes("/view")}>
           <CardTitle class="absolute right-5">
             <Dropdown direction="left" point="start">
               <DropdownHeader>
@@ -365,7 +367,11 @@ async function updatePoll() {
           <Carousel >
             <For each={props.files} fallback={<></>}>
               {(item) => (
-                <CarouselItem>
+                <CarouselItem 
+                
+                onClick={()=>{ 
+                  window.open(api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item), "_blank");
+                }}>
                   <img
                     src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)}
                     class={joinClass(
