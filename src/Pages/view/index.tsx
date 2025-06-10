@@ -159,7 +159,7 @@ export default function View(props: any) {
     <Page {...{ params: useParams, route, navigate: props.navigate }} id={id}>
       <div class={joinClass("flex flex-col w-full   ", theme() === "dark" ? "border border-[#1c1c1c]" : "border")}>
         <div class="flex flex-row gap-5 p-2">
-          <ArrowLeft class="w-6 h-6 cursor-pointer" onClick={() => goBack()} stroke-width="2" fill={theme() === "dark" ? "#fff" : "#000"} />
+          <ArrowLeft class="w-6 h-6 cursor-pointer" onClick={() => goBack()} stroke-width="2"   />
           <h1 class="font-bold">Post</h1>
         </div>
         <div class="flex flex-col">
