@@ -1,8 +1,9 @@
 export default function ArrowLeft(props: any) {
   return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" class="w-6 h-6 cursor-pointer  xl:w-6 xl:h-6 "
-    {...props}
-    ><g><path d="M7.414 13l5.043 5.04-1.414 1.42L3.586 12l7.457-7.46 1.414 1.42L7.414 11H21v2H7.414z"></path></g></svg>
- 
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width={1.5} stroke="currentColor" 
+    {...props} class={props.class}> 
+  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5" />
+</svg>
+
   );
 }
