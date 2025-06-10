@@ -15,6 +15,14 @@ import Carousel from "../UI/UX/Carousel";
 import NumberedList from "../Icons/NumberedList";
 import { HttpCodes } from "@/src/Utils/SDK/opCodes";
 import useNavigation from "@/src/Utils/Hooks/useNavigation";
+function getFileType(file: File){
+  switch (true){
+    case file.type == "image/png":
+      return "image"
+    case file.type == "video/mp4":
+      return "video"
+  }
+}
 export default function CreatePostModal() {
   const getMaxDate = () => {
     const date = new Date();
@@ -63,10 +71,14 @@ export default function CreatePostModal() {
           type: file.type,
           size: file.size,
         }
+        if(getFileType(file) == "video"){
+         data.isSnippet = true
+        }
         let reader = new FileReader();
         reader.readAsArrayBuffer(file);
         return new Promise((resolve, reject) => {
-          if(fileObj.size >  200000000) { //
+          if(fileObj.size >  5242880) { // 
+            alert("File size wayy to big please compress or try a different file!")
             reject("File way too big")
           }
           reader.onload = () => {
@@ -219,11 +231,18 @@ export default function CreatePostModal() {
                     
                   }
                 >
-                  <img
+                   <Switch>
+                    <Match when={getFileType(file) == "image"}>
+                      <img
                     src={URL.createObjectURL(file)}
                     class="w-full h-[20rem] object-cover rounded-lg my-2"
                     alt="file"
                   />
+                    </Match>
+                    <Match when={getFileType(file) == "video"}>
+                       <video src={URL.createObjectURL(file)} autoplay loop  class="w-full h-[20rem] object-cover rounded-lg my-2"  alt="file"/>
+                    </Match>
+                   </Switch> 
                 </Carousel.Item>
               )}
             </For>
@@ -380,7 +399,7 @@ export default function CreatePostModal() {
             id="files"
             onInput={(file: any) => setFiles(Array.from(file.target.files))}
             multiple
-            accept="image/*"
+            accept="image/*, video/*"
           />
           <div class="flex flex-row gap-5">
             <Media
