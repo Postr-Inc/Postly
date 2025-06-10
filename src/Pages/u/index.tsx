@@ -61,10 +61,24 @@ export default function User() {
     }
     // more on scroll
     window.onscroll = function () {
-      if (window.innerHeight + window.scrollY >= document.body.offsetHeight && !feedLoading() && currentPage() < totalPages()) {
-        setCurrentPage(currentPage() + 1); 
-      }else{
-        console.log("not scrolling")
+      // handle desktop scrolling
+      if (window.innerWidth > 768) {
+        if (Math.round(window.scrollY + window.innerHeight) >= document.body.offsetHeight && !feedLoading() && currentPage() < totalPages()) {
+          setCurrentPage(currentPage() + 1);
+        } else {
+          console.log(window.scrollY + window.innerHeight, document.body.offsetHeight)
+          console.log("not scrolling")
+        }
+        return;
+      }
+
+      else if  (window.innerWidth <= 768) {
+        // handle mobile scrolling
+        if (window.scrollY + window.innerHeight >= document.body.offsetHeight && !feedLoading() && currentPage() < totalPages()) {
+          setCurrentPage(currentPage() + 1);
+        } else {
+          console.log("not scrolling")
+        }
       }
     }
 
