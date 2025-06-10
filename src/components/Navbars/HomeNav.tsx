@@ -32,8 +32,7 @@ export default function HomeNav({
         theme() === "dark"
           ? "bg-black z-[99999] text-white border-[#121212] border border-l-0 border-r-0 border-b-none"
           : "bg-white border border-[#f3f3f3]",
-        "backdrop-blur-sm",
-        mobile() && scrollingDirection() === "down" ? "hidden" : ""
+        "backdrop-blur-sm", 
       )}
     >  
       <div class="flex   w-full sm:p-3  z-[9999999] justify-between ">
