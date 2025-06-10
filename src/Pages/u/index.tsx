@@ -31,7 +31,7 @@ async function handleFeed(
 ) { 
   return api.collection(type).list(page, 10, {
     expand: ["author", "likes", "comments", "repost", "repost.author", "author.followers"],
-    sort: otherOptions.sort + ",-created" || "-created",
+    sort: otherOptions.sort ? otherOptions.sort + ", -created" : "-created",
     cacheKey: `/u/${params.id}_${type}_${page}/${JSON.stringify(otherOptions)}`,
     filter: otherOptions.filter || `author.username="${params.id}"`,
   });
@@ -51,7 +51,7 @@ export default function User() {
   let [feedLoading, setFeedLoading] = createSignal(false);
   let [totalPages, setTotalPages] = createSignal(0); 
   const [feed, setFeed] = createSignal(savedFeed === 1 ? "posts" : savedFeed === 2 ? "Replies" : savedFeed === 3 ? "likes" : "posts");
-  console.log(posts())
+   
  
   createEffect(() => {
     api.checkAuth()
@@ -106,8 +106,7 @@ export default function User() {
               followers: [],
               following: [],
             }
-          })
-          console.log("not found")
+          }) 
           setLoading(false);
           return;
         } 
@@ -134,8 +133,7 @@ export default function User() {
     setCurrentPage(1)
   }, [u.id]);
 
-  createEffect(() => {
-    console.log("current page", currentPage()) 
+  createEffect(() => { 
     if (currentPage() > 1) {  
       handleFeed(view(),u, currentPage(), user(), {
         filter: `author.username="${u.id}"`, 
@@ -159,6 +157,7 @@ export default function User() {
         console.log(u.id)
         handleFeed("posts", u, currentPage(), user(), {
           filter: `author.username="${u.id}"`, 
+          sort: '-pinned'
         }).then((data: any) => {
           if (data.opCode === HttpCodes.OK) {
             let pinned = data.items.filter((p: any) => p.pinned); 
@@ -178,10 +177,9 @@ export default function User() {
           }
         });
         break;
-      case "Likes":
-        console.log(`likes.id ="${api.authStore.model.id} && author.username != "${u.id}"`)
+      case "Likes": 
         handleFeed("posts", u, currentPage(), user(), {
-          filter: `likes.id ="${u.id}"`, 
+          filter: `likes.id ="${u.id}" && author.id !="${user().id}"`, 
         }).then((data: any) => {
           if (data.opCode === HttpCodes.OK) {
             console.log(data)
@@ -189,8 +187,15 @@ export default function User() {
           }
         });
         break;
-      case "snippets":
-         
+      case "snippets": 
+        handleFeed("posts", u, currentPage(), user(), {
+          filter: `author="${user().id}" && isSnippet=true`, 
+          sort: `-created`
+        }).then((data: any) => {
+          if (data.opCode === HttpCodes.OK) { 
+            setPosts(data.items); 
+          }
+        });
         break;
     }
     setTimeout(() => {
@@ -459,7 +464,14 @@ export default function User() {
                   <span class="bg-blue-500 w-full text-white p-[0.15rem] rounded-full  "></span>
                 </Show>
               </p>
-              <p onClick={() => setView("snippets")} class="flex flex-col">
+              <p   class="flex flex-col"
+              onClick={() => {
+                setView("snippets")
+                swapFeed("snippets")
+                setFeed("snippets")
+                navigate(`/u/${u.id}?feed=snippets`)
+              }}  
+              >
                 Snippets
                 <Show when={view() === "snippets"}>
                   <span class="bg-blue-500 w-full text-white p-[0.15rem] rounded-full  "></span>
@@ -485,7 +497,7 @@ export default function User() {
                             class={joinClass(
                               index() == posts().length - 1 && posts().length > 1
                                 ? "sm:mb-[70px]"
-                                : ""
+                                : posts().length == 1 && "sm:mb-[70px]"
                             )}
                           >
                             {" "}
