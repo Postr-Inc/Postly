@@ -60,27 +60,28 @@ export default function User() {
       window.scrollTo(0, 0);
     }
     // more on scroll
+    
     window.onscroll = function () {
       // handle desktop scrolling
       if (window.innerWidth > 768) {
-        if (Math.round(window.scrollY + window.innerHeight) >= document.body.offsetHeight && !feedLoading() && currentPage() < totalPages()) {
-          setCurrentPage(currentPage() + 1);
-        } else {
-          console.log(window.scrollY + window.innerHeight, document.body.offsetHeight)
-          console.log("not scrolling")
-        }
-        return;
+      if (
+        window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 100 &&
+        !feedLoading() &&
+        currentPage() < totalPages()
+      ) {
+        setCurrentPage(currentPage() + 1);
       }
-
-      else if  (window.innerWidth <= 768) {
-        // handle mobile scrolling
-        if (window.scrollY + window.innerHeight >= document.body.offsetHeight && !feedLoading() && currentPage() < totalPages()) {
-          setCurrentPage(currentPage() + 1);
-        } else {
-          console.log("not scrolling")
-        }
+      } else if (window.innerWidth <= 768) {
+      // handle mobile scrolling
+      if (
+        window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 50 &&
+        !feedLoading() &&
+        currentPage() < totalPages()
+      ) {
+        setCurrentPage(currentPage() + 1);
       }
-    }
+      }
+    };
 
     
     
