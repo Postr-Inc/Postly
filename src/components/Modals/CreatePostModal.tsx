@@ -63,7 +63,7 @@ export default function CreatePostModal() {
         let reader = new FileReader();
         reader.readAsArrayBuffer(file);
         return new Promise((resolve, reject) => {
-          if(fileObj.size > 100000){
+          if(fileObj.size >  200000000) { //
             reject("File way too big")
           }
           reader.onload = () => {
