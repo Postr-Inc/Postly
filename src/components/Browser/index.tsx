@@ -24,16 +24,16 @@ export default function Browser() {
     })
     return (
 
-        <dialog id="browser-modal" class="modal w-full h-full max-w-5xl max-h-5xl">
-            <div class="bg-white">
-                <div class="mockup-browser   w-screen h-screen">
+        <dialog id="browser-modal" class="modal rounded sm:w-full sm:h-full sm:max-w-5xl sm:max-h-5xl    ">
+            <div class="bg-white rounded  h-screen   ">
+                <div class="mockup-browser h-full   sm:w-screen sm:h-screen">
                     <div class="mockup-browser-toolbar justify-between gap-5">
                         <div class="input"
                         onClick={()=>{
                             setShowFullUrl(!showFullUrl())
                         }}
                         >{url()}</div>
-                        <button class="btn btn-circle btn-ghost" onClick={()=>{
+                        <button class="btn focus:outline-none btn-circle btn-ghost" onClick={()=>{
                             setUrl("")
                             setLoading(true)
                             setLoaded(false)
