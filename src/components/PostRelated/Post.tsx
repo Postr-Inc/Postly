@@ -71,6 +71,15 @@ type Props = {
   [key: string]: any;
 };
 
+function getFileType(file: File){
+  switch (true){
+    case file.type == "image/png":
+      return "image"
+    case file.type == "video/mp4":
+      return "video"
+  }
+}
+
 export default function Post(props: Props) {
   let { theme } = useTheme();
   let { likes, updateLikes, commentLength } = usePost(props);
@@ -372,7 +381,9 @@ async function updatePoll() {
                 onClick={()=>{ 
                   window.open(api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item), "_blank");
                 }}>
-                  <img
+                   <Switch>
+                    <Match when={item.includes(".png") || item.includes(".jpg")}>
+                      <img
                     src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)}
                     class={joinClass(
                       "w-full h-[400px]  object-cover rounded-xl",
@@ -382,6 +393,17 @@ async function updatePoll() {
                         : "border-[#cacaca] border"
                     )}
                   />
+                    </Match>
+                    <Match when={item.includes(".mp4")}>
+                      <video class={joinClass(
+                      "  object-cover rounded-xl",
+                      "cursor-pointer",
+                      theme() === "dark"
+                        ? "border-[#121212] border"
+                        : "border-[#cacaca] border"
+                    )} src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)} autoplay loop />
+                    </Match>
+                   </Switch>
                 </CarouselItem>
               )}
             </For>
