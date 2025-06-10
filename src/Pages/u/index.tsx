@@ -257,7 +257,7 @@ export default function User() {
             >
               <div>
                 <ArrowLeft
-                  class={`p-2 h-[2.2rem] bg-base-200 cursor-pointer rounded-full bg-opacity-50 fill-white stroke-white`}
+                  class={`p-2 h-[2.2rem] bg-base-200 cursor-pointer rounded-full bg-opacity-70  `}
                   onClick={() => goBack()}
                 />
               </div>
@@ -265,14 +265,13 @@ export default function User() {
               <div class="flex flex-row gap-2"> 
                 <Search class={
                   joinClass(
-                    "p-2 h-[2.2rem] bg-base-200 rounded-full bg-opacity-50",
-                    theme() === "dark" ? "fill-white" : "text-white fill-white"
+                    "p-2 h-[2.2rem] bg-base-200 rounded-full bg-opacity-70" 
                   )
                 } />
                    
                 <Ellipse class={
                   joinClass(
-                    "p-2 h-[2.2rem] bg-base-200 rounded-full bg-opacity-50 fill-white"
+                    "p-2 h-[2.2rem] bg-base-200 rounded-full bg-opacity-70 "
                   )
                 } />
               </div>
