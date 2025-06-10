@@ -1,7 +1,7 @@
 import { createSignal } from "solid-js";
 
 let currentRoute = "/";
-const arrayOfNavigations = ["/"];
+const arrayOfNavigations =  createSignal<string[]>([currentRoute]);
 let params = [{ route: "/", params: null }] as [{ route: string; params: any }];
 /**
  * @description - A hook to handle navigation in a SolidJS application
