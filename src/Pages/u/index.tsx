@@ -31,7 +31,7 @@ async function handleFeed(
 ) { 
   return api.collection(type).list(page, 10, {
     expand: ["author", "likes", "comments", "repost", "repost.author", "author.followers"],
-    sort: otherOptions.sort || "-created",
+    sort: otherOptions.sort + ",-created" || "-created",
     cacheKey: `/u/${params.id}_${type}_${page}/${JSON.stringify(otherOptions)}`,
     filter: otherOptions.filter || `author.username="${params.id}"`,
   });
@@ -366,9 +366,13 @@ export default function User() {
               {user() && user().social && (
                 <p class="flex flex-row gap-1 items-center text-sm  ">
                   <Link class="h-4 w-4" />
-                  <a href={user() && user().social} class="text-blue-500">
+                  <span onClick={()=>{
+                    if(user().social.startsWith("https://")) {
+                      window.open(user().social, "_blank");
+                    }
+                  }} class="text-blue-500">
                     {user() && user().social.split("/")[2].split(".")[0]}
-                  </a>
+                  </span>
                 </p>
               )}
               <p class="flex flex-row gap-2 items-center text-sm opacity-50">
