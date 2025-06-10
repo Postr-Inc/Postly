@@ -7,7 +7,8 @@ import useTheme from "../Hooks/useTheme";
 import { joinClass } from "../Joinclass";
 import { api } from "@/src";
 import CreatePostModal from "@/src/components/Modals/CreatePostModal";
-export default function Page(props: { children: any , params: ()=> any, route: () => string, navigate: any, id: string }) {
+import Browser from "@/src/components/Browser";
+export default function Page(props: { children: any , params: ()=> any, route: () => string, navigate: any, id: string, hide?: string[] }) {
      const { theme } = useTheme();
     return <>
    <div id={props.id} class={joinClass("relative xl:flex xl:w-[40vw] w-[100vw]   xl:p-0  lg:flex   2xl:w-[79rem]    justify-center xl:mx-auto ", )}>
@@ -33,8 +34,13 @@ export default function Page(props: { children: any , params: ()=> any, route: (
         </Show> 
 
         
-       <BottomNav />
+       {
+          !props.hide?.includes("bottomNav") && (
+               <BottomNav />
+          )
+       }
     </div>
+    <Browser />
     
     <CreatePostModal /> 
     </>
