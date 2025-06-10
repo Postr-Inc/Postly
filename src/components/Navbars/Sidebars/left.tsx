@@ -53,7 +53,9 @@ export function SideBarLeft(props: {
             </li>
             <li>
               <a
-                class={joinClass("text-lg  rounded-full ",   route() === "/" ? "fill-blue-500 stroke-blue-500 text-blue-500 font-bold" : " fill-white")}
+                class={joinClass("text-lg  rounded-full ",   route() === "/" ? "fill-blue-500 stroke-blue-500 text-blue-500 font-bold" : 
+                theme() === "dark" ? "fill-white stroke-white text-white" : "  stroke-black"
+                )}
                 onClick={() => {
                   // @ts-ignore
                   navigate(`/`);
