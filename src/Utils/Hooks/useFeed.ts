@@ -14,8 +14,8 @@ async function list(
       .list(currentPage, 10, {
         recommended: true,
         order: options.sort || "createdAt",
-        filter: options.filter || "",
-        cacheKey: `${collection}_${feed()}_${currentPage}`,
+        filter: options.filter || "author.deactivated=false",
+        cacheKey: `${collection}_${feed()}_${currentPage}_feed`,
         expand: [
           "comments.likes",
           "comments",
@@ -65,13 +65,14 @@ export default function useFeed(
 
   function fetchPosts(options: any, resetFlag: boolean) {
     if (resetFlag) {
-      setCurrentPage(1);
+       setCurrentPage(1);
+       setLoading(true)
     }
     list(collection, resetFlag ? 1 : currentPage(), feed, options)
       .then((data: any) => {
         if (resetFlag) {
           setPosts(data.items);
-        } else {
+        } else { 
           setPosts([...posts(), ...data.items]);
         }
 
@@ -95,6 +96,7 @@ export default function useFeed(
               relevantPeople.length < 5 &&
               !followers[j].followers.includes(api.authStore.model.id) &&
               !relevantPeople.find((i) => i.id === followers[j].id)
+              && !followers[j].deactivated
             ) {
               relevantPeople.push(followers[j]);
             }
@@ -193,6 +195,7 @@ export default function useFeed(
   });
 
   // Initial load outside the effect
+  reset()
   fetchPosts(options, false);
 
   return { feed, currentPage, posts, loading, error, hasMore, setFeed, reset, setPosts };
