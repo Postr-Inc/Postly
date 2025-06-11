@@ -211,7 +211,7 @@ export default function User() {
         break;
       case "Likes": 
         handleFeed("posts", u, currentPage(), user(), {
-          filter: `likes ~="${u.id}" && author.id !="${u.id}"`, 
+          filter: `likes ~"${user().id}" && author.id !="${user().id}"`, 
         }).then((data: any) => {
           if (data.opCode === HttpCodes.OK) {
             console.log(data)
