@@ -71,8 +71,8 @@ type Props = {
   [key: string]: any;
 };
 
-function getFileType(file: File){
-  switch (true){
+function getFileType(file: File) {
+  switch (true) {
     case file.type == "image/png":
       return "image"
     case file.type == "video/mp4":
@@ -85,11 +85,11 @@ export default function Post(props: Props) {
   let { likes, updateLikes, commentLength } = usePost(props);
   let [totalVotes, setTotalVotes] = createSignal(0);
   let [pollVotes, setPollVotes] = createSignal(props.pollVotes || 0);
-  let [pollOptions, setPollOptions] = createSignal([]); 
+  let [pollOptions, setPollOptions] = createSignal([]);
   let [hasVoted, setHasVoted] = createSignal(props.whoVoted && props.whoVoted.includes(api.authStore.model.id) ? true : false);
   let [pollEnds, setPollEnds] = createSignal(new Date());
 
-  function calculateVotePercentage(votes: number, totalVotes: number) { 
+  function calculateVotePercentage(votes: number, totalVotes: number) {
     let percentage = (votes / totalVotes) * 100;
     if (isNaN(percentage)) {
       return 0;
@@ -98,7 +98,7 @@ export default function Post(props: Props) {
   }
 
   createEffect(() => {
-    if(props.isPoll) {  
+    if (props.isPoll) {
       let votes = 0;
       props.pollOptions.forEach((option: any) => {
         votes += option.votes;
@@ -113,7 +113,7 @@ export default function Post(props: Props) {
     const diff = date.getTime() - now.getTime();
 
     if (diff <= 0) {
-        return "Ended";
+      return "Ended";
     }
 
     const seconds = Math.floor(diff / 1000);
@@ -125,29 +125,29 @@ export default function Post(props: Props) {
     const years = Math.floor(days / 365.25); // Average days in a year
 
     if (seconds < 60) {
-        return `${seconds}s`;
+      return `${seconds}s`;
     } else if (minutes < 60) {
-        return `${minutes}m`;
+      return `${minutes}m`;
     } else if (hours < 24) {
-        return `${hours}h`;
+      return `${hours}h`;
     } else if (days < 7) {
-        return `${days}d`;
+      return `${days}d`;
     } else if (weeks < 4) {
-        return `${weeks}w`;
+      return `${weeks}w`;
     } else if (months < 12) {
-        return `${months}mo`;
+      return `${months}mo`;
     } else {
-        return `${years}y`;
+      return `${years}y`;
     }
-}
+  }
 
-async function updatePoll() {
-  await api.collection(props.isComment ? "comments" : "posts").update(props.id, {
-    pollVotes: pollVotes(),
-    pollOptions: pollOptions(),
-    whoVoted: [...props.whoVoted, api.authStore.model.id],
-  })
-}
+  async function updatePoll() {
+    await api.collection(props.isComment ? "comments" : "posts").update(props.id, {
+      pollVotes: pollVotes(),
+      pollOptions: pollOptions(),
+      whoVoted: [...props.whoVoted, api.authStore.model.id],
+    })
+  }
 
 
   return (
@@ -171,7 +171,7 @@ async function updatePoll() {
         <div class="flex hero   gap-5  "><svg viewBox="0 0 24 24" aria-hidden="true" class={
           joinClass(
             "w-4 h-4",
-            theme() == "dark" ? "text-white" : "text-black"
+            theme() == "dark" ? "text-white fill-white" : "text-black"
           )
         }><g><path d="M7 4.5C7 3.12 8.12 2 9.5 2h5C15.88 2 17 3.12 17 4.5v5.26L20.12 16H13v5l-1 2-1-2v-5H3.88L7 9.76V4.5z"></path></g></svg>Pinned</div>
       </Show>
@@ -223,9 +223,14 @@ async function updatePoll() {
           <CardTitle class="text-sm opacity-50">·</CardTitle>
           <CardTitle class="text-sm opacity-50">{created(props.created)}</CardTitle>
         </div>
+        <Show when={props.isSnippe}>
+          <span class="badge bg-blue-500 p-3 text-white rounded-full">
+            ✨ Snippet
+          </span>
+        </Show>
 
 
-        <Show when={!props.isComment  && !window.location.pathname.includes("/view")|| props.isComment && window.location.pathname.includes("/view")}>
+        <Show when={!props.isComment && !window.location.pathname.includes("/view") || props.isComment && window.location.pathname.includes("/view")}>
           <CardTitle class="absolute right-5">
             <Dropdown direction="left" point="start">
               <DropdownHeader>
@@ -244,7 +249,7 @@ async function updatePoll() {
                   />
                 </svg>
               </DropdownHeader>
-              
+
               <DropdownItem>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -308,7 +313,7 @@ async function updatePoll() {
                   <p class="font-bold"> Block @{props.expand.author.username}</p>
                 </DropdownItem>
               </Show>
-              
+
             </Dropdown>
           </CardTitle>
         </Show>
@@ -318,55 +323,55 @@ async function updatePoll() {
         <a onClick={() => props.navigate(StringJoin("/view/", props.isComment ? "comments/" : "posts/", props.id))}>
           <p class="text-md">{props.content}</p>
         </a>
-      </CardContent> 
+      </CardContent>
       <Show when={props.isPoll && !hasVoted()}>
-       <div>
-       <For each={props.pollOptions}>
-          {(item) => ( 
-            <CardContent class="p-1 cursor-pointer">
-              <div class="flex gap-2">
-                <div class="flex items-center gap-2">
-                  <input type="radio" name="poll" onClick={() => {
-                    setPollOptions(props.pollOptions.map((option: any) => {
-                      if (option.choice === item.choice) {
-                        option.votes++;
-                      }
-                      return option;
-                    }));
-                    setHasVoted(true); 
-                    setTotalVotes(totalVotes() + 1);
-                    setPollVotes(pollVotes() + 1);
-                    updatePoll();
-                  } } />
-                  <p>{item.content}</p>
+        <div>
+          <For each={props.pollOptions}>
+            {(item) => (
+              <CardContent class="p-1 cursor-pointer">
+                <div class="flex gap-2">
+                  <div class="flex items-center gap-2">
+                    <input type="radio" name="poll" onClick={() => {
+                      setPollOptions(props.pollOptions.map((option: any) => {
+                        if (option.choice === item.choice) {
+                          option.votes++;
+                        }
+                        return option;
+                      }));
+                      setHasVoted(true);
+                      setTotalVotes(totalVotes() + 1);
+                      setPollVotes(pollVotes() + 1);
+                      updatePoll();
+                    }} />
+                    <p>{item.content}</p>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          )}
-        </For>
-        <div class="flex gap-2">
-           votes {totalVotes()} - {calculatePollEnds(props.pollEnds)} left
-        </div>
+              </CardContent>
+            )}
+          </For>
+          <div class="flex gap-2">
+            votes {totalVotes()} - {calculatePollEnds(props.pollEnds)} left
+          </div>
         </div>
       </Show>
-      <Show when={props.isPoll && hasVoted()}> 
+      <Show when={props.isPoll && hasVoted()}>
         <For each={props.pollOptions}>
           {(item) => (
             <CardContent class="p-1 items-center cursor-pointer flex  gap-12 justify-between w-full">
-              <div class="flex gap-2 w-full"> 
+              <div class="flex gap-2 w-full">
                 <div class={joinClass("flex items-center gap-2")}
                   style={{ width: `${calculateVotePercentage(parseInt(item.votes), totalVotes())}%`, "background-color": "skyblue", padding: "0.5rem", "border-radius": "0.2rem" }}
                 >
                   <p>{item.content}</p>
-                  
+
                 </div>
               </div>
-              <p class="font-bold">{calculateVotePercentage(parseInt(item.votes),  totalVotes())}%</p>
+              <p class="font-bold">{calculateVotePercentage(parseInt(item.votes), totalVotes())}%</p>
             </CardContent>
           )}
         </For>
         <div class="flex gap-2 text-sm mt-2 text-gray-500">
-           votes {totalVotes()} • {calculatePollEnds(props.pollEnds)} left
+          votes {totalVotes()} • {calculatePollEnds(props.pollEnds)} left
         </div>
       </Show>
       <Show when={props.files && props.files.length > 0}>
@@ -376,40 +381,41 @@ async function updatePoll() {
           <Carousel >
             <For each={props.files} fallback={<></>}>
               {(item) => (
-                <CarouselItem 
-                
-                onClick={()=>{ 
-                  window.open(api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item), "_blank");
-                }}>
-                   <Switch>
-                    <Match when={item.includes(".png") || item.includes(".jpg")}>
+                <CarouselItem
+
+                  onClick={() => {
+                    window.open(api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item), "_blank");
+                  }}>
+                  <Switch>
+                    <Match when={item.includes(".png") || item.includes(".jpg") || item.includes(".gif")}>
                       <img
-                    src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)}
-                    class={joinClass(
-                      "w-full h-[400px]  object-cover rounded-xl",
-                      "cursor-pointer",
-                      theme() === "dark"
-                        ? "border-[#121212] border"
-                        : "border-[#cacaca] border"
-                    )}
-                  />
+                        src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)}
+                        class={joinClass(
+                          "w-full h-[400px]  object-cover rounded-xl",
+                          "cursor-pointer",
+                          theme() === "dark"
+                            ? "border-[#121212] border"
+                            : "border-[#cacaca] border"
+                        )}
+                      />
                     </Match>
                     <Match when={item.includes(".mp4")}>
                       <video class={joinClass(
-                      "  object-cover rounded-xl",
-                      "cursor-pointer",
-                      theme() === "dark"
-                        ? "border-[#121212] border"
-                        : "border-[#cacaca] border"
-                    )} src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)} autoplay loop />
+                        "  object-cover rounded-xl",
+                        "cursor-pointer",
+                        theme() === "dark"
+                          ? "border-[#121212] border"
+                          : "border-[#cacaca] border"
+                      )} src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)} autoplay loop />
                     </Match>
-                   </Switch>
+                  </Switch>
                 </CarouselItem>
               )}
             </For>
           </Carousel>
         </CardContent>
       </Show>
+
 
       {/**
        * @search - repost section
