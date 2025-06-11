@@ -112,7 +112,10 @@ export default function User() {
         } 
         if (data.opCode === HttpCodes.OK) {
           setUser(data.items[0]);
-          handleFeed("posts", u, currentPage(), data.items[0], {
+          console.log(view())
+          switch(view()){
+            case "posts":
+              handleFeed("posts", u, currentPage(), data.items[0], {
             filter: `author.username="${u.id}"`, 
             sort: '-pinned',
           }).then((data: any) => {
@@ -123,6 +126,20 @@ export default function User() {
               setLoading(false);
             }
           });
+          break;
+          case "Likes":
+            handleFeed("posts", u, currentPage(), data.items[0], {
+            filter: `likes ~"${user().id}" && author.id !="${user().id}"`, 
+          }).then((data: any) => {
+            console.log(currentPage())
+            if (data.opCode === HttpCodes.OK) { 
+              setPosts(data.items); 
+              setTotalPages(data.totalPages); 
+              setLoading(false);
+            }
+          });
+          }
+           
         }
       });
 
@@ -134,16 +151,33 @@ export default function User() {
   }, [u.id]);
 
   createEffect(() => { 
-    if (currentPage() > 1) {  
-      handleFeed(view(),u, currentPage(), user(), {
-        filter: `author.username="${u.id}"`, 
-        sort: '-pinned',
-      }).then((data: any) => {
-        if (data.opCode === HttpCodes.OK) {
-          setPosts([...posts(), ...data.items]);
-          setFeedLoading(false);
-        }
-      });
+    if (currentPage() > 1) { 
+      switch(view()){
+            case "posts":
+              handleFeed("posts", u, currentPage(), data.items[0], {
+            filter: `author.username="${u.id}"`, 
+            sort: '-pinned',
+          }).then((data: any) => {
+            console.log(currentPage())
+            if (data.opCode === HttpCodes.OK) { 
+              setPosts(data.items); 
+              setTotalPages(data.totalPages); 
+              setLoading(false);
+            }
+          });
+          break;
+          case "Likes":
+            handleFeed("posts", u, currentPage(), data.items[0], {
+            filter: `likes ~"${user().id}" && author.id !="${user().id}"`, 
+          }).then((data: any) => {
+            console.log(currentPage())
+            if (data.opCode === HttpCodes.OK) { 
+              setPosts(data.items); 
+              setTotalPages(data.totalPages); 
+              setLoading(false);
+            }
+          });
+          }
     }
   }, [currentPage()]);
 
@@ -152,18 +186,16 @@ export default function User() {
   function swapFeed(type: string) {
     setFeedLoading(true)
     setCurrentPage(1)
+    setPosts([])
     switch (type) {
       case "posts":
         console.log(u.id)
         handleFeed("posts", u, currentPage(), user(), {
           filter: `author.username="${u.id}"`, 
-          sort: '-pinned'
+          sort:'-pinned'
         }).then((data: any) => {
           if (data.opCode === HttpCodes.OK) {
-            let pinned = data.items.filter((p: any) => p.pinned); 
-            let notPinned = data.items.filter((p: any) => !p.pinned);
-            data.items = [...pinned, ...notPinned]; 
-            setPosts(data.items); 
+            setPosts(data.items)
           } 
         });
         break;
@@ -179,7 +211,7 @@ export default function User() {
         break;
       case "Likes": 
         handleFeed("posts", u, currentPage(), user(), {
-          filter: `likes.id ="${u.id}" && author.id !="${user().id}"`, 
+          filter: `likes ~="${u.id}" && author.id !="${u.id}"`, 
         }).then((data: any) => {
           if (data.opCode === HttpCodes.OK) {
             console.log(data)
