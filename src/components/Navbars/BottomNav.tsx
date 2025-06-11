@@ -45,7 +45,7 @@ export default function BottomNav() {
             scrollingDirection() == "up" ? "bg-opacity-100" : "bg-opacity-100", 
         )}
       >
-        <li class="flex ">
+        <li class="flex mb-5 ">
           <Home
             class={joinClass(
               "w-7 h-7",
@@ -58,7 +58,7 @@ export default function BottomNav() {
             onClick={() => navigate("/")}
           />
         </li>
-        <li>
+        <li class="flex mb-5 ">
           <Search
             class={joinClass(
               "w-7 h-7",
@@ -70,7 +70,7 @@ export default function BottomNav() {
             )}
           />
         </li>
-        <li>
+        <li class="flex mb-5 ">
           <Mail
             class={joinClass(
               "w-7 h-7",
@@ -82,7 +82,7 @@ export default function BottomNav() {
             )}
           />
         </li>
-        <li>
+        <li class="flex mb-5 ">
           <Heart
             class={joinClass(
               "w-7 h-7",
@@ -94,7 +94,7 @@ export default function BottomNav() {
             )}
           />
         </li>
-        <li>
+        <li class="flex mb-5 ">
           <Scissors
             class={joinClass(
               "w-7 h-7",
