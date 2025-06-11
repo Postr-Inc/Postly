@@ -1,524 +1,606 @@
-import {
-  Card,
-  CardContent,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-
 import { api } from "@/src";
-import usePost from "@/src/Utils/Hooks/usePost";
-import useTheme from "@/src/Utils/Hooks/useTheme";
+import ArrowLeft from "@/src/components/Icons/ArrowLeft";
+import Calendar from "@/src/components/Icons/Calendar";
+import Ellipse from "@/src/components/Icons/Ellipse";
+import Link from "@/src/components/Icons/Link";
+import Search from "@/src/components/Icons/search";
+import Verified from "@/src/components/Icons/Verified";
 import { joinClass } from "@/src/Utils/Joinclass";
-import { For, Match, Show, Switch, createSignal, createEffect } from "solid-js";
-import Heart from "../Icons/heart";
-import Dropdown, { DropdownHeader, DropdownItem } from "../UI/UX/dropdown";
-import Carousel, { CarouselItem } from "../UI/UX/Carousel";
+import Post from "@/src/components/PostRelated/Post";
+import useNavigation from "@/src/Utils/Hooks/useNavigation";
+import useTheme from "@/src/Utils/Hooks/useTheme";
+import { HttpCodes } from "@/src/Utils/SDK/opCodes";
+import Page from "@/src/Utils/Shared/Page";
 import StringJoin from "@/src/Utils/StringJoin";
-import { A } from "@solidjs/router";
-import Verified from "../Icons/Verified";
-import Bookmark from "../Icons/Bookmark";
-import Share from "../Icons/Share";
-const created = (created: any) => {
-  let date = new Date(created);
-  let now = new Date();
-  let diff = now.getTime() - date.getTime();
-  let seconds = diff / 1000;
-  let minutes = seconds / 60;
-  let hours = minutes / 60;
-  let days = hours / 24;
-  let weeks = days / 7;
-  let months = weeks / 4;
-  let years = months / 12;
-  switch (true) {
-    case seconds < 60:
-      return `${Math.floor(seconds)}s`;
-      break;
-    case minutes < 60:
-      return `${Math.floor(minutes)}m`;
-      break;
-    case hours < 24:
-      return `${Math.floor(hours)}h`;
-      break;
-    case days < 7:
-      return `${Math.floor(days)}d`;
-      break;
-    case weeks < 4:
-      return `${Math.floor(weeks)}w`;
-      break;
-    case months < 12:
-      return `${Math.floor(months)}mo`;
-      break;
-    case years > 1:
-      return `${Math.floor(years)}y`;
-      break;
-    default:
-      break;
+import { Item } from "@kobalte/core/menubar";
+import { createEffect, createSignal, For, Match, Show, Switch } from "solid-js";
+import EditProfileModal from "@/src/components/Modals/EditProfileModal";
+import { Portal } from "solid-js/web";
+import useFeed from "@/src/Utils/Hooks/useFeed";
+import { useParams } from "@solidjs/router";
+import LoadingIndicator from "@/src/components/Icons/loading";
+async function handleFeed(
+  type: string,
+  params: any,
+  page: number,
+  user = api.authStore.model,
+  otherOptions: {
+    filter?: string,
+    sort?: string,
   }
-};
-type Props = {
-  author?: string | any;
-  id?: string | any;
-  content?: string;
-  created?: Date;
-  updated?: Date;
-  expand?: { [key: string]: any } | any;
-  comments?: string[];
-  file?: string[];
-  isRepost?: boolean;
-  disabled?: boolean;
-  isComment?: boolean;
-  [key: string]: any;
-};
-
-function getFileType(file: File) {
-  switch (true) {
-    case file.type == "image/png":
-      return "image"
-    case file.type == "video/mp4":
-      return "video"
-  }
+) {
+  return api.collection(type).list(page, 10, {
+    expand: ["author", "likes", "comments", "repost", "repost.author", "author.followers", "post"],
+    sort: otherOptions.sort ? otherOptions.sort + ", -created" : "-created",
+    cacheKey: `/u/${params.id}_${type}_${page}/${JSON.stringify(otherOptions)}`,
+    filter: otherOptions.filter || `author.username="${params.id}"`,
+  });
 }
+export default function User() {
+  const { params, route, navigate, goBack } = useNavigation("/u/:id");
+  const u = useParams();
+  const queryParams = new URLSearchParams(window.location.search);
+  const [user, setUser] = createSignal(null, { equals: false }) as any;
+  const { theme } = useTheme();
+  const savedFeed = queryParams.get("feed") === "posts" ? 1 : queryParams.get("feed") === "Replies" ? 2 : queryParams.get("feed") === "likes" ? 3 : 1
+  const [view, setView] = createSignal(savedFeed === 1 ? "posts" : savedFeed === 2 ? "comments" : savedFeed === 3 ? "Likes" : "posts");
+  let [loading, setLoading] = createSignal(true);
+  let [posts, setPosts] = createSignal([]);
+  const [currentPage, setCurrentPage] = createSignal(1);
+  let [notFound, setNotFound] = createSignal(false);
+  let [feedLoading, setFeedLoading] = createSignal(false);
+  let [totalPages, setTotalPages] = createSignal(0);
+  const [feed, setFeed] = createSignal(savedFeed === 1 ? "posts" : savedFeed === 2 ? "Replies" : savedFeed === 3 ? "likes" : "posts");
 
-export default function Post(props: Props) {
-  let { theme } = useTheme();
-  let { likes, updateLikes, commentLength } = usePost(props);
-  let [totalVotes, setTotalVotes] = createSignal(0);
-  let [pollVotes, setPollVotes] = createSignal(props.pollVotes || 0);
-  let [pollOptions, setPollOptions] = createSignal([]);
-  let [hasVoted, setHasVoted] = createSignal(props.whoVoted && props.whoVoted.includes(api.authStore.model.id) ? true : false);
-  let [pollEnds, setPollEnds] = createSignal(new Date());
-
-  function calculateVotePercentage(votes: number, totalVotes: number) {
-    let percentage = (votes / totalVotes) * 100;
-    if (isNaN(percentage)) {
-      return 0;
-    }
-    return Math.round(percentage);
-  }
 
   createEffect(() => {
-    if (props.isPoll) {
-      let votes = 0;
-      props.pollOptions.forEach((option: any) => {
-        votes += option.votes;
+    api.checkAuth()
+    setCurrentPage(0)
+    window.onbeforeunload = function () {
+      window.scrollTo(0, 0);
+    }
+    // more on scroll
+
+    window.onscroll = function () {
+      // handle desktop scrolling
+      if (window.innerWidth > 768) {
+        if (
+          window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 100 &&
+          !feedLoading() &&
+          currentPage() < totalPages()
+        ) {
+          setCurrentPage(currentPage() + 1);
+        }
+      } else if (window.innerWidth <= 768) {
+        // handle mobile scrolling
+        if (
+          window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 50 &&
+          !feedLoading() &&
+          currentPage() < totalPages()
+        ) {
+          setCurrentPage(currentPage() + 1);
+        }
+      }
+    };
+
+
+
+
+    api.collection("users")
+      .list(1, 1, {
+        filter: StringJoin("username", "=", `"${u.id}"`),
+        expand: ["followers", "following"],
+        cacheKey: `/u/user_${u.id}`
+      })
+      .then((data: any) => {
+        if (!data.items[0]) {
+          setNotFound(true);
+          setUser({
+            id: crypto.randomUUID(),
+            username: "not found",
+            created: new Date().toISOString(),
+            bio: "User not found",
+            followers: [],
+            following: [],
+            expand: {
+              followers: [],
+              following: [],
+            }
+          })
+          setLoading(false);
+          return;
+        }
+        if (data.opCode === HttpCodes.OK) {
+          setUser(data.items[0]);
+          console.log(view())
+          switch (view()) {
+            case "posts":
+              handleFeed("posts", u, currentPage(), data.items[0], {
+                filter: `author.username="${u.id}"`,
+                sort: '-pinned',
+              }).then((data: any) => {
+                console.log(currentPage())
+                if (data.opCode === HttpCodes.OK) {
+                  setPosts(data.items);
+                  setTotalPages(data.totalPages);
+                  setLoading(false);
+                }
+              });
+              break;
+            case "Likes":
+              handleFeed("posts", u, currentPage(), data.items[0], {
+                filter: `likes ~"${user().id}" && author.id !="${user().id}"`,
+              }).then((data: any) => {
+                console.log(currentPage())
+                if (data.opCode === HttpCodes.OK) {
+                  setPosts(data.items);
+                  setTotalPages(data.totalPages);
+                  setLoading(false);
+                }
+              });
+              break;
+            case "comments":
+              handleFeed("comments", u, currentPage(), user(), {
+                filter: `author.username="${u.id}"`,
+              }).then((data: any) => {
+                console.log(data)
+                if (data.opCode === HttpCodes.OK) {
+                  setPosts(data.items);
+                  setLoading(false)
+                  setTotalPages(data.totalPages)
+                }
+              });
+          }
+
+        }
       });
-      setTotalVotes(parseInt(votes));
+
+
+
+    //@ts-ignore
+    setRelevantText("You might also like")
+    setCurrentPage(1)
+  }, [u.id]);
+
+  createEffect(() => {
+    if (currentPage() > 1) {
+      switch (view()) {
+        case "posts":
+          handleFeed("posts", u, currentPage(), data.items[0], {
+            filter: `author.username="${u.id}"`,
+            sort: '-pinned',
+          }).then((data: any) => {
+            console.log(currentPage())
+            if (data.opCode === HttpCodes.OK) {
+              setPosts([...posts(), ...data.items]);
+              setTotalPages(data.totalPages);
+              setLoading(false);
+            }
+          });
+          break;
+        case "Likes":
+          handleFeed("posts", u, currentPage(), data.items[0], {
+            filter: `likes ~"${user().id}" && author.id !="${user().id}"`,
+          }).then((data: any) => {
+            console.log(currentPage())
+            if (data.opCode === HttpCodes.OK) {
+             setPosts([...posts(), ...data.items]);
+              setTotalPages(data.totalPages);
+              setLoading(false);
+            }
+          });
+          break;
+        case "comments":
+          handleFeed("comments", u, currentPage(), user(), {
+            filter: `author.username="${u.id}"`,
+          }).then((data: any) => {
+            console.log(data)
+            if (data.opCode === HttpCodes.OK) {
+              setPosts([...posts(), ...data.items]);
+              setTotalPages(data.items)
+              setLoading(false)
+            }
+          });
+      }
     }
-  });
+  }, [currentPage()]);
 
-  function calculatePollEnds(ends: Date) {
-    const date = new Date(ends);
-    const now = new Date();
-    const diff = date.getTime() - now.getTime();
 
-    if (diff <= 0) {
-      return "Ended";
+
+  function swapFeed(type: string) {
+    setFeedLoading(true)
+    setCurrentPage(1)
+    setPosts([])
+    switch (type) {
+      case "posts":
+        console.log(u.id)
+        handleFeed("posts", u, currentPage(), user(), {
+          filter: `author.username="${u.id}"`,
+          sort: '-pinned'
+        }).then((data: any) => {
+          if (data.opCode === HttpCodes.OK) {
+            setPosts(data.items)
+          }
+        });
+        break;
+      case "Replies":
+        handleFeed("comments", u, currentPage(), user(), {
+          filter: `author.username="${u.id}"`,
+        }).then((data: any) => {
+          console.log(data)
+          if (data.opCode === HttpCodes.OK) {
+            setPosts(data.items);
+          }
+        });
+        break;
+      case "Likes":
+        handleFeed("posts", u, currentPage(), user(), {
+          filter: `likes ~"${user().id}" && author.id !="${user().id}"`,
+        }).then((data: any) => {
+          if (data.opCode === HttpCodes.OK) {
+            console.log(data)
+            setPosts(data.items);
+          }
+        });
+        break;
+      case "snippets":
+        handleFeed("posts", u, currentPage(), user(), {
+          filter: `author="${user().id}" && isSnippet=true`,
+          sort: `-created`
+        }).then((data: any) => {
+          if (data.opCode === HttpCodes.OK) {
+            setPosts(data.items);
+          }
+        });
+        break;
     }
-
-    const seconds = Math.floor(diff / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-    const weeks = Math.floor(days / 7);
-    const months = Math.floor(days / 30.44); // Average days in a month
-    const years = Math.floor(days / 365.25); // Average days in a year
-
-    if (seconds < 60) {
-      return `${seconds}s`;
-    } else if (minutes < 60) {
-      return `${minutes}m`;
-    } else if (hours < 24) {
-      return `${hours}h`;
-    } else if (days < 7) {
-      return `${days}d`;
-    } else if (weeks < 4) {
-      return `${weeks}w`;
-    } else if (months < 12) {
-      return `${months}mo`;
-    } else {
-      return `${years}y`;
-    }
+    setTimeout(() => {
+      setFeedLoading(false)
+    }, 1000)
   }
 
-  async function updatePoll() {
-    await api.collection(props.isComment ? "comments" : "posts").update(props.id, {
-      pollVotes: pollVotes(),
-      pollOptions: pollOptions(),
-      whoVoted: [...props.whoVoted, api.authStore.model.id],
+  function follow(type: string) {
+    let followers = user().followers as any[]
+    let isFollowing = api.authStore.model.following
+    switch (type) {
+      case "unfollow":
+        followers = followers.filter((u) => u != api.authStore.model.id)
+        console.log(followers)
+        user().followers = followers
+        setUser({ ...user(), followers })
+        setLoading(false)
+        isFollowing = isFollowing.filter((d) => d != user().id)
+        break;
+      case "follow":
+        followers.push(api.authStore.model.id)
+        user().followers = followers
+        setUser({ ...user(), followers })
+        setLoading(false)
+        !isFollowing.includes(user().id) && isFollowing.push(user().id)
+        break;
+    }
+    api.collection("users").update(user().id, {
+      followers,
+    }, {
+      expand: ["followers", "following"],
+      cacheKey: `/u/user_${user().username}`,
+    })
+    api.collection("users").update(api.authStore.model.id, { following: isFollowing }, {
+      expand: ["followers", "following"],
+      cacheKey: `/u/${api.authStore.model.username}`
     })
   }
-
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
 
   return (
-    <Card
-      class={joinClass(
-        theme() === "dark"
-          ? "bg-black text-white border-[#1c1c1c]  "
-          : "  border-gray-200 border   ",
-        theme() === "dark" && !props.page ? "hover:bg-[#121212]" : theme() === "light" && !props.page ? "hover:bg-[#faf9f9]" : "",
-        "z-10  relative h-fit",
-        "p-2 text-md shadow-none ",
-        window.location.pathname.includes("view") ? "border-r-0 border-b-0  border-l-0" : window.location.pathname.includes('view') && props.isComment ?
-          "border-t-0" : "",
-        props.disabled
-          ? "rounded "
-          : `   rounded-none shadow-none${theme() === "dark" && !props.page ? "hover:bg-[#121212]" : theme() === "light" && !props.page ? "hover:bg-[#faf9f9]" : ""
-          }`
-      )}
-    >
-      <Show when={props.pinned && window.location.pathname.includes("/u")}>
-        <div class="flex hero   gap-5  "><svg viewBox="0 0 24 24" aria-hidden="true" class={
-          joinClass(
-            "w-4 h-4",
-            theme() == "dark" ? "text-white fill-white" : "text-black"
-          )
-        }><g><path d="M7 4.5C7 3.12 8.12 2 9.5 2h5C15.88 2 17 3.12 17 4.5v5.26L20.12 16H13v5l-1 2-1-2v-5H3.88L7 9.76V4.5z"></path></g></svg>Pinned</div>
-      </Show>
-      <CardHeader class="flex p-[0.3rem]   mt-2 flex-row gap-3  relative ">
+    <Page {...{ params, route, navigate, id: "user" }}>
+      <Switch>
 
-        <Switch fallback={<></>}>
-          <Match when={!props.expand.author.avatar}>
-            <div
-              class={joinClass(
-                "w-10 h-10  text-center p-2 rounded ",
-                theme() === "dark"
-                  ? "bg-[#121212] text-white"
-                  : "bg-[#e2e1e1] text-black"
-              )}
-            >
-              {props.expand.author.username.slice(0, 1).charAt(0).toUpperCase()}
+        <Match when={loading()}>
+          <div class={
+            joinClass("flex flex-col items-center justify-center h-screen z-[99999]  ",
+              theme() === "dark" ? "bg-black" : "bg-white"
+            )
+          }>
+            <div class="loading loading-spinner text-blue-500">
             </div>
-          </Match>
-
-          <Match when={props.expand.author.avatar}>
-            <img
-              src={api.cdn.getUrl(
-                "users",
-                props.author,
-                props.expand.author.avatar
-              )}
-              alt={props.author}
-              class="w-10 h-10 rounded object-cover"
-            />
-          </Match>
-        </Switch>
-
-
-        <div class="flex gap-2">
-          <div class="flex">
-            <CardTitle
-              class="cursor-pointer items-center gap-5 "
-              onClick={() => props.navigate(StringJoin("/u/", props.expand.author.username))}
-            >
-              {props.expand.author.username}
-            </CardTitle>
-            <Show when={props.expand.author.validVerified}>
-              <div data-tip="Verified" class="tooltip">
-                <Verified class="w-5  h-5 mx-1 text-blue-500 fill-blue-500 stroke-white " />
-              </div>
-            </Show>
           </div>
-          <CardTitle class="text-sm opacity-50"> @{props.expand.author.username}</CardTitle>
-          <CardTitle class="text-sm opacity-50">·</CardTitle>
-          <CardTitle class="text-sm opacity-50">{created(props.created)}</CardTitle>
-        </div>
-        <Show when={props.isSnippe}>
-          <span class="badge bg-blue-500 p-3 text-white rounded-full">
-            ✨ Snippet
-          </span>
-        </Show>
-
-
-        <Show when={!props.isComment && !window.location.pathname.includes("/view") || props.isComment && window.location.pathname.includes("/view")}>
-          <CardTitle class="absolute right-5">
-            <Dropdown direction="left" point="start">
-              <DropdownHeader>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="1.5"
-                  stroke="currentColor"
-                  class="size-6 "
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z"
-                  />
-                </svg>
-              </DropdownHeader>
-
-              <DropdownItem>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="1.5"
-                  stroke="currentColor"
-                  class="w-4 h-4"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5"
-                  />
-                </svg>
-
-                <p class="font-bold"> Embed Post</p>
-              </DropdownItem>
-              <DropdownItem>
-                <svg
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  class={joinClass(
-                    "cursor-pointer hover:rounded-full hover:bg-sky-500 hover:bg-opacity-20  size-6 hover:p-2 hover:text-sky-500 ",
-                    theme() === "dark" ? "fill-white" : "fill-black"
-                  )}
-                >
-                  <g>
-                    <path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"></path>
-                  </g>
-                </svg>
-                <p class="font-bold w-full"> View Post Engagement </p>
-              </DropdownItem>
-              <Show when={props.expand.author.id !== api.authStore.model.id}>
-                <DropdownItem>
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5" />
-                  </svg>
-
-
-                  <p class="font-bold"> Report @{props.expand.author.username}</p>
-                </DropdownItem>
-              </Show>
-              <Show when={props.expand.author.id !== api.authStore.model.id}>
-                <DropdownItem>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    class="w-4 h-4"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636"
-                    />
-                  </svg>
-
-                  <p class="font-bold"> Block @{props.expand.author.username}</p>
-                </DropdownItem>
-              </Show>
-
-            </Dropdown>
-          </CardTitle>
-        </Show>
-      </CardHeader>
-      <CardContent class="p-1 cursor-pointer">
-
-        <a onClick={() => props.navigate(StringJoin("/view/", props.isComment ? "comments/" : "posts/", props.id))}>
-          <p class="text-md">{props.content}</p>
-        </a>
-      </CardContent>
-      <Show when={props.isPoll && !hasVoted()}>
-        <div>
-          <For each={props.pollOptions}>
-            {(item) => (
-              <CardContent class="p-1 cursor-pointer">
-                <div class="flex gap-2">
-                  <div class="flex items-center gap-2">
-                    <input type="radio" name="poll" onClick={() => {
-                      setPollOptions(props.pollOptions.map((option: any) => {
-                        if (option.choice === item.choice) {
-                          option.votes++;
-                        }
-                        return option;
-                      }));
-                      setHasVoted(true);
-                      setTotalVotes(totalVotes() + 1);
-                      setPollVotes(pollVotes() + 1);
-                      updatePoll();
-                    }} />
-                    <p>{item.content}</p>
-                  </div>
-                </div>
-              </CardContent>
-            )}
-          </For>
-          <div class="flex gap-2">
-            votes {totalVotes()} - {calculatePollEnds(props.pollEnds)} left
-          </div>
-        </div>
-      </Show>
-      <Show when={props.isPoll && hasVoted()}>
-        <For each={props.pollOptions}>
-          {(item) => (
-            <CardContent class="p-1 items-center cursor-pointer flex  gap-12 justify-between w-full">
-              <div class="flex gap-2 w-full">
-                <div class={joinClass("flex items-center gap-2")}
-                  style={{ width: `${calculateVotePercentage(parseInt(item.votes), totalVotes())}%`, "background-color": "skyblue", padding: "0.5rem", "border-radius": "0.2rem" }}
-                >
-                  <p>{item.content}</p>
-
-                </div>
-              </div>
-              <p class="font-bold">{calculateVotePercentage(parseInt(item.votes), totalVotes())}%</p>
-            </CardContent>
-          )}
-        </For>
-        <div class="flex gap-2 text-sm mt-2 text-gray-500">
-          votes {totalVotes()} • {calculatePollEnds(props.pollEnds)} left
-        </div>
-      </Show>
-      <Show when={props.files && props.files.length > 0}>
-
-        <CardContent class="p-1   h-[300px]">
-
-          <Carousel >
-            <For each={props.files} fallback={<></>}>
-              {(item) => (
-                console.log(item),
-                <CarouselItem
-
-                  onClick={() => {
-                    window.open(api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item), "_blank");
-                  }}>
-                  <Switch>
-                    <Match when={item.includes(".png") || item.includes(".jpg") || item.includes(".jpeg") || item.includes('.webp')
-                      || item.includes('.svg')
-                    }>
-                      <img
-                        src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)}
-                        class={joinClass(
-                          "w-full h-[400px]  object-cover rounded-xl",
-                          "cursor-pointer",
-                          theme() === "dark"
-                            ? "border-[#121212] border"
-                            : "border-[#cacaca] border"
-                        )}
-                      />
-                    </Match>
-                    <Match when={item.includes(".mp4")}>
-                      <video class={joinClass(
-                        "  object-cover rounded-xl",
-                        "cursor-pointer",
-                        theme() === "dark"
-                          ? "border-[#121212] border"
-                          : "border-[#cacaca] border"
-                      )} src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)} autoplay loop />
-                    </Match>
-                  </Switch>
-                </CarouselItem>
-              )}
-            </For>
-          </Carousel>
-        </CardContent>
-      </Show>
-
-
-      {/**
-       * @search - repost section
-       */}
-      <CardContent class="p-1">
-
-        <Show when={props.isRepost}>
-          <Post
-            author={props.expand.repost.author}
-            id={props.expand.repost.id}
-            content={props.expand.repost.content}
-            disabled={true}
-            created={props.expand.repost.created}
-            updated={props.expand.repost.updated}
-            expand={props.expand.repost.expand}
-            comments={props.expand.repost.comments}
-            files={props.expand.repost.files}
-          />
-        </Show>
-      </CardContent>
-
-      {/**
-       * @search - footer section
-       */}
-      <Show when={!props.disabled}>
-        <CardFooter class="p-1 flex gap-3 relative items-start">
-          <div class="flex items-center gap-2">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              onClick={() => updateLikes(api.authStore.model.id, props.isComment)}
-              class={joinClass(
-                "w-6 h- cursor-pointer",
-                likes().includes(api.authStore.model.id)
-                  ? "fill-red-500 stroke-red-500"
-                  : ""
-              )}
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
-              />
-            </svg>
-            <span class="countdown">  <span style={{ "--value": Math.abs(likes().length) }}></span></span>
-
-          </div>
-          <div class="flex items-center gap-2 ">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke-width="1.5"
-              stroke="currentColor"
-              class="size-6 cursor-pointer"
-              onClick={() => props.navigate(StringJoin("/view/", "posts/", props.id))}
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z"
-              />
-            </svg>
-            {commentLength()}
-
-          </div>
-          <Show when={!props.hidden || !props.hidden.includes("repostButton")}>
-            <div class=" flex items-center gap-2 "
-              onClick={() => {
-                //@ts-ignore
-                window.repost(props)
-                document.getElementById("createPostModal")?.showModal()
+        </Match>
+        <Match when={!loading()}>
+          <div class="flex flex-col relative">
+            <div
+              class="flex flex-row justify-between p-2 h-[10rem]"
+              style={{
+                "background-size": "cover",
+                "background-image":
+                  user() && user().banner
+                    ? `url(${user().banner.includes("blob") ? user().banner : api.cdn.getUrl("users", user().id, user().banner)})`
+                    : "linear-gradient(90deg, #ff5858 0%, #f09819 49%, #ff5858 100%)",
               }}
-            ><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="   hover:rounded-full hover:bg-green-400 hover:bg-opacity-20   hover:text-green-600 cursor-pointer  w-6 h-6 size-6 "><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 0 0-3.7-3.7 48.678 48.678 0 0 0-7.324 0 4.006 4.006 0 0 0-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 0 0 3.7 3.7 48.656 48.656 0 0 0 7.324 0 4.006 4.006 0 0 0 3.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3-3 3"></path></svg></div>
-          </Show>
-          <div class="flex hero gap-2">
-            <svg
-              viewBox="0 0 24 24"
-              aria-hidden="true"
-              class={joinClass(
-                "cursor-pointer hover:rounded-full hover:bg-sky-500 hover:bg-opacity-20  size-6 hover:p-2 hover:text-sky-500 ",
-                theme() === "dark" ? "fill-white" : "fill-black"
-              )}
             >
-              <g>
-                <path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"></path>
-              </g>
-            </svg>
-            {props.views && props.views.length || 0}
-          </div>
+              <div>
+                <ArrowLeft
+                  class={`p-2 h-[2.2rem] bg-base-200 cursor-pointer rounded-full bg-opacity-70  `}
+                  onClick={() => goBack()}
+                />
+              </div>
 
-          <div class="flex absolute right-5 gap-5">
-            <Bookmark class="w-6 h-6" />
-            <Share class="w-6 h-6" />
+              <div class="flex flex-row gap-2">
+                <Search class={
+                  joinClass(
+                    "p-2 h-[2.2rem] bg-base-200 rounded-full bg-opacity-70"
+                  )
+                } />
+
+                <Ellipse class={
+                  joinClass(
+                    "p-2 h-[2.2rem] bg-base-200 rounded-full bg-opacity-70 "
+                  )
+                } />
+              </div>
+            </div>
+
+            <div class="flex justify-between items-center ">
+              <Switch>
+                <Match when={user() && user().avatar}>
+                  <img
+                    src={user().avatar.includes("blob") ? user().avatar : api.cdn.getUrl("users", user().id, user().avatar)}
+                    class={`
+                      rounded-full xl:w-24 xl:h-24 w-[5rem] h-[5rem] mx-1 border-2  -mt-12 object-cover
+                     ${theme() === "dark" ? "border-white" : "border-base-200"}  
+                    `}
+                  />
+                </Match>
+                <Match when={!user() || !user().avatar}>
+                  <div class="rounded-full w-24 h-24 mx-1 border-4 border-white -mt-12 bg-base-300 flex items-center justify-center">
+                    <p class="text-2xl text-black">{user() && user().username[0]}</p>
+                  </div>
+                </Match>
+              </Switch>
+              <Switch>
+                <Match
+                  when={user() && user().id != api.authStore.model.id && user().followers.includes(api.authStore.model.id)}
+                >
+                  <button
+                    style={{
+                      "border-radius": "9999px"
+                    }}
+                    disabled={notFound()}
+                    class={
+                      theme() === "dark"
+                        ? "bg-black text-black p-2 w-24 mr-2 mt-2 text-sm"
+                        : "bg-white text-white p-2 rounded-full w-24 mr-2 text-sm"
+                    }
+                    onclick={() => notFound() ? null : follow("unfollow")}
+                  >
+                    Unfollow
+                  </button>
+                </Match>
+                <Match
+                  when={
+                    !user() && user().id != api.authStore.model.id || user().id != api.authStore.model.id && !user().followers.includes(api.authStore.model.id)
+                    && !notFound()
+                  }
+                >
+                  <button
+
+                    style={{
+                      "border-radius": "9999px"
+                    }}
+                    disabled={notFound()}
+                    class={
+                      joinClass(theme() === "dark"
+                        ? "bg-white text-black p-2 mt-2 w-24 mr-2  text-sm"
+                        : "bg-black text-white p-2 rounded-full  mt-2 w-24 mr-2 text-sm", "rounded-full")
+                    }
+                    onclick={() => notFound() ? null : follow("follow")}
+                  >
+                    Follow
+                  </button>
+                </Match>
+              </Switch>
+              <Show when={user() && user().id === api.authStore.model.id}>
+                <button
+                  onClick={() => document.getElementById("editProfileModal")?.showModal()}
+                  class={
+                    joinClass(theme() === "dark"
+                      ? "bg-white text-black p-2 w-24 mr-2 text-sm"
+                      : "bg-black text-white p-2 rounded-full w-24 mr-2 text-sm", "sm:mt-2 md:mt-3", "rounded-full")
+                  }
+                >
+                  Edit Profile
+                </button>
+              </Show>
+            </div>
           </div>
-        </CardFooter>
-      </Show>
-    </Card>
+          <div class="flex flex-col p-2">
+            <h1 class="text-2xl font-bold flex hero gap-2">
+              {user() ? user().username : "Loading..."}
+              <Show when={user() && user().verified}>
+                <Verified class="h-7 w-7 text-white stroke-white fill-blue-500" />
+              </Show>
+            </h1>
+            <span class="text-sm mt-1 opacity-60">
+              @{user() && user().username}
+              {user() && user().id.slice(0, 5)}
+            </span>
+            <p class=" mt-2">{user() && user().bio}</p>
+            <div class="flex flex-row gap-5 mt-2">
+              {user() && user().social && (
+                <p class="flex flex-row gap-1 items-center text-sm  ">
+                  <Link class="h-4 w-4" />
+                  <span onClick={() => {
+                    if (user().social.startsWith("https://")) {
+                      window.open(user().social, "_blank");
+                    }
+                  }} class="text-blue-500">
+                    {user() && user().social.split("/")[2].split(".")[0]}
+                  </span>
+                </p>
+              )}
+              <p class="flex flex-row gap-2 items-center text-sm opacity-50">
+                {" "}
+                <Calendar class="h-5 w-5" /> Joined{" "}
+                {user() && months[new Date(user().created).getMonth()]}{" "}
+                {user() && new Date(user().created).getFullYear()}
+              </p>
+            </div>
+
+            <div class="flex flex-row gap-2 mt-2">
+              {user() && user().following && (
+                <p>
+                  <span class="font-bold">{user().following.length} </span>{" "}
+                  <span class="text-gray-500"> Following</span>
+                </p>
+              )}
+              {user() && user().followers && (
+                <p>
+                  <span class="font-bold">{user().followers.length} </span>
+                  <span class="text-gray-500"> Followers</span>
+                </p>
+              )}
+            </div>
+          </div>
+          <Show when={user()}>
+            <Show when={!user()}>
+              <div class="w-screen justify-center flex mx-auto"></div>
+            </Show>
+            <div class="flex flex-row justify-between p-2 border-b-base-200">
+              <p
+                class="flex flex-col cursor-pointer border-b-gray-500"
+                onClick={() => {
+                  setView("posts");
+                  swapFeed("posts");
+                  setFeed("posts");
+                  //set query params to posts
+                  navigate(`/u/${u.id}?feed=posts`);
+                }}
+              >
+                Posts
+                <Show when={view() === "posts"}>
+                  {/**
+             * animate slide in from left
+             */}
+                  <span class="bg-blue-500 w-full text-white p-[0.15rem] rounded-full transition-all duration-300 ease-in-out"></span>
+                </Show>
+              </p>
+              <p
+                onClick={() => {
+                  setView("comments")
+                  swapFeed("Replies")
+                  setFeed("Replies")
+                  navigate(`/u/${u.id}?feed=Replies`)
+                }} class="flex flex-col  cursor-pointer">
+                Replies
+                <Show when={view() === "comments"}>
+                  <span class="bg-blue-500 w-full text-white p-[0.15rem] rounded-full  "></span>
+                </Show>
+              </p>
+              <p onClick={() => {
+                setView("Likes")
+                swapFeed("Likes")
+                setFeed("likes")
+                navigate(`/u/${u.id}?feed=likes`)
+              }} class="flex flex-col  cursor-pointer">
+                Likes
+                <Show when={view() === "Likes"}>
+                  <span class="bg-blue-500 w-full text-white p-[0.15rem] rounded-full  "></span>
+                </Show>
+              </p>
+              <p class="flex flex-col"
+                onClick={() => {
+                  setView("snippets")
+                  swapFeed("snippets")
+                  setFeed("snippets")
+                  navigate(`/u/${u.id}?feed=snippets`)
+                }}
+              >
+                Snippets
+                <Show when={view() === "snippets"}>
+                  <span class="bg-blue-500 w-full text-white p-[0.15rem] rounded-full  "></span>
+                </Show>
+              </p>
+            </div>
+            <div class="flex flex-col">
+
+              <Switch>
+                <Match when={feedLoading()}>
+                  <For each={Array.from({ length: 10 })}>
+                    {() => <LoadingIndicator />}
+                  </For>
+                </Match>
+                <Match when={!feedLoading()}>
+                  {posts().length > 0 ?
+                    <For each={posts()}>
+                      {(item: any, index: any) => {
+                        let copiedObj = { ...item };
+                        console.log(copiedObj)
+                        console.log("copiedObj", copiedObj.expand.author);
+                        return (
+                          <div
+                            class={joinClass(
+                              index() == posts().length - 1 && posts().length > 1
+                                ? "sm:mb-[70px]"
+                                : posts().length == 1 && "sm:mb-[70px]"
+                            )}
+                          >
+                            {" "}
+                            <Post
+                              noBottomBorder={index() == posts().length - 1}
+                              author={copiedObj.author}
+                              comments={copiedObj.comments}
+                              content={copiedObj.content}
+                              created={copiedObj.created}
+                              id={copiedObj.id}
+                              likes={copiedObj.likes}
+                              navigate={navigate}
+                              pinned={copiedObj.pinned}
+                              expand={copiedObj.expand}
+                              route={route}
+                              files={copiedObj.files}
+                              isPoll={copiedObj.isPoll}
+                              isComment={copiedObj.collectionName === "comments"}
+                              pollOptions={copiedObj.pollOptions}
+                              isRepost={copiedObj.isRepost}
+                              pollVotes={copiedObj.pollVotes}
+                              pollEnds={copiedObj.pollEnds}
+                              whoVoted={copiedObj.whoVoted || []}
+                              currentPage={feed()}
+                              params={params}
+                            />{" "}
+                          </div>
+                        );
+                      }}
+                    </For> : <div class="flex flex-col  p-5  mb-5 items-center justify-center">
+                      <h1 class="text-3xl">No {feed() === "posts" ? "Posts" : feed() === "Replies" ? "Replies" : feed() === "likes" ? "Likes" : "Snippets"} Found</h1>
+                      <p>
+                        {user().username}  {feed() === "posts" ? "hasn't posted anything yet." : feed() === "Replies" ? "hasn't replied to any posts yet." : feed() === "likes" ? "hasn't liked any posts yet." : "hasn't posted any snippets yet."}
+                      </p>
+                    </div>
+                  }
+
+                </Match>
+              </Switch>
+            </div>
+          </Show>
+        </Match>
+      </Switch>
+      <Portal>
+        <EditProfileModal updateUser={(data: any) => { setUser({ ...user(), ...data }) }} />
+      </Portal>
+    </Page>
   );
 }
