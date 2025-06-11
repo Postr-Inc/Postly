@@ -76,7 +76,7 @@ export default function EditProfileModal(
     }
     return (
         <dialog id="editProfileModal" class="modal overflow-scroll rounded-md">
-            <div class={joinClass("modal-content  h-[20rem] sm:w-[23rem]    w-[27rem]  rounded-xl", theme() === "dark" ? "bg-black" : "bg-white")}>
+            <div class={joinClass("modal-content   sm:w-[23rem]    w-[27rem]  rounded-xl", theme() === "dark" ? "bg-black" : "bg-white")}>
                 <div class="modal-header p-3 flex justify-between">
                     <svg
                         onClick={() => document.getElementById("editProfileModal")?.close()}
