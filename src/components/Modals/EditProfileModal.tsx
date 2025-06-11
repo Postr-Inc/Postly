@@ -20,7 +20,8 @@ export default function EditProfileModal(
     const [username, setUsername] = createSignal(api.authStore.model.username);
     const [bio, setBio] = createSignal(api.authStore.model.bio);
     const [location, setLocation] = createSignal(api.authStore.model.location);
-    const [social, setSocial] = createSignal(api.authStore.model.social);
+    const [social, setSocial] = createSignal(api.authStore.model.social); 
+    const [deactivated, setDeactivated] = createSignal(api.authStore.model.deactivated)
     const [isSaving, setIsSaving] = createSignal(false);
     async function bufferFile(file: File) {
         let reader = new FileReader();
@@ -44,12 +45,15 @@ export default function EditProfileModal(
             ...(bio() !== api.authStore.model.bio && { bio: bio() }),
             ...(location() !== api.authStore.model.location && { location: location() }),
             ...(social() !== api.authStore.model.social && { social: social() }),
-        }
-        console.log(data);
+            ...(deactivated() !== api.authStore.model.deactivated && {deactivated :  deactivated()})
+        } 
+        console.log(data)
         if (Object.keys(data).length === 0) return;
         setIsSaving(true);
         try {
-            await api.collection("users").update(api.authStore.model.id, data);
+            await api.collection("users").update(api.authStore.model.id, data, {
+                invalidateCache:[`u/${api.authStore.model.id}`]
+            });
             setIsSaving(false);
             document.getElementById("editProfileModal")?.close();
             let oldUser = api.authStore.model;
@@ -71,8 +75,8 @@ export default function EditProfileModal(
         updateUser({ ...api.authStore.model, ...copiedData });
     }
     return (
-        <dialog id="editProfileModal" class="modal rounded-md">
-            <div class={joinClass("modal-content sm:w-[25rem]  w-[27rem]  rounded-xl", theme() === "dark" ? "bg-black" : "bg-white")}>
+        <dialog id="editProfileModal" class="modal overflow-scroll rounded-md">
+            <div class={joinClass("modal-content  h-[20rem] sm:w-[23rem]    w-[27rem]  rounded-xl", theme() === "dark" ? "bg-black" : "bg-white")}>
                 <div class="modal-header p-3 flex justify-between">
                     <svg
                         onClick={() => document.getElementById("editProfileModal")?.close()}
@@ -151,6 +155,16 @@ export default function EditProfileModal(
                             onChange={(e) => setSocial(e.currentTarget.value)}
                         />
                     </div>
+                    <div class="flex flex-col mt-2 gap-5 p-2">
+                        <label>
+                            Deactivate Account
+                        </label>
+                        <p>
+                            Hide account from others, dont worry your data is not going to be deleted
+                        </p>
+                        <input type="checkbox" checked={deactivated()}   onChange={()=> setDeactivated(!deactivated())} className="toggle" />
+                         
+                     </div>
                 </div>
             </div>
         </dialog>
