@@ -381,13 +381,16 @@ export default function Post(props: Props) {
           <Carousel >
             <For each={props.files} fallback={<></>}>
               {(item) => (
+                console.log(item),
                 <CarouselItem
 
                   onClick={() => {
                     window.open(api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item), "_blank");
                   }}>
                   <Switch>
-                    <Match when={item.includes(".png") || item.includes(".jpg") || item.includes(".gif")}>
+                    <Match when={item.includes(".png") || item.includes(".jpg") || item.includes(".jpeg") || item.includes('.webp')
+                      || item.includes('.svg')
+                    }>
                       <img
                         src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)}
                         class={joinClass(
