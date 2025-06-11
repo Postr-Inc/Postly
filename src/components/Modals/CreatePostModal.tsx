@@ -15,12 +15,14 @@ import Carousel from "../UI/UX/Carousel";
 import NumberedList from "../Icons/NumberedList";
 import { HttpCodes } from "@/src/Utils/SDK/opCodes";
 import useNavigation from "@/src/Utils/Hooks/useNavigation";
-function getFileType(file: File){
-  switch (true){
-    case file.type == "image/png":
-      return "image"
-    case file.type == "video/mp4":
-      return "video"
+function getFileType(file: File): "image" | "video" | "unknown" {
+  switch (true) {
+    case file.type === "image/png":
+      return "image";
+    case file.type.startsWith("video/"): // This handles video/mp4, video/quicktime, video/webm, etc.
+      return "video";
+    default:
+      return "unknown";
   }
 }
 export default function CreatePostModal() {
@@ -77,10 +79,12 @@ export default function CreatePostModal() {
         let reader = new FileReader();
         reader.readAsArrayBuffer(file);
         return new Promise((resolve, reject) => {
-          if(fileObj.size >  5242880) { // 
+           /**
+            * if(fileObj.size >  5242880) { // 
             alert("File size wayy to big please compress or try a different file!")
             reject("File way too big")
           }
+            */
           reader.onload = () => {
             resolve({ data: Array.from(new Uint8Array(reader.result as ArrayBuffer)), ...fileObj });
           };
@@ -104,7 +108,7 @@ export default function CreatePostModal() {
           "repost.author",
           "repost"
         ],
-        invalidateCache: [`/u/${api.authStore.model.username}`, `/u/${api.authStore.model.username}/comments`],
+        invalidateCache: [`/u/${api.authStore.model.username}_posts`, `/u/${api.authStore.model.username}/comments`],
       })  
       setPostData({
         content: "",
