@@ -21,7 +21,7 @@ export default function LogoutModal(props: any) {
             borderRadius: "10px",
             border: theme() == "dark" ? "1px solid #2d2d2d" : "1px solid #f9f9f9",
           }}
-          className={`flex p-5 xl:w-[15vw] h-[45vh] xl:h-[35vh] rounded-box items-center 
+          className={`flex p-5 xl:w-[23vw] h-[45vh] xl:h-[45vh] rounded-box items-center 
              ${
                theme() === "dark" ? "bg-black text-white" : "bg-white text-black "
              }
