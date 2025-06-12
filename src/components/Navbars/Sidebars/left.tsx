@@ -217,10 +217,12 @@ export function SideBarLeft(props: {
               onClick={() => {
                 //@ts-ignore
                 document.getElementById("createPostModal").showModal();
+                  //@ts-ignore
+                resetCreatePost()
               }}
               class="btn rounded-full  text-lg hero btn-ghost  hover:bg-blue-500 focus:bg-blue-500 bg-blue-500 text-white "
             >
-              <p>Post</p>
+              <p>{window.location.pathname.includes("/view") ? "Create Comment" : "Post"} </p>
             </button>
             
           </ul>
