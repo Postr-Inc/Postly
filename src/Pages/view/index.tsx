@@ -102,7 +102,7 @@ export default function View(props: any) {
 
   function fetchP() {
     let { params } = useNavigation("/view/:collection/:id");
-    let { id, collection } = params();
+    let { id, collection } = params(); 
     api
       .collection(collection)
       .get(id, {
@@ -154,15 +154,15 @@ export default function View(props: any) {
 
       }
     });
-    fetchP();
+    fetchP(); 
   }, params()); // Depend on the `id` parameter
 
   let { theme } = useTheme();
 
   return (
     <Page {...{ params: useParams, route, navigate: props.navigate }} id={id}>
-      <div class={joinClass("flex flex-col w-full   ", theme() === "dark" && desktop() ? "border border-[#1c1c1c]" : "")}>
-        <div class="flex flex-row justify-between gap-5 p-2">
+      <div class={joinClass("flex flex-col w-full h-full  ", theme() === "dark" && desktop() ? "border border-[#1c1c1c]" : "")}>
+        <div class="flex flex-row justify-between gap-5 p-3">
           <ArrowLeft class="w-6 h-6 cursor-pointer" onClick={() => goBack()} stroke-width="2" />
           <h1 class="font-bold">Post</h1>
           <Ellipse />
@@ -194,138 +194,11 @@ export default function View(props: any) {
             View Post Engagements
           </div>
         </Show>
-        <div class={joinClass(post() && post().comments.length < 1 && "mb-[120px]", "relative border-l-0 border-r-0 p-3 sm:hidden", theme() === "dark" ? "border border-[#1c1c1c]" : " ",
-          post() && post().whoCanSee && post().whoCanSee[0] === "private" && post().expand.author.id !== api.authStore.model.id ? "hidden" : "")}>
-          <div class="flex flex-row gap-5">
-            <Show when={api.authStore.model.avatar}>
-              <img
-                src={api.cdn.getUrl("users", api.authStore.model.id, api.authStore.model.avatar)}
-                class="w-10 h-10 rounded-full"
-                alt="logo"
-              />
-            </Show>
-            <Show when={!api.authStore.model.avatar}>
-              <div class="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-                {api.authStore.model.username[0].toUpperCase()}
-              </div>
-            </Show>
-            <div
-              ref={el => {
-                // Keep ref for focus if needed
-                // @ts-ignore
-                window.commentInputRef = el;
-              }}
-              contentEditable="true"
-              class={joinClass(
-                "input border-none outline-none p-2 w-full rounded bg-gray-100 dark:bg-[#23272f] min-h-[44px] transition focus:ring-2 focus:ring-sky-400",
-                isReplying() ? "ring-2 ring-sky-400" : ""
-              )}
-              tabIndex={0}
-              onFocus={(e) => {
-                if (
-                  comment().content === "" &&
-                  post() &&
-                  (
-                    (post().whoCanSee && post().whoCanSee[0] === "private" && post().expand.author.id === api.authStore.model.id) ||
-                    (post().whoCanSee && post().whoCanSee[0] === "followers" && post().expand.author.expand.followers.find((f: any) => f.id === api.authStore.model.id)) ||
-                    (post().whoCanSee && post().whoCanSee[0] === "public")
-                  )
-                ) {
-                  e.currentTarget.innerText = "";
-                }
-              }}
-              onBlur={(e) => {
-                if (e.currentTarget.textContent.trim() === "") {
-                  setIsReplying(false);
-                  let placeholder =
-                    post()
-                      ? post().whoCanSee && post().whoCanSee[0] === "private" && post().expand.author.id === api.authStore.model.id
-                        ? "Only you can comment on this post"
-                        : post().whoCanSee && post().whoCanSee[0] === "followers" && post().expand.author.expand.followers.find((f: any) => f.id === api.authStore.model.id)
-                          ? "..."
-                          : post().whoCanSee && post().whoCanSee[0] === "public"
-                            ? "Reply to " + post().expand.author.username
-                            : "..."
-                      : "...";
-                  e.currentTarget.innerText = placeholder;
-                  setComment({ ...comment(), content: "" });
-                }
-              }}
-              onInput={(e) => {
-                setComment({ ...comment(), content: e.currentTarget.textContent });
-                setIsReplying(e.currentTarget.textContent.length > 0);
-              }}
-              // Set the content manually to keep it in sync
-              innerText={
-                comment().content.length > 0
-                  ? comment().content
-                  : post()
-                    ? post().whoCanSee && post().whoCanSee[0] === "private" && post().expand.author.id === api.authStore.model.id
-                      ? "Only you can comment on this post"
-                      : post().whoCanSee && post().whoCanSee[0] === "followers" && post().expand.author.expand.followers.find((f: any) => f.id === api.authStore.model.id)
-                        ? "..."
-                        : post().whoCanSee && post().whoCanSee[0] === "public"
-                          ? "Reply to " + post().expand.author.username
-                          : "..."
-                    : "..."
-              }
-            />
-          </div>
-          {isReplying() && (
-            <div class="relative flex p-2">
-              <input type="file" id="media" class="hidden" accept="image/*,video/*" multiple onChange={(e) => {
-                setComment({ ...comment(), media: e.target.files })
-                setFiles(Array.from(e.target.files));
-              }} />
-              <label for="media" class="cursor-pointer">
-
-
-
-                <Media class="w-6 h-6 cursor-pointer mb-5 mt-2" />
-              </label>
-              <button
-                onClick={createComment}
-                class={joinClass("btn btn-sm rounded-full right-0 absolute mb-5 mt-2", theme() === "dark" ? "bg-white text-black hover:bg-black" : "bg-black text-white")}>
-                Post
-              </button>
-            </div>
-          )}
-          <Show when={comment() && comment().media.length > 0}>
-            <Carousel class="h-[200px]" >
-              <For each={comment() && Array.from(comment().media)}>
-                {(file, index) => (
-                  <CarouselItem
-                    showDelete={true}
-                    id={index()}
-                    fileSizeError={file.size > 100000}
-                    onClick={() => {
-                      console.log("clicked")
-                      window.open(
-                        URL.createObjectURL(file), "_blank"
-                      )
-                    }}
-                    onDelete={() => {
-                      if ("media" in comment()) {
-                        // media is a file list
-                        let media = comment().media;
-                        media = Array.from(media);
-                        media.splice(index(), 1);
-                        setComment({ ...comment(), media: media });
-                        setFiles(media);
-                      }
-                    }}>
-                    {/**
-                      * oN CLICK of the image, expand the image in a modal
-                      */}
-                    <img src={URL.createObjectURL(file)} class="w-full h-full object-cover"
-                      alt={`media-${index()}`}
-                    />
-                  </CarouselItem>
-                )}
-              </For>
-            </Carousel>
-          </Show>
-        </div>
+        <Show when={post() && post().comments.length < 1 }>
+                  <div class="p-5 text-xl text-center">
+                     ✨ Nobody has commented, be the first to comment
+                  </div>
+        </Show>
         <div>
           <Switch>
             <Match when={post()}>
