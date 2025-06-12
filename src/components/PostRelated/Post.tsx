@@ -404,12 +404,12 @@ export default function Post(props: Props) {
                     </Match>
                     <Match when={item.includes(".mp4")}>
                       <video class={joinClass(
-                        "  object-cover rounded-xl",
+                        "  w-full object-cover rounded-xl",
                         "cursor-pointer",
                         theme() === "dark"
                           ? "border-[#121212] border"
                           : "border-[#cacaca] border"
-                      )} src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)} autoplay loop />
+                      )} src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)}  controls />
                     </Match>
                   </Switch>
                 </CarouselItem>
