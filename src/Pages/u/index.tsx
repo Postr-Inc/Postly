@@ -22,8 +22,7 @@ import LoadingIndicator from "@/src/components/Icons/loading";
 async function handleFeed(
   type: string,
   params: any,
-  page: number,
-  user = api.authStore.model,
+  page: number, 
   otherOptions: {
     filter?: string,
     sort?: string,
@@ -111,45 +110,63 @@ export default function User() {
           return;
         }
         if (data.opCode === HttpCodes.OK) {
-          setUser(data.items[0]);
-          console.log(view())
-          switch (view()) {
-            case "posts":
-              handleFeed("posts", u, currentPage(), data.items[0], {
-                filter: `author.username="${u.id}"`,
-                sort: '-pinned',
-              }).then((data: any) => {
-                console.log(currentPage())
-                if (data.opCode === HttpCodes.OK) {
-                  setPosts(data.items);
-                  setTotalPages(data.totalPages);
-                  setLoading(false);
-                }
-              });
-              break;
-            case "Likes":
-              handleFeed("posts", u, currentPage(), data.items[0], {
-                filter: `likes ~"${user().id}" && author.id !="${user().id}"`,
-              }).then((data: any) => {
-                console.log(currentPage())
-                if (data.opCode === HttpCodes.OK) {
-                  setPosts(data.items);
-                  setTotalPages(data.totalPages);
-                  setLoading(false);
-                }
-              });
-              break;
-            case "comments":
-              handleFeed("comments", u, currentPage(), user(), {
-                filter: `author.username="${u.id}"`,
-              }).then((data: any) => {
-                console.log(data)
-                if (data.opCode === HttpCodes.OK) {
-                  setPosts(data.items);
-                  setLoading(false)
-                  setTotalPages(data.totalPages)
-                }
-              });
+          if (data.items[0].deactivated == true && data.items[0].id !== api.authStore.model.id) {
+            setUser({
+              id: crypto.randomUUID(),
+              username: "not found",
+              created: new Date().toISOString(),
+              bio: "User not found",
+              deactivated: true,
+              followers: [],
+              following: [],
+              expand: {
+                followers: [],
+                following: [],
+              }
+            })
+            setLoading(false);
+          } else {
+
+            setUser(data.items[0]);
+            switch (view()) {
+              case "posts":
+                handleFeed("posts", u, currentPage(), {
+                  filter: `author.username="${u.id}"`,
+                  sort: '-pinned',
+                }).then((data: any) => {
+                  console.log(currentPage())
+                  if (data.opCode === HttpCodes.OK) {
+                    setPosts(data.items);
+                    setTotalPages(data.totalPages);
+                    setLoading(false);
+                  }
+                });
+                break;
+              case "Likes":
+                handleFeed("posts", u, currentPage(),  {
+                  filter: `likes ~"${user().id}" && author.id !="${user().id}"`,
+                }).then((data: any) => {
+                  console.log(currentPage())
+                  if (data.opCode === HttpCodes.OK) {
+                    setPosts(data.items);
+                    setTotalPages(data.totalPages);
+                    setLoading(false);
+                  }
+                });
+                break;
+              case "comments":
+                handleFeed("comments", u, currentPage(), {
+                  filter: `author.username="${u.id}"`,
+                }).then((data: any) => {
+                  console.log(data)
+                  if (data.opCode === HttpCodes.OK) {
+                    setPosts(data.items);
+                    setLoading(false)
+                    setTotalPages(data.totalPages)
+                  }
+                });
+            }
+
           }
 
         }
@@ -164,9 +181,14 @@ export default function User() {
 
   createEffect(() => {
     if (currentPage() > 1) {
+
+      if (user().deactivated) {
+        setLoading(false)
+        return
+      };
       switch (view()) {
         case "posts":
-          handleFeed("posts", u, currentPage(), data.items[0], {
+          handleFeed("posts", u, currentPage(),  {
             filter: `author.username="${u.id}"`,
             sort: '-pinned',
           }).then((data: any) => {
@@ -179,12 +201,12 @@ export default function User() {
           });
           break;
         case "Likes":
-          handleFeed("posts", u, currentPage(), data.items[0], {
+          handleFeed("posts", u, currentPage(),  {
             filter: `likes ~"${user().id}" && author.id !="${user().id}"`,
           }).then((data: any) => {
             console.log(currentPage())
             if (data.opCode === HttpCodes.OK) {
-             setPosts([...posts(), ...data.items]);
+              setPosts([...posts(), ...data.items]);
               setTotalPages(data.totalPages);
               setLoading(false);
             }
@@ -208,9 +230,15 @@ export default function User() {
 
 
   function swapFeed(type: string) {
-    setFeedLoading(true)
-    setCurrentPage(1)
-    setPosts([])
+    if (user().deactivated) {
+      setLoading(false)
+      return
+    } else {
+
+      setFeedLoading(true)
+      setCurrentPage(1)
+      setPosts([])
+    }
     switch (type) {
       case "posts":
         console.log(u.id)
@@ -273,6 +301,7 @@ export default function User() {
         break;
       case "follow":
         followers.push(api.authStore.model.id)
+        const lastViewedPost = localStorage.getItem("lastViewedPost")
         user().followers = followers
         setUser({ ...user(), followers })
         setLoading(false)
@@ -381,8 +410,8 @@ export default function User() {
                     disabled={notFound()}
                     class={
                       theme() === "dark"
-                        ? "bg-black text-black p-2 w-24 mr-2 mt-2 text-sm"
-                        : "bg-white text-white p-2 rounded-full w-24 mr-2 text-sm"
+                        ? "bg-white text-black p-2 w-24 mr-2 mt-2 text-sm"
+                        : "bg-black text-white p-2 rounded-full w-24 mr-2 text-sm"
                     }
                     onclick={() => notFound() ? null : follow("unfollow")}
                   >
@@ -546,15 +575,13 @@ export default function User() {
                   {posts().length > 0 ?
                     <For each={posts()}>
                       {(item: any, index: any) => {
-                        let copiedObj = { ...item };
-                        console.log(copiedObj)
-                        console.log("copiedObj", copiedObj.expand.author);
+                        let copiedObj = { ...item }; 
                         return (
                           <div
                             class={joinClass(
                               index() == posts().length - 1 && posts().length > 1
-                                ? "sm:mb-[70px]"
-                                : posts().length == 1 && "sm:mb-[70px]"
+                                ? "sm:mb-[80px]"
+                                : posts().length == 1 && "sm:mb-[75px]"
                             )}
                           >
                             {" "}
