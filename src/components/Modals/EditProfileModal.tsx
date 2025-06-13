@@ -24,8 +24,7 @@ export default function EditProfileModal(
     const [deactivated, setDeactivated] = createSignal(api.authStore.model.deactivated)
     const [isSaving, setIsSaving] = createSignal(false);
     let [socialLinks, setSocialLinks] = createSignal(api.authStore.model.account_links ? api.authStore.model.account_links : [])
-    let [addAccountLink, setAddAcountLinks] = createSignal(0)
-    console.log(avatarFile())
+    let [addAccountLink, setAddAcountLinks] = createSignal(0) 
     async function bufferFile(file: File) {
         let reader = new FileReader();
         reader.readAsArrayBuffer(file);
@@ -55,13 +54,14 @@ export default function EditProfileModal(
         if (Object.keys(data).length === 0) return;
         setIsSaving(true);
         try {
-            await api.collection("users").update(api.authStore.model.id, data, {
-                invalidateCache:[`u/${api.authStore.model.id}`]
+            let data2 = await api.collection("users").update(api.authStore.model.id, data, {
+                invalidateCache:[`u/${api.authStore.model.username}`]
             });
+            console.log(data2)
             setIsSaving(false);
             document.getElementById("editProfileModal")?.close();
             let oldUser = api.authStore.model;
-            let newUser = { ...oldUser, ...data };
+            let newUser = { ...oldUser, ...data2};
             //@ts-ignore
             api.authStore.model = newUser;
             newUser.token = oldUser.token;
