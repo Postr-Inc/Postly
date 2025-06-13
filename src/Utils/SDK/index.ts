@@ -53,17 +53,24 @@ export default class SDK {
     }, 3600000) // every hour
 
     //@ts-ignore
-    this.isOnIos = navigator.userAgent.match(/iPad/i)|| navigator.userAgent.match(/iPhone/i);
-    var eventName = this.isOnIos ? "onpagehide" : "onbeforeunload";  
-    window[eventName] = function () {
-      // clear app cache
+    this.isOnIos = navigator.userAgent.match(/iPad/i)|| navigator.userAgent.match(/iPhone/i) 
+    if(this.isOnIos){
+      window.onpagehide = (e)=>{
+        console.log("Clearing app cache");
+      caches.keys().then((keys) => {
+        keys.forEach((key) => {
+          caches.delete(key);
+        });
+      });
+      }
+    }else{
       console.log("Clearing app cache");
       caches.keys().then((keys) => {
         keys.forEach((key) => {
           caches.delete(key);
         });
       });
-    }
+    } 
     // check if logged in and check if ws is closed periodically
     setInterval(() => {
       if (this.ws === null || this.ws.readyState === WebSocket.CLOSED && localStorage.getItem("postr_auth")) {
