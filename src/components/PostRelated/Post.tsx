@@ -97,6 +97,7 @@ export default function Post(props: Props) {
     return Math.round(percentage);
   }
 
+  console.log(props.expand)
   createEffect(() => {
     if (props.isPoll) {
       let votes = 0;
@@ -115,6 +116,7 @@ export default function Post(props: Props) {
     if (diff <= 0) {
       return "Ended";
     }
+
 
     const seconds = Math.floor(diff / 1000);
     const minutes = Math.floor(seconds / 60);
@@ -223,7 +225,7 @@ export default function Post(props: Props) {
           <CardTitle class="text-sm opacity-50">·</CardTitle>
           <CardTitle class="text-sm opacity-50">{created(props.created)}</CardTitle>
         </div>
-        <Show when={props.isSnippe}>
+        <Show when={props.isSnippet}>
           <span class="badge bg-blue-500 p-3 text-white rounded-full">
             ✨ Snippet
           </span>
@@ -322,9 +324,10 @@ export default function Post(props: Props) {
 
         <a onClick={() => props.navigate(StringJoin("/view/", props.isComment ? "comments/" : "posts/", props.id))}>
           <p class="text-md">{props.content}</p>
+
         </a>
       </CardContent>
-      <Show when={props.isPoll && !hasVoted()}>
+      <Show when={props.isPoll && !hasVoted() && !calculatePollEnds(props.pollEnds) == "Ended"}>
         <div>
           <For each={props.pollOptions}>
             {(item) => (
@@ -349,12 +352,20 @@ export default function Post(props: Props) {
               </CardContent>
             )}
           </For>
-          <div class="flex gap-2">
-            votes {totalVotes()} - {calculatePollEnds(props.pollEnds)} left
+          <div class="flex gap-2 text-sm mt-2 text-gray-500">
+            <div  >
+              <Show when={calculatePollEnds(props.pollEnds) !== "Ended"}>
+
+                votes {totalVotes()} - {calculatePollEnds(props.pollEnds)} left
+              </Show>
+              <Show when={calculatePollEnds(props.pollEnds) == "Ended"}>
+                Poll Results - Total Votes {totalVotes()}
+              </Show>
+            </div>
           </div>
         </div>
       </Show>
-      <Show when={props.isPoll && hasVoted()}>
+      <Show when={props.isPoll && hasVoted() || props.isPoll && calculatePollEnds(props.pollEnds) == "Ended"}>
         <For each={props.pollOptions}>
           {(item) => (
             <CardContent class="p-1 items-center cursor-pointer flex  gap-12 justify-between w-full">
@@ -371,7 +382,15 @@ export default function Post(props: Props) {
           )}
         </For>
         <div class="flex gap-2 text-sm mt-2 text-gray-500">
-          votes {totalVotes()} • {calculatePollEnds(props.pollEnds)} left
+          <div  >
+            <Show when={calculatePollEnds(props.pollEnds) !== "Ended"}>
+
+              votes {totalVotes()} - {calculatePollEnds(props.pollEnds)} left
+            </Show>
+            <Show when={calculatePollEnds(props.pollEnds) == "Ended"}>
+              Poll Results - Total Votes {totalVotes()}
+            </Show>
+          </div>
         </div>
       </Show>
       <Show when={props.files && props.files.length > 0}>
@@ -409,7 +428,7 @@ export default function Post(props: Props) {
                         theme() === "dark"
                           ? "border-[#121212] border"
                           : "border-[#cacaca] border"
-                      )} src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)}  controls />
+                      )} src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)} controls />
                     </Match>
                   </Switch>
                 </CarouselItem>
