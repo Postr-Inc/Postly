@@ -28,6 +28,7 @@ async function handleFeed(
     sort?: string,
   }
 ) {
+  console.log(otherOptions.filter)
   return api.collection(type == "likes" ? "posts" : type == "comments" ? "comments" : "posts").list(page, 10, {
     expand: ["author", "likes", "comments", "repost", "repost.author", "author.followers", "post"],
     sort: otherOptions.sort ? otherOptions.sort + ", -created" : "-created",
@@ -239,6 +240,7 @@ export default function User() {
       setCurrentPage(1)
       setPosts([])
     }
+    console.log(type)
     switch (type) {
       case "posts":
         handleFeed("posts", u, currentPage(), {
@@ -248,13 +250,13 @@ export default function User() {
                   console.log(currentPage())
                   if (data.opCode === HttpCodes.OK) {
                     setPosts(data.items);
-                    setTotalPages(data.totalPages);
+                    setTotalPages(data.totalPages);ed
                     setLoading(false);
                   }
                 });
         break;
       case "Replies":
-        handleFeed("comments", u, currentPage(), user(), {
+        handleFeed("comments", u, currentPage(),   {
           filter: `author.username="${u.id}"`,
         }).then((data: any) => {
           console.log(data)
@@ -275,9 +277,8 @@ export default function User() {
           });
         break;
       case "snippets":
-        handleFeed("posts", u, currentPage(), user(), {
-          filter: `author="${user().id}" && isSnippet=true`,
-          sort: `-created`
+        handleFeed("posts", u, currentPage(),   {
+          filter: `author="${user().id}" && isSnippet=true`, 
         }).then((data: any) => {
           if (data.opCode === HttpCodes.OK) {
             setPosts(data.items);
