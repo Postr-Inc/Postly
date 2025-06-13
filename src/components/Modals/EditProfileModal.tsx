@@ -3,7 +3,7 @@ import Modal from "../Modal";
 import useTheme from "@/src/Utils/Hooks/useTheme";
 import { joinClass } from "@/src/Utils/Joinclass";
 import ArrowLeft from "../Icons/ArrowLeft";
-import { createSignal, createEffect } from "solid-js";
+import { createSignal, createEffect, Switch, Match, For } from "solid-js";
 
 export default function EditProfileModal(
     {
@@ -23,6 +23,9 @@ export default function EditProfileModal(
     const [social, setSocial] = createSignal(api.authStore.model.social); 
     const [deactivated, setDeactivated] = createSignal(api.authStore.model.deactivated)
     const [isSaving, setIsSaving] = createSignal(false);
+    let [socialLinks, setSocialLinks] = createSignal(api.authStore.model.account_links ? api.authStore.model.account_links : [])
+    let [addAccountLink, setAddAcountLinks] = createSignal(0)
+    console.log(avatarFile())
     async function bufferFile(file: File) {
         let reader = new FileReader();
         reader.readAsArrayBuffer(file);
@@ -45,7 +48,8 @@ export default function EditProfileModal(
             ...(bio() !== api.authStore.model.bio && { bio: bio() }),
             ...(location() !== api.authStore.model.location && { location: location() }),
             ...(social() !== api.authStore.model.social && { social: social() }),
-            ...(deactivated() !== api.authStore.model.deactivated && {deactivated :  deactivated()})
+            ...(deactivated() !== api.authStore.model.deactivated && {deactivated :  deactivated()}),
+            ...(api.authStore.model.account_links != socialLinks() && {account_links: socialLinks()})
         } 
         console.log(data)
         if (Object.keys(data).length === 0) return;
@@ -75,8 +79,8 @@ export default function EditProfileModal(
         updateUser({ ...api.authStore.model, ...copiedData });
     }
     return (
-        <dialog id="editProfileModal" class="modal overflow-scroll rounded-md">
-            <div class={joinClass("modal-content   sm:w-[23rem]    w-[27rem]  rounded-xl", theme() === "dark" ? "bg-black" : "bg-white")}>
+        <dialog id="editProfileModal" class="modal overflow-scroll  ">
+            <div class={joinClass("modal-content   sm:w-[23rem]      w-[27rem]  rounded-xl", theme() === "dark" ? "bg-black" : "bg-white")}>
                 <div class="modal-header p-3 flex justify-between">
                     <svg
                         onClick={() => document.getElementById("editProfileModal")?.close()}
@@ -95,26 +99,46 @@ export default function EditProfileModal(
                 </div>
                 <div class="modal-body flex flex-col">
                     <div class="flex flex-col relative">
-                        <label for="change-banner">
+                      
+                            <Switch>
+                                <Match when={!api.authStore.model.banner && !bannerFile()}>
+                                    <div class="w-full h-[6rem] rounded-md bg-base-200"></div> 
+                                </Match>
+                                <Match when={api.authStore.model.banner || bannerFile()}>
+                                    
                             <img src={
-                                api.cdn.getUrl("users", api.authStore.model.id, api.authStore.model.banner)
+                                bannerFile() ?  URL.createObjectURL(bannerFile()) :  api.cdn.getUrl("users", api.authStore.model.id,  api.authStore.model.banner )
                             } alt="banner" class="w-full h-[6rem] object-cover rounded-md" />
-                            <div class="absolute btn btn-circle bg-[#030303] bg-opacity-25  inset-x-0 mx-auto translate-x-0   left-[-4vw] text-white top-[30%]"><label for="change-banner"><button><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6  "><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"></path></svg></button></label></div>
-                        </label>
+                                </Match>
+                            </Switch> 
+                            <div class="absolute btn btn-circle bg-[#030303] bg-opacity-25  inset-x-0 mx-auto translate-x-0   sm:left-[-4vw] text-white top-[30%]"><label for="change-banner"><button>
+                               <label for="change-banner"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6  "><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"></path></svg></label></button></label></div>
+                         
                         <input type="file" 
                         accept="image/*"
-                        id="change-avatar" class="hidden" onChange={(e) => setBannerFile(e.currentTarget.files![0])} />
+                        id="change-avatar" class="hidden" onInput={(e) => setAvatarFile(e.currentTarget.files![0])} />
                         <input type="file" 
                         accept="image/*"
-                        id="change-banner" class="hidden" onChange={(e) => setAvatarFile(e.currentTarget.files![0])} />
-                        <label for="change-avatar">
-                            <div class="absolute top-[40px] left-2">
-                                <div class="relative w-32  ">
-                                    <img src={api.cdn.getUrl("users", api.authStore.model.id, api.authStore.model.avatar)} alt="" class={joinClass("w-20 h-20 object-cover avatar rounded   border-2", theme() === "dark" ? "border-black" : "border-white")} />
+                        id="change-banner" class="hidden" onChange={(e) => setBannerFile(e.currentTarget.files![0])} />
+                       
+                            <div class="absolute top-[40px] ">
+                                <div class="relative w-32 left-3 ">
+                                     <Switch>
+                                        <Match when={api.authStore.model.avatar && !avatarFile()}>
+                                            <img src={api.cdn.getUrl("users", api.authStore.model.id, api.authStore.model.avatar)} alt="" class={joinClass("w-20 h-20 object-cover avatar rounded   border-2", theme() === "dark" ? "border-black" : "border-white")} />
+                                        </Match>
+                                        <Match when={!api.authStore.model.avatar && !avatarFile()}>
+                                            <div class={joinClass("w-20 h-20 object-cover avatar rounded  bg-base-200  border-2", theme() === "dark" ? "border-black" : "border-white")}>{api.authStore.model.username[0]}</div>
+                                        </Match>
+                                        <Match when={avatarFile()}>
+                                            <img src={URL.createObjectURL(avatarFile())} alt="" class={joinClass("w-20 h-20 object-cover avatar rounded   border-2", theme() === "dark" ? "border-black" : "border-white")} />
+                                        </Match>
+                                     </Switch>
                                 </div>
-                                <div class="absolute btn btn-circle bg-[#030303] bg-opacity-25  inset-x-0 mx-auto translate-x-0   left-[-3.2vw] sm:left-[-10vw] text-white top-[20%]"><label for="change-banner"><button><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6  "><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"></path></svg></button></label></div>
-                            </div>
-                        </label>
+                                  <label for="change-avatar"> 
+                                <div class="absolute btn btn-circle bg-[#030303] bg-opacity-25  inset-x-0 mx-auto translate-x-0   left-[-2.2vw] sm:left-[-5.3vw] text-white top-[20%]"><label for="change-banner"><button>  <label for="change-avatar"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6  "><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"></path></svg></label></button></label></div>
+                          </label>
+                            </div> 
 
                     </div>
 
@@ -149,7 +173,7 @@ export default function EditProfileModal(
                     <div class="flex flex-col mt-2 gap-5 p-2">
                         <label>
                             Socials
-                        </label>
+                        </label> 
                         <input type="text" class={joinClass("input focus:outline-none", theme() === "dark" ? "border border-[#464646] rounded" : "border border-[#cac9c9] focus:border-[#cac9c9]")}
                             value={api.authStore.model.social}
                             onChange={(e) => setSocial(e.currentTarget.value)}
@@ -162,7 +186,7 @@ export default function EditProfileModal(
                         <p>
                             Hide account from others, dont worry your data is not going to be deleted
                         </p>
-                        <input type="checkbox" checked={deactivated()}   onChange={()=> setDeactivated(!deactivated())} className="toggle" />
+                        <input type="checkbox" checked={deactivated()}   onChange={()=> setDeactivated(!deactivated())} class="toggle rounded-xl mb-12" />
                          
                      </div>
                 </div>
