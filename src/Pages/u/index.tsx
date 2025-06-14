@@ -195,7 +195,7 @@ export default function User() {
                 }).then((data: any) => {
                   console.log(currentPage())
                   if (data.opCode === HttpCodes.OK) {
-                    setPosts(data.items);
+                   setPosts([...posts(), ...data.items]);
                     setTotalPages(data.totalPages);
                     setLoading(false);
                   }
@@ -214,7 +214,7 @@ export default function User() {
           });
           break;
         case "comments":
-          handleFeed("comments", u, currentPage(), user(), {
+          handleFeed("comments", u, currentPage(),  {
             filter: `author.username="${u.id}"`,
           }).then((data: any) => {
             console.log(data)
@@ -224,6 +224,8 @@ export default function User() {
               setLoading(false)
             }
           });
+        case "snippets":
+          break;
       }
     }
   }, [currentPage()]);
@@ -553,7 +555,7 @@ export default function User() {
                   <span class="bg-blue-500 w-full text-white p-[0.15rem] rounded-full  "></span>
                 </Show>
               </p>
-              <p class="flex flex-col"
+              <p class="flex flex-col cursor-pointer"
                 onClick={() => {
                   setView("snippets")
                   swapFeed("snippets")
