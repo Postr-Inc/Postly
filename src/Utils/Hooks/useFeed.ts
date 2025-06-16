@@ -12,10 +12,10 @@ async function list(
     api
       .collection(collection)
       .list(currentPage, 10, {
-        recommended: true,
-        order: options.sort || "createdAt",
+        recommended: feed() === "recommended",
+        order: options.sort || "-created",
         filter: options.filter || "author.deactivated=false",
-        cacheKey: `${collection}_${feed()}_${currentPage}_feed`,
+        cacheKey: `${collection}_${feed()}_${currentPage}_feed_${api.authStore.model.id}`,
         expand: [
           "comments.likes",
           "comments",
@@ -151,6 +151,7 @@ export default function useFeed(
             const nextPage = currentPage() + 1;
             console.log("next page value", nextPage);
             const data = await list(collection, nextPage, feed, options);
+            console.log([...posts(), ...data?.items])
             setPosts([...posts(), ...data?.items]);
             setCurrentPage(nextPage);
             if (data.totalPages) {
