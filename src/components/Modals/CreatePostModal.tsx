@@ -16,15 +16,15 @@ import NumberedList from "../Icons/NumberedList";
 import { HttpCodes } from "@/src/Utils/SDK/opCodes";
 import useNavigation from "@/src/Utils/Hooks/useNavigation";
 function getFileType(file: File): "image" | "video" | "unknown" {
-  switch (true) {
-    case file.type === "image/png":
-      return "image";
-    case file.type.startsWith("video/"): // This handles video/mp4, video/quicktime, video/webm, etc.
-      return "video";
-    default:
-      return "unknown";
+  if (file.type.startsWith("image/")) {
+    return "image";
+  } else if (file.type.startsWith("video/")) {
+    return "video";
+  } else {
+    return "unknown";
   }
 }
+
 export default function CreatePostModal() {
   const getMaxDate = () => {
   const date = new Date();
@@ -139,8 +139,8 @@ export default function CreatePostModal() {
         );
         // update the post in db
         const postId = window.location.pathname.split("/")[3];  
-        var p = await api.collection(collection()).get(postId)
-        await api.collection(collection()).update(postId,{
+        var p = await api.collection(collection() == "comments" ? "posts" : "comments").get(postId)
+        await api.collection(p.collectionName).update(postId,{
            ...({comments: [...(p.comments || []), (res as any).id]}) 
         });
       }else{
@@ -168,9 +168,8 @@ export default function CreatePostModal() {
     setPostData({ ...postData(), isRepost: true, repost: post , hidden: ["repostButton"]});
   }
   //@ts-ignore
-  window.resetCreatePost = () => { 
-    console.log(collection())
-    setCollection(window.location.pathname.split("/")[2] === "posts" ?  "comments" : "createPost"); 
+  window.resetCreatePost = () => {  
+    setCollection(window.location.pathname.split("/")[2] === "posts" ?  "comments" : "posts"); 
   }
 
   //@ts-ignore
