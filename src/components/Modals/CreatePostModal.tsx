@@ -194,8 +194,10 @@ export default function CreatePostModal() {
     <dialog id="createPostModal" class="modal z-[-1]">
        <Switch>
         <Match when={isPosting() && !hasError()}>
+          <div class="modal-box scroll p-2 z-[-1] h-fit">
           <p>Wait one second creating your post!</p>
           <div class="spinner spinner-lg"></div>
+          </div>
         </Match>
         <Match when={!isPosting() && !hasError()}>
           <div class="modal-box scroll p-2 z-[-1] h-fit">
@@ -446,7 +448,7 @@ export default function CreatePostModal() {
            */}
           <span>{postData().content.length} / 200</span>
           <button class="btn-sm bg-blue-500 text-white rounded-full  " onClick={createPost}>
-            {isPosting() ? "Posting..." : collection() === "createPost" ? "Post" : "Create Comment"}
+            {isPosting() ? "Posting..." : collection() === "posts" ? "Post" : "Create Comment"}
           </button>
         </div>
       </div>
