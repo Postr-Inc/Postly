@@ -27,7 +27,7 @@ function getFileType(file: File): "image" | "video" | "unknown" {
 }
 export default function CreatePostModal() {
   const getMaxDate = () => {
-    const date = new Date();
+  const date = new Date();
     date.setDate(date.getDate() + 10);
     return date.toISOString().split("T")[0];
   };
@@ -40,7 +40,9 @@ export default function CreatePostModal() {
   let [canCommentOnPost, setCanCommentOnPost] = createSignal(true)
   let [mainPost, setMainPost] = createSignal({})
   let [replyRule, setReplyRule] = createSignal("public")
-  const [collection, setCollection] = createSignal(window.location.pathname.split("/")[2] === "posts" ? "createPost" : window.location.pathname.split("/")[2] === "posts" ?  "comments" : "createPost") 
+  let [hasError, setHasError] = createSignal(false, {equals: false})
+  let [error, setError] = createSignal(null)
+  const [collection, setCollection] = createSignal(window.location.pathname.split("/")[2] === "posts" && window.location.pathname.includes("view") ? "comments" : window.location.pathname.split("/")[2] === "comments" &&  window.location.pathname.includes("view") ? "comments" : "posts") 
   console.log("Collection", collection());
   let [postData, setPostData] = createSignal<any>({
     content: "",
@@ -94,10 +96,12 @@ export default function CreatePostModal() {
       data.files = filesData;
     } 
      try {
+
+      console.log(collection())
       
-      collection() === "createPost" && (data.post = window.location.pathname.split("/")[3]);
-      collection() === "comments" && (data.mainComment = window.location.pathname.split("/")[3])
-      let res = await api.collection(collection() == "createPost" ? "posts" : "comments").create(data, {
+      collection() === "comments" && (data.post = window.location.pathname.split("/")[3]);
+      collection() === "comments" && !window.location.pathname.includes("posts") &&  (data.mainComment = window.location.pathname.split("/")[3])
+      let res = await api.collection(collection()).create(data, {
         expand: [
           "author",
           "author.following",
@@ -125,7 +129,7 @@ export default function CreatePostModal() {
         whoCanSee: "public", 
       });
       setFiles([]);
-      setIsPosting(false);
+      setIsPosting(false); 
       if( collection() === "comments") {
         document.getElementById("createPostModal")?.close();
         window.dispatchEvent(
@@ -134,16 +138,21 @@ export default function CreatePostModal() {
           })
         );
         // update the post in db
-        const postId = window.location.pathname.split("/")[3]; 
-        await api.collection(collection() === "createPost" ? "posts" : "comments").update(postId,{
-           ...({comments: [...(api.collection(collection() == "createPost" ? "posts" : "comments").get(postId) as any).comments, (res as any).id]}) 
+        const postId = window.location.pathname.split("/")[3];  
+        var p = await api.collection(collection()).get(postId)
+        await api.collection(collection()).update(postId,{
+           ...({comments: [...(p.comments || []), (res as any).id]}) 
         });
       }else{
-        navigate(`/view/posts/${(res as any).id}`);
+        setTimeout(()=>{
+          navigate(`/view/posts/${(res as any).id}`);
+        }, 100)
       }
       
-     } catch (error) {
+     } catch (error) { 
+      setHasError(true) 
       setIsPosting(false);
+      setError(error.message)
       console.log("Error", error);
      } 
   }
@@ -160,6 +169,7 @@ export default function CreatePostModal() {
   }
   //@ts-ignore
   window.resetCreatePost = () => { 
+    console.log(collection())
     setCollection(window.location.pathname.split("/")[2] === "posts" ?  "comments" : "createPost"); 
   }
 
@@ -183,7 +193,13 @@ export default function CreatePostModal() {
   }, [files()]);
   return (
     <dialog id="createPostModal" class="modal z-[-1]">
-      <div class="modal-box scroll p-2 z-[-1] h-fit">
+       <Switch>
+        <Match when={isPosting() && !hasError()}>
+          <p>Wait one second creating your post!</p>
+          <div class="spinner spinner-lg"></div>
+        </Match>
+        <Match when={!isPosting() && !hasError()}>
+          <div class="modal-box scroll p-2 z-[-1] h-fit">
         <div class="flex flex-row justify-between  ">
           <button
             class="btn btn-sm focus:outline-none btn-circle btn-ghost  "
@@ -435,6 +451,254 @@ export default function CreatePostModal() {
           </button>
         </div>
       </div>
+        </Match>
+        <Match when={hasError()}>
+       <div class="modal-box scroll p-2 z-[-1] h-fit">
+        <div class="flex flex-row justify-between  ">
+          <button
+            class="btn btn-sm focus:outline-none btn-circle btn-ghost  "
+            onClick={() => document.getElementById("createPostModal")?.close()}
+          >
+            ✕
+          </button>
+          <p class="text-blue-500 btn btn-sm rounded-full">Drafts</p>
+        </div>
+        <div class="flex flex-row  text-lg mt-5">
+          <img
+            src={api.cdn.getUrl(
+              "users",
+              api.authStore.model.id,
+              api.authStore.model.avatar
+            )}
+            class="w-10 h-10 rounded"
+            alt="logo"
+          />
+          <div class="flex flex-col gap-2 w-full">
+          <textarea
+            maxLength={200}
+            class={joinClass(
+              "w-full h-fit  rounded-lg mx-5 resize-none outline-none scroll",
+              theme() === "dark" ? "bg-black text-white" : "bg-white"
+            )}
+            placeholder={`Error Occured :/`}
+            disabled={true} 
+          ></textarea>
+
+          <Show when={postData().isRepost}>
+            <Post {...postData().repost} />
+          </Show>
+          </div>
+        </div>
+        <p class="p-5">
+          {error()}
+        </p>
+        <Show when={files().length > 0}>
+          <Carousel>
+            <For each={files()}>
+              {(file: File) => (
+                <Carousel.Item
+                  showDelete={true}
+                  id={file.name}
+                  onDeleted={() => {
+                    setFiles(files().filter((f: any) => f.name !== file.name));
+                  }
+                    
+                  }
+                >
+                   <Switch>
+                    <Match when={getFileType(file) == "image"}>
+                      <img
+                    src={URL.createObjectURL(file)}
+                    class="w-full h-[20rem] object-cover rounded-lg my-2"
+                    alt="file"
+                  />
+                    </Match>
+                    <Match when={getFileType(file) == "video"}>
+                       <video src={URL.createObjectURL(file)} autoplay loop  class="w-full h-[20rem] object-cover rounded-lg my-2"  alt="file"/>
+                    </Match>
+                   </Switch> 
+                </Carousel.Item>
+              )}
+            </For>
+          </Carousel>
+        </Show>
+        <Show when ={postData().isPoll}>
+          <div class="flex flex-col gap-2">
+            <input
+              type="date"
+              class="input input-bordered rounded-lg"
+              max={getMaxDate()}
+              onInput={(e: any) =>
+                setPostData({ ...postData(), pollEnds: e.target.value })
+              }
+            />
+            <For each={postData().pollOptions}>
+              {(option: any) => (
+                <div class="flex flex-row gap-2">
+                  <input
+                    type="text"
+                    class="input input-bordered rounded-lg"
+                    placeholder="Option"
+                    value={option.content}
+                    onChange={(e: any) =>
+                      setPostData({
+                        ...postData(),
+                        pollOptions: postData().pollOptions.map((o: any) =>
+                          o.choice === option.choice
+                            ? { ...o, content: e.target.value }
+                            : o
+                        ),
+                      })
+                    }
+                  />
+                  <button
+                    class="btn btn-circle btn-ghost"
+                    onClick={() =>
+                      setPostData({
+                        ...postData(),
+                        pollOptions: postData().pollOptions.filter(
+                          (o: any) => o.choice !== option.choice
+                        ),
+                      })
+                    }
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+            </For>
+            <button
+              class="btn btn-sm bg-blue-500 text-white rounded-full"
+              onClick={() =>
+                setPostData({
+                  ...postData(),
+                  pollOptions: [
+                    ...postData().pollOptions,
+                    {
+                      choice: postData().pollOptions.length + 1,
+                      content: "",
+                    },
+                  ],
+                })
+              }
+            >
+              Add option
+            </button>
+          </div>
+        </Show>
+        <div
+          class="flex flex-row fill-blue-500 hero text-blue-500 font-semibold gap-2 hover:bg-base-200  w-fit cursor-pointer p-2 rounded-full"
+          onClick={() => document.getElementById("visibility")?.showModal()}
+        >
+          <Switch>
+            <Match when={postData().whoCanSee === "public"}>
+              <World class="w-5 h-5" />
+              <p>Everyone can reply</p>
+            </Match>
+            <Match when={postData().whoCanSee === "following"}>
+              <Users class="w-5 h-5" />
+              <p>Accounts you follow</p>
+            </Match>
+            <Match when={postData().whoCanSee === "private"}>
+              <User class="w-5 h-5" />
+              <p>Only you</p>
+            </Match>
+          </Switch>
+        </div>
+        <Portal>
+          <dialog
+            id="visibility"
+            class="modal sm:modal-bottom xl:modal-middle md:modal-middle  "
+          >
+            <div class="modal-box w-32 gap-1">
+              <div class="flex flex-col gap-2">
+                <p class="font-bold">Who can reply to this post?</p>
+                <p>Choose who is allowed to reply to your post.</p>
+              </div>
+              <div class="flex flex-col relative gap-2 mt-5">
+                <div
+                  class="flex flex-row gap-5 font-bold cursor-pointer text-lg hero"
+                  onClick={() => {
+                    setPostData({ ...postData(), whoCanSee: "public" });
+                    document.getElementById("visibility")?.close();
+                  }}
+                >
+                  <div class="p-3 bg-blue-500 rounded-full">
+                    <World class="w-5 h-5 fill-white stroke-blue-500" />
+                  </div>
+                  <p>Everyone</p>
+                  {postData().whoCanSee === "public" && (
+                    <CheckMark class="w-5 h-5 text-blue-500 absolute right-5" />
+                  )}
+                </div>
+                <div
+                  class="flex flex-row gap-5 font-bold cursor-pointer text-lg hero"
+                  onClick={() => {
+                    setPostData({ ...postData(), whoCanSee: "following" });
+                    document.getElementById("visibility")?.close();
+                  }}
+                >
+                  <div class="p-3 bg-blue-500 rounded-full">
+                    <Users class="w-5 h-5 fill-white stroke-blue-500" />
+                  </div>
+                  <p>Following</p>
+                  {postData().whoCanSee === "following" && (
+                    <CheckMark class="w-5 h-5 text-blue-500 absolute right-5" />
+                  )}
+                </div>
+                <div
+                  class="flex flex-row gap-5 font-bold cursor-pointer text-lg hero"
+                  onClick={() => {
+                    setPostData({ ...postData(), whoCanSee: "private" });
+                    document.getElementById("visibility")?.close();
+                  }}
+                >
+                  <div class="p-3 bg-blue-500 rounded-full">
+                    <User class="w-5 h-5 fill-white stroke-blue-500" />
+                  </div>
+                  <p>Only me</p>
+                  {postData().whoCanSee === "private" && (
+                    <CheckMark class="w-5 h-5 text-blue-500 absolute right-5" />
+                  )}
+                </div>
+              </div>
+            </div>
+          </dialog>
+        </Portal>
+        <div class="divider  rounded-full h-1"></div>
+        <div class="flex flex-row  relative justify-between ">
+          <input
+            type="file"
+            hidden
+            id="files"
+            onInput={(file: any) => setFiles(Array.from(file.target.files))}
+            multiple
+            disabled={true}
+            accept="image/*, video/*"
+          />
+          <div class="flex flex-row gap-5">
+            <Media
+              class={joinClass(
+                "w-5 h-5 cursor-pointer",
+                postData().isPoll && "opacity-50"
+              )} 
+            />
+            <NumberedList
+              class={joinClass(
+                "w-5 h-5 cursor-pointer",
+                files().length > 0 && "opacity-50",
+                postData().isPoll && "text-blue-500"
+              )} 
+            />
+          </div>
+          {/**
+           * verticle line
+           */} 
+        </div>
+      </div>
+          
+        </Match>
+       </Switch>
     </dialog>
   );
 }
