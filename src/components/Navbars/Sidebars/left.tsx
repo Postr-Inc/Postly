@@ -122,7 +122,8 @@ export function SideBarLeft(props: {
                 Explore
               </a>
             </li>
-            <li>
+             {
+              api.authStore.model.id && <li>
               <a
                 class={`text-xl  rounded-full rounded-full
                     ${
@@ -156,6 +157,7 @@ export function SideBarLeft(props: {
                 Profile
               </a>
             </li>
+             }
             <li class="text-lg  rounded-full  text-start hover:outline-none  hover:text-lg  hover:justify-start hover:rounded-full">
               <a onClick={() => {}} class=" rounded-full">
                 <svg
@@ -215,14 +217,19 @@ export function SideBarLeft(props: {
              
             <button
               onClick={() => {
-                //@ts-ignore
+                if(api.authStore.model.id){
+                    //@ts-ignore
                 document.getElementById("createPostModal").showModal();
                   //@ts-ignore
                 resetCreatePost()
+                }else{
+                  document.getElementById("register").showModal();
+                }
               }}
               class="btn rounded-full  text-lg hero btn-ghost  hover:bg-blue-500 focus:bg-blue-500 bg-blue-500 text-white "
             >
-              <p>{window.location.pathname.includes("/view") ? "Create Comment" : "Post"} </p>
+               {api.authStore.model.id && <p>{window.location.pathname.includes("/view") ? "Create Comment" : "Post"} </p>}
+               {!api.authStore.model.id && <p>Join The Community !</p>}
             </button>
             
           </ul>
