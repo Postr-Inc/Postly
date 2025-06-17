@@ -13,7 +13,7 @@ import { HttpCodes } from "@/src/Utils/SDK/opCodes";
 import Page from "@/src/Utils/Shared/Page";
 import StringJoin from "@/src/Utils/StringJoin";
 import { Item } from "@kobalte/core/menubar";
-import { createEffect, createSignal, For, Match, Show, Switch } from "solid-js";
+import { createEffect, createSignal, For, Match, Show, Switch, onMount } from "solid-js";
 import EditProfileModal from "@/src/components/Modals/EditProfileModal";
 import { Portal } from "solid-js/web";
 import useFeed from "@/src/Utils/Hooks/useFeed";
@@ -27,8 +27,7 @@ async function handleFeed(
     filter?: string,
     sort?: string,
   }
-) {
-  console.log(otherOptions.filter)
+) { 
   return api.collection(type == "likes" ? "posts" : type == "comments" ? "comments" : "posts").list(page, 10, {
     expand: ["author", "likes", "comments", "repost", "repost.author", "author.followers", "post"],
     sort: otherOptions.sort ? otherOptions.sort + ", -created" : "-created",
@@ -53,7 +52,8 @@ export default function User() {
   const [feed, setFeed] = createSignal(savedFeed === 1 ? "posts" : savedFeed === 2 ? "Replies" : savedFeed === 3 ? "likes" : "posts");
 
 
-  createEffect(() => {
+  onMount(()=>{
+     createEffect(() => {
     api.checkAuth()
     setCurrentPage(0)
     window.onbeforeunload = function () {
@@ -134,8 +134,7 @@ export default function User() {
                 handleFeed("posts", u, currentPage(), {
                   filter: `author.username="${u.id}"`,
                   sort: '-pinned',
-                }).then((data: any) => {
-                  console.log(currentPage())
+                }).then((data: any) => { 
                   if (data.opCode === HttpCodes.OK) {
                     setPosts(data.items);
                     setTotalPages(data.totalPages);
@@ -146,8 +145,7 @@ export default function User() {
               case "Likes":
                 handleFeed("likes", u, currentPage(),  {
                   filter: `likes ~"${user().id}" && author.id !="${user().id}"`,
-                }).then((data: any) => {
-                  console.log(currentPage())
+                }).then((data: any) => { 
                   if (data.opCode === HttpCodes.OK) {
                     setPosts(data.items);
                     setTotalPages(data.totalPages);
@@ -158,8 +156,7 @@ export default function User() {
               case "comments":
                 handleFeed("comments", u, currentPage(), {
                   filter: `author.username="${u.id}"`,
-                }).then((data: any) => {
-                  console.log(data)
+                }).then((data: any) => { 
                   if (data.opCode === HttpCodes.OK) {
                     setPosts(data.items);
                     setLoading(false)
@@ -192,8 +189,7 @@ export default function User() {
           handleFeed("posts", u, currentPage(), {
                   filter: `author.username="${u.id}"`,
                   sort: '-pinned',
-                }).then((data: any) => {
-                  console.log(currentPage())
+                }).then((data: any) => { 
                   if (data.opCode === HttpCodes.OK) {
                    setPosts([...posts(), ...data.items]);
                     setTotalPages(data.totalPages);
@@ -204,8 +200,7 @@ export default function User() {
         case "Likes":
           handleFeed("likes", u, currentPage(),  {
             filter: `likes ~"${user().id}" && author.id !="${user().id}"`,
-          }).then((data: any) => {
-            console.log(currentPage())
+          }).then((data: any) => { 
             if (data.opCode === HttpCodes.OK) {
               setPosts([...posts(), ...data.items]);
               setTotalPages(data.totalPages);
@@ -216,8 +211,7 @@ export default function User() {
         case "comments":
           handleFeed("comments", u, currentPage(),  {
             filter: `author.username="${u.id}"`,
-          }).then((data: any) => {
-            console.log(data)
+          }).then((data: any) => { 
             if (data.opCode === HttpCodes.OK) {
               setPosts([...posts(), ...data.items]);
               setTotalPages(data.items)
@@ -230,6 +224,7 @@ export default function User() {
     }
   }, [currentPage()]);
 
+  })
 
 
   function swapFeed(type: string) {
@@ -241,15 +236,13 @@ export default function User() {
       setFeedLoading(true)
       setCurrentPage(1)
       setPosts([])
-    }
-    console.log(type)
+    } 
     switch (type) {
       case "posts":
         handleFeed("posts", u, currentPage(), {
                   filter: `author.username="${u.id}"`,
                   sort: '-pinned',
-                }).then((data: any) => {
-                  console.log(currentPage())
+                }).then((data: any) => { 
                   if (data.opCode === HttpCodes.OK) {
                     setPosts(data.items);
                     setTotalPages(data.totalPages);ed
@@ -260,8 +253,7 @@ export default function User() {
       case "Replies":
         handleFeed("comments", u, currentPage(),   {
           filter: `author.username="${u.id}"`,
-        }).then((data: any) => {
-          console.log(data)
+        }).then((data: any) => { 
           if (data.opCode === HttpCodes.OK) {
             setPosts(data.items);
           }
@@ -298,8 +290,7 @@ export default function User() {
     let isFollowing = api.authStore.model.following
     switch (type) {
       case "unfollow":
-        followers = followers.filter((u) => u != api.authStore.model.id)
-        console.log(followers)
+        followers = followers.filter((u) => u != api.authStore.model.id) 
         user().followers = followers
         setUser({ ...user(), followers })
         setLoading(false)
