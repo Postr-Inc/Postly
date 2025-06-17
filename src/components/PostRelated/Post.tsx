@@ -10,7 +10,7 @@ import { api } from "@/src";
 import usePost from "@/src/Utils/Hooks/usePost";
 import useTheme from "@/src/Utils/Hooks/useTheme";
 import { joinClass } from "@/src/Utils/Joinclass";
-import { For, Match, Show, Switch, createSignal, createEffect } from "solid-js";
+import { For, Match, Show, Switch, createSignal, createEffect, onMount } from "solid-js";
 import Heart from "../Icons/heart";
 import Dropdown, { DropdownHeader, DropdownItem } from "../UI/UX/dropdown";
 import Carousel, { CarouselItem } from "../UI/UX/Carousel";
@@ -69,6 +69,7 @@ type Props = {
   disabled?: boolean;
   isComment?: boolean;
   [key: string]: any;
+  isLast: boolean;
 };
 
 function getFileType(file: File) {
@@ -97,8 +98,10 @@ export default function Post(props: Props) {
     return Math.round(percentage);
   }
 
-  console.log(props.expand)
-  createEffect(() => {
+
+  console.log(props.isPoll)
+  onMount(()=>{
+     createEffect(() => {
     if (props.isPoll) {
       let votes = 0;
       props.pollOptions.forEach((option: any) => {
@@ -107,6 +110,7 @@ export default function Post(props: Props) {
       setTotalVotes(parseInt(votes));
     }
   });
+  })
 
   function calculatePollEnds(ends: Date) {
     const date = new Date(ends);
@@ -327,7 +331,7 @@ export default function Post(props: Props) {
 
         </a>
       </CardContent>
-      <Show when={props.isPoll && !hasVoted() && !calculatePollEnds(props.pollEnds) == "Ended"}>
+      <Show when={props.isPoll && !hasVoted() && calculatePollEnds(props.pollEnds) !== "Ended"}>
         <div>
           <For each={props.pollOptions}>
             {(item) => (
