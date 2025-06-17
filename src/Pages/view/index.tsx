@@ -22,8 +22,8 @@ export default function View(props: any) {
   );
   let { id, collection } = useParams();
   const [isReplying, setIsReplying] = createSignal(false);
-  let [post, setPost] = createSignal<any>(null, { equals: false });
-  let [comments, setComments] = createSignal<any[]>([], { equals: false });
+  let [post, setPost] = createSignal<any>(null);
+  let [comments, setComments] = createSignal<any[]>([]);
 
   let [comment, setComment] = createSignal<any>({
     content: "",
@@ -102,7 +102,7 @@ export default function View(props: any) {
 
   function fetchP() {
     let { params } = useNavigation("/view/:collection/:id");
-    let { id, collection } = params(); 
+    let { id, collection } = params();
     api
       .collection(collection)
       .get(id, {
@@ -143,21 +143,25 @@ export default function View(props: any) {
   }
 
   // CreateEffect to trigger refetching when the `id` changes
-  createEffect(() => {
-    api.checkAuth();
-    window.addEventListener("popstate", fetchP);
-    window.addEventListener("commentCreated", (e) => {
-      let commentData = e.detail;
-      console.log("Comment created event received:", commentData);
-      if (commentData.post === id || (collection === "comments" && commentData.mainComment === id)) {
-        setComments([commentData, ...comments()]);
+  onMount(() => {
+    createEffect(() => {
+      api.checkAuth();
+      window.addEventListener("popstate", fetchP);
+      window.addEventListener("commentCreated", (e) => {
+        let commentData = e.detail;
+        console.log("Comment created event received:", commentData);
+        if (commentData.post === id || (collection === "comments" && commentData.mainComment === id)) {
+          setComments([commentData, ...comments()]);
 
-      }
-    });
-    fetchP(); 
-  }, params()); // Depend on the `id` parameter
+        }
+      });
+      fetchP();
+      console.log(post)
+    }); // Depend on the `id` parameter
+  })
 
   let { theme } = useTheme();
+
 
   return (
     <Page {...{ params: useParams, route, navigate: props.navigate }} id={id}>
@@ -194,14 +198,9 @@ export default function View(props: any) {
             View Post Engagements
           </div>
         </Show>
-        <Show when={post() && post().comments.length < 1 }>
-                  <div class="p-5 text-xl text-center">
-                     ✨ Nobody has commented, be the first to comment
-                  </div>
-        </Show>
         <div>
           <Switch>
-            <Match when={post()}>
+            <Match when={post() && comments().length > 0}>
               <For each={comments()}>
                 {(comment, index) => (
                   <div style={{ "margin-bottom": index() === comments().length - 1 ? "100px" : "0px" }} class="border-l-0 border-r-0  relative">
@@ -219,6 +218,11 @@ export default function View(props: any) {
                   </div>
                 )}
               </For>
+            </Match>
+            <Match when={post() && comments().length < 1}>
+              <div class="p-5 text-xl text-center">
+                ✨ Nobody has commented, be the first to comment
+              </div>
             </Match>
           </Switch>
         </div>
