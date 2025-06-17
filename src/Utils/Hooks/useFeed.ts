@@ -1,5 +1,5 @@
 import { api } from "@/src";
-import { createEffect, createSignal } from "solid-js";
+import { createEffect, createSignal, onMount } from "solid-js";
 import { HttpCodes } from "../SDK/opCodes";
 
 async function list(
@@ -65,20 +65,20 @@ export default function useFeed(
 
   function fetchPosts(options: any, resetFlag: boolean) {
     if (resetFlag) {
-       setCurrentPage(1);
-       setLoading(true)
+      setCurrentPage(1);
+      setLoading(true)
     }
     list(collection, resetFlag ? 1 : currentPage(), feed, options)
       .then((data: any) => {
         if (resetFlag) {
           setPosts(data.items);
-        } else { 
+        } else {
           setPosts([...posts(), ...data.items]);
         }
 
         for (let i = 0; i < data?.items.length; i++) {
           api.collection("posts").subscribe(data.items[i].id, {
-            cb() {},
+            cb() { },
           });
         }
 
@@ -112,92 +112,94 @@ export default function useFeed(
       });
   }
 
-  createEffect(() => {
-    window.addEventListener("popstate", () => {
-      setLoading(true);
-      setPosts([]);
-      setCurrentPage(1);
-      setHasMore(true);
+  onMount(() => {
+    createEffect(() => {
+      window.addEventListener("popstate", () => {
+        setLoading(true);
+        setPosts([]);
+        setCurrentPage(1);
+        setHasMore(true);
+      });
+
+      let scrollTimeout: any = null;
+
+      function handleScroll() {
+        if (scrollTimeout) return;
+
+        scrollTimeout = setTimeout(async () => {
+          scrollTimeout = null;
+
+          if (loading() || refresh()) return;
+
+          console.log("scrolling", currentPage(), totalPages(), hasMore());
+
+          if (totalPages() <= currentPage()) {
+            setHasMore(false);
+          } else if (totalPages() > currentPage() && !hasMore()) {
+            setHasMore(true);
+          }
+
+          if (
+            window.innerHeight + window.scrollY <
+            document.body.offsetHeight - 100
+          ) {
+            console.log("not at bottom, skipping fetch");
+            return;
+          }
+
+          if (hasMore() && totalPages() > currentPage()) {
+            try {
+              const nextPage = currentPage() + 1;
+              console.log("next page value", nextPage);
+              const data = await list(collection, nextPage, feed, options);
+              console.log([...posts(), ...data?.items])
+              setPosts([...posts(), ...data?.items]);
+              setCurrentPage(nextPage);
+              if (data.totalPages) {
+                setTotalPages(data.totalPages);
+              }
+              if (data.totalPages <= nextPage) {
+                setHasMore(false);
+                setCurrentPage(data.totalPages);
+              }
+            } catch (e) {
+              setError(e as any);
+            } finally {
+              setLoading(false);
+            }
+          }
+        }, 300); // debounce: 300ms
+      }
+
+      window.addEventListener("scroll", handleScroll);
+
+      function handleTouchStart(e: TouchEvent) {
+        if (e.touches[0].clientY < 50) {
+          setRefresh(true);
+        }
+      }
+      function handleTouchEnd() {
+        setRefresh(false);
+      }
+
+      window.addEventListener("touchstart", handleTouchStart);
+      window.addEventListener("touchend", handleTouchEnd);
+
+      fetchPosts(
+        {
+          filter:
+            feed() === "following"
+              ? `author.followers ~ "${api.authStore.model.id}"`
+              : `author.id  != "${api.authStore.model.id}"`,
+        },
+        true
+      );
     });
 
-    let scrollTimeout: any = null;
-
-    function handleScroll() {
-      if (scrollTimeout) return;
-
-      scrollTimeout = setTimeout(async () => {
-        scrollTimeout = null;
-
-        if (loading() || refresh()) return;
-
-        console.log("scrolling", currentPage(), totalPages(), hasMore());
-
-        if (totalPages() <= currentPage()) {
-          setHasMore(false);
-        } else if (totalPages() > currentPage() && !hasMore()) {
-          setHasMore(true);
-        }
-
-        if (
-          window.innerHeight + window.scrollY <
-          document.body.offsetHeight - 100
-        ) {
-          console.log("not at bottom, skipping fetch");
-          return;
-        }
-
-        if (hasMore() && totalPages() > currentPage()) {
-          try {
-            const nextPage = currentPage() + 1;
-            console.log("next page value", nextPage);
-            const data = await list(collection, nextPage, feed, options);
-            console.log([...posts(), ...data?.items])
-            setPosts([...posts(), ...data?.items]);
-            setCurrentPage(nextPage);
-            if (data.totalPages) {
-              setTotalPages(data.totalPages);
-            }
-            if (data.totalPages <= nextPage) {
-              setHasMore(false);
-              setCurrentPage(data.totalPages);
-            }
-          } catch (e) {
-            setError(e as any);
-          } finally {
-            setLoading(false);
-          }
-        }
-      }, 300); // debounce: 300ms
-    }
-
-    window.addEventListener("scroll", handleScroll);
-
-    function handleTouchStart(e: TouchEvent) {
-      if (e.touches[0].clientY < 50) {
-        setRefresh(true);
-      }
-    }
-    function handleTouchEnd() {
-      setRefresh(false);
-    }
-
-    window.addEventListener("touchstart", handleTouchStart);
-    window.addEventListener("touchend", handleTouchEnd);
-
-    fetchPosts(
-      {
-        filter:
-          feed() === "following"
-            ? `author.followers ~ "${api.authStore.model.id}"`
-            : `author.id  != "${api.authStore.model.id}"`,
-      },
-      true
-    );
-  });
-
-  // Initial load outside the effect
-  reset()
-  fetchPosts(options, false);
+    // Initial load outside the effect
+    reset()
+    fetchPosts(options, false);
+  })
 
   return { feed, currentPage, posts, loading, error, hasMore, setFeed, reset, setPosts };
 }
