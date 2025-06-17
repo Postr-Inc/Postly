@@ -8,6 +8,7 @@ import Heart from "../Icons/heart";
 import Mail from "../Icons/Mail";
 import Scissors from "../Icons/Scissors";
 import { createEffect, createSignal } from "solid-js";
+import { api } from "@/src";
 
 export default function BottomNav() {
   const { theme } = useTheme();
@@ -25,11 +26,16 @@ export default function BottomNav() {
         )}>
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="fill-white stroke-white size-6" onClick={() =>{
             //@ts-ignore   
-           document.getElementById("createPostModal")?.showModal()
+          if(api.authStore.model.id){
+            document.getElementById("createPostModal")?.showModal()
            //@ts-ignore
            window.resetCreatePost()
            //@ts-ignore   
            window.modal = "comments" 
+          }else{
+            document.getElementById("register").showModal()
+          }
+            
         }}>
   <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
 </svg>
