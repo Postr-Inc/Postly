@@ -22,8 +22,9 @@ export default function View(props: any) {
   );
   let { id, collection } = useParams();
   const [isReplying, setIsReplying] = createSignal(false);
-  let [post, setPost] = createSignal<any>(null);
+  let [post, setPost] = createSignal<any>(null, {equals: false});
   let [comments, setComments] = createSignal<any[]>([]);
+  let [loading, setLoading] = createSignal(true)
 
   let [comment, setComment] = createSignal<any>({
     content: "",
@@ -122,9 +123,12 @@ export default function View(props: any) {
       .then((data) => {
         setPost(data);
         window.setWhoCanReply(
-          data.whoCanSee[0]
+          data.whoCanSee && data.whoCanSee.length > 0 ? data.whoCanSee[0] : []
         )
         window.setMainPost(data)
+        setTimeout(()=>{
+          setLoading(false)
+        }, 2000)
       })
       .catch((err) => {
         console.log(err);
@@ -144,9 +148,14 @@ export default function View(props: any) {
 
   // CreateEffect to trigger refetching when the `id` changes
   onMount(() => {
+    
     createEffect(() => {
       api.checkAuth();
-      window.addEventListener("popstate", fetchP);
+
+      window.addEventListener("popstate", ()=>{
+        setPost(null)
+        setLoading(true)
+      });
       window.addEventListener("commentCreated", (e) => {
         let commentData = e.detail;
         console.log("Comment created event received:", commentData);
@@ -155,10 +164,13 @@ export default function View(props: any) {
 
         }
       });
-      fetchP();
-      console.log(post)
+      fetchP(); 
     }); // Depend on the `id` parameter
+
+  
   })
+
+  
 
   let { theme } = useTheme();
 
@@ -173,7 +185,7 @@ export default function View(props: any) {
         </div>
         <div class="flex flex-col">
           <Switch fallback={<div>Something went wrong</div>}>
-            <Match when={post() === null}>
+            <Match when={loading()}>
               <LoadingIndicator />
             </Match>
             <Match when={post() !== null}>
@@ -200,7 +212,7 @@ export default function View(props: any) {
         </Show>
         <div>
           <Switch>
-            <Match when={post() && comments().length > 0}>
+            <Match when={post() && !loading() && comments().length > 0}>
               <For each={comments()}>
                 {(comment, index) => (
                   <div style={{ "margin-bottom": index() === comments().length - 1 ? "100px" : "0px" }} class="border-l-0 border-r-0  relative">
@@ -219,7 +231,7 @@ export default function View(props: any) {
                 )}
               </For>
             </Match>
-            <Match when={post() && comments().length < 1}>
+            <Match when={post() && !loading() && comments().length < 1}>
               <div class="p-5 text-xl text-center">
                 ✨ Nobody has commented, be the first to comment
               </div>
