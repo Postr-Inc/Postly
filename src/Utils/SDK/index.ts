@@ -45,9 +45,7 @@ export default class SDK {
           })
 
         } else {
-          console.log("Token expired, reauthenticating");
-          localStorage.removeItem("postr_auth");
-          window.location.href = "/auth/login";
+          console.log("Token expired, reauthenticating"); 
         }
       }
     }, 3600000) // every hour
@@ -73,7 +71,7 @@ export default class SDK {
     } 
     // check if logged in and check if ws is closed periodically
     setInterval(() => {
-      if (this.ws === null || this.ws.readyState === WebSocket.CLOSED && localStorage.getItem("postr_auth")) {
+      if (this.ws === null || this.ws.readyState === WebSocket.CLOSED && localStorage.getItem("postr_auth") && this.authStore.model.id) {
         this.wsReconnect();
       }
     }, 0) // check every 5 minutes
@@ -179,8 +177,10 @@ export default class SDK {
       });
       this.hasChecked = true;
       if (res.status !== 200) {
-        localStorage.removeItem("postr_auth");
-        window.location.href = "/auth/login"
+        var c = this.authStore.getBasicAuthToken()
+        if(c){
+          console.log('[DEBUG] Authenticated via basic auth token')
+        }
         return;
       }
       if (this.ws === null) this.connectToWS();
@@ -213,6 +213,25 @@ export default class SDK {
 
   authStore: authStore = {
     model: JSON.parse(localStorage.getItem("postr_auth") || "{}"),
+    getBasicAuthToken: () => {
+       return new Promise(async (resolve, reject)=> {
+            const response = await fetch(`${this.serverURL}/auth/get-basic-auth-token`, {
+              method: "POST",
+              headers:{
+                "Content-Type": "application/json"
+              }
+            })
+
+            const { status, token, message } = await response.json();
+            console.log(token)
+            if(status !== 200) return reject(message)
+            else{
+             localStorage.setItem("postr_auth", JSON.stringify({token}))
+             this.authStore.model.token = token
+              resolve(true)
+            }
+      })
+    },
     isValid: () => {
       if (!this.authStore.model.token) return false;
       return isTokenExpired(this.authStore.model.token) ? false : true;
