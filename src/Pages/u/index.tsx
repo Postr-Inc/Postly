@@ -410,7 +410,7 @@ export default function User() {
                         ? "bg-white text-black p-2 w-24 mr-2 mt-2 text-sm"
                         : "bg-black text-white p-2 rounded-full w-24 mr-2 text-sm"
                     }
-                    onclick={() => notFound() ? null : follow("unfollow")}
+                    onclick={() => notFound() ? null : api.authStore.model.id  && follow("unfollow")}
                   >
                     Unfollow
                   </button>
@@ -432,7 +432,7 @@ export default function User() {
                         ? "bg-white text-black p-2 mt-2 w-24 mr-2  text-sm"
                         : "bg-black text-white p-2 rounded-full  mt-2 w-24 mr-2 text-sm", "rounded-full")
                     }
-                    onclick={() => notFound() ? null : follow("follow")}
+                    onclick={() => notFound() ? null : api.authStore.model.id  && follow("follow")}
                   >
                     Follow
                   </button>
