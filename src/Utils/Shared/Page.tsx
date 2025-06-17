@@ -8,10 +8,12 @@ import { joinClass } from "../Joinclass";
 import { api } from "@/src";
 import CreatePostModal from "@/src/components/Modals/CreatePostModal";
 import Browser from "@/src/components/Browser";
+import RegisterModal from "../Modals/RegisterModal";
+import { Portal } from "solid-js/web";
 export default function Page(props: { children: any , params: ()=> any, route: () => string, navigate: any, id: string, hide?: string[] }) {
      const { theme } = useTheme();
     return <>
-   <div id={props.id} class={joinClass("relative xl:flex xl:w-[40vw] w-[100vw]   xl:p-0  lg:flex   2xl:w-[79rem]    justify-center xl:mx-auto ", )}>
+   <div id={props.id} class={joinClass("relative xl:flex xl:w-[30vw] w-[100vw]   xl:p-0  lg:flex   2xl:w-[79rem]    justify-center xl:mx-auto ", )}>
          <Show when={props.route() !== "/auth/login" && props.route() !== "/auth/signup" && props.route() !== "/auth/forgot"}>
          <SideBarLeft {...{
              params: props.params,
@@ -39,9 +41,13 @@ export default function Page(props: { children: any , params: ()=> any, route: (
                <BottomNav />
           )
        }
-    </div>
+    </div> 
+    <Portal>
+     
     <Browser />
     
-    <CreatePostModal /> 
+    <RegisterModal />
+    <CreatePostModal />  
+    </Portal>
     </>
 }
