@@ -79,12 +79,12 @@ export default function RegisterModal() {
         })
     }
     return (
-        <Modal id="register" className=" xl:w-[600px]  xl:h-[600px] md:w-[600px] self-center w-full h-full flex flex-col mx-auto xl:mt-12 md:mt-12 md:rounded-xl xl:rounded-xl"  >
+        <Modal id="register" className=" xl:w-[600px] focus:outline-none xl:h-[700px] md:w-[600px] self-center w-full h-full flex flex-col mx-auto xl:mt-12 md:mt-12 md:rounded-xl xl:rounded-xl"  >
             <Modal.Content className="xl:w-[600px] xl:h-[600px] relative  md:w-[600px] md:h-1/2 w-full h-full">
                 <div class="flex justify-between p-2">
                      <Switch>
                         <Match when={stages() === 1}>
-                            <button onClick={() => document.getElementById("register")?.remove()} class="  text-lg w-6 h-6 size-6  p-2">X</button>
+                            <button onClick={() => document.getElementById("register")?.close()} class="  text-lg w-6 h-6 size-6  p-2">X</button>
                         </Match>
                         <Match when={stages() === 2}>
                             <button>
@@ -105,7 +105,7 @@ export default function RegisterModal() {
                 </div>
                 <Show when={stages() === 1}>
                     <div class="flex flex-col p-5 mt-2 gap-5">
-                        <h1 class="flex  font-bold text-2xl  ">Create Your Account</h1>
+                        <h1 class="flex  font-bold text-2xl  ">Join the community! Empowering open source social media</h1>
                         <label>
                             {username() && userNameExists() ? <span class="text-red-500">Username already exists</span> : "Username"}
                         </label>
@@ -134,6 +134,8 @@ export default function RegisterModal() {
                             Next
                         </button>
 
+                          <a href="/auth/login" class="text-blue-500">Already Have an Account? Login to continue</a>
+
                     </div>
                 </Show>
                 <Show when={stages() === 2}>
@@ -160,6 +162,7 @@ export default function RegisterModal() {
 
                 </Show>
             </Modal.Content>
+           
         </Modal>
     )
 }
