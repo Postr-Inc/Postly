@@ -62,6 +62,8 @@ export default function CreatePostModal() {
   let [Drafts, setDrafts] = createSignal(
     localStorage.getItem("postDrafts") ? JSON.parse(localStorage.getItem("drafts") as any) : [] 
   )
+
+  console.log(postData())
  
 
   async function createPost() {
@@ -100,7 +102,7 @@ export default function CreatePostModal() {
       console.log(collection())
       
       collection() === "comments" && (data.post = window.location.pathname.split("/")[3]);
-      collection() === "comments" && !window.location.pathname.includes("posts") &&  (data.mainComment = window.location.pathname.split("/")[3])
+      collection() === "comments" && !window.location.pathname.includes("posts") &&  (data.mainComment = window.location.pathname.split("/")[3]) 
       let res = await api.collection(collection()).create(data, {
         expand: [
           "author",
@@ -184,14 +186,9 @@ export default function CreatePostModal() {
   window.setMainPost = (data) => {
     setMainPost(data)
   }
-
-  console.log(mainPost())
-
-  createEffect(() => {
-    console.log(files())
-  }, [files()]);
+ 
   return (
-    <dialog id="createPostModal" class="modal z-[-1]">
+    <dialog id="createPostModal" class="modal z-[-1f]">
        <Switch>
         <Match when={isPosting() && !hasError()}>
           <div class="modal-box scroll p-2 z-[-1] h-fit">
@@ -439,7 +436,10 @@ export default function CreatePostModal() {
                 postData().isPoll && "text-blue-500"
               )}
               onClick={() =>
-                setPostData({ ...postData(), isPoll: !postData().isPoll })
+              {
+                if(postData().isPoll)  setPostData({ ...postData(), isPoll: false });
+                else  setPostData({ ...postData(), isPoll: true })
+              }
               }
             />
           </div>
