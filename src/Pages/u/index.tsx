@@ -392,7 +392,7 @@ export default function User() {
                 </Match>
                 <Match when={!user() || !user().avatar}>
                   <div class="rounded-full w-24 h-24 mx-1 border-4 border-white -mt-12 bg-base-300 flex items-center justify-center">
-                    <p class="text-2xl text-black">{user() && user().username[0]}</p>
+                    <p class="text-2xl text-black">{user() && user()?.username[0]}</p>
                   </div>
                 </Match>
               </Switch>
