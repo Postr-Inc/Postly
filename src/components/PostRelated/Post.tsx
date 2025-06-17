@@ -495,7 +495,14 @@ export default function Post(props: Props) {
               viewBox="0 0 24 24"
               stroke-width="1.5"
               stroke="currentColor"
-              onClick={() => updateLikes(api.authStore.model.id, props.isComment)}
+              onClick={() => {
+                if(!api.authStore.model.id){
+                  // assume they have a basic access token
+                  document.getElementById("register").showModal()
+                }else{
+                   updateLikes(api.authStore.model.id, props.isComment)
+                }
+              }}
               class={joinClass(
                 "w-6 h- cursor-pointer",
                 likes().includes(api.authStore.model.id)
