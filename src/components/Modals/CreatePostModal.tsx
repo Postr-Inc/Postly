@@ -50,12 +50,7 @@ export default function CreatePostModal() {
     tags: [],
     author: api.authStore.model.id,
     isRepost: false,
-    isPoll: false,
-    pollOptions: [
-      { choice: 1, content: "" , votes: []},
-      { choice: 2, content: "", votes: [] },
-    ],
-    pollEnds: new Date(), 
+    isPoll: false, 
     whoCanSee: "public",
   });
 
@@ -122,12 +117,7 @@ export default function CreatePostModal() {
         tags: [],
         isRepost: false,
         isPoll: false, 
-        hashtags: [],
-        pollOptions: [
-          { choice: 1, content: "" , votes: []},
-          { choice: 2, content: "", votes: [] },
-        ],
-        pollEnds: new Date(), 
+        hashtags: [], 
         whoCanSee: "public", 
       });
       setFiles([]);
@@ -266,70 +256,7 @@ export default function CreatePostModal() {
             </For>
           </Carousel>
         </Show>
-        <Show when ={postData().isPoll}>
-          <div class="flex flex-col gap-2">
-            <input
-              type="date"
-              class="input input-bordered rounded-lg"
-              max={getMaxDate()}
-              onInput={(e: any) =>
-                setPostData({ ...postData(), pollEnds: e.target.value })
-              }
-            />
-            <For each={postData().pollOptions}>
-              {(option: any) => (
-                <div class="flex flex-row gap-2">
-                  <input
-                    type="text"
-                    class="input input-bordered rounded-lg"
-                    placeholder="Option"
-                    value={option.content}
-                    onChange={(e: any) =>
-                      setPostData({
-                        ...postData(),
-                        pollOptions: postData().pollOptions.map((o: any) =>
-                          o.choice === option.choice
-                            ? { ...o, content: e.target.value }
-                            : o
-                        ),
-                      })
-                    }
-                  />
-                  <button
-                    class="btn btn-circle btn-ghost"
-                    onClick={() =>
-                      setPostData({
-                        ...postData(),
-                        pollOptions: postData().pollOptions.filter(
-                          (o: any) => o.choice !== option.choice
-                        ),
-                      })
-                    }
-                  >
-                    ✕
-                  </button>
-                </div>
-              )}
-            </For>
-            <button
-              class="btn btn-sm bg-blue-500 text-white rounded-full"
-              onClick={() =>
-                setPostData({
-                  ...postData(),
-                  pollOptions: [
-                    ...postData().pollOptions,
-                    {
-                      choice: postData().pollOptions.length + 1,
-                      content: "",
-                    },
-                  ],
-                })
-              }
-            >
-              Add option
-            </button>
-          </div>
-        </Show>
+       
         <div
           class="flex flex-row fill-blue-500 hero text-blue-500 font-semibold gap-2 hover:bg-base-200  w-fit cursor-pointer p-2 rounded-full"
           onClick={() => document.getElementById("visibility")?.showModal()}
