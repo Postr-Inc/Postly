@@ -356,19 +356,7 @@ export default function CreatePostModal() {
                 !postData().isPoll && document.getElementById("files")?.click()
               }
             />
-            <NumberedList
-              class={joinClass(
-                "w-5 h-5 cursor-pointer",
-                files().length > 0 && "opacity-50",
-                postData().isPoll && "text-blue-500"
-              )}
-              onClick={() =>
-              {
-                if(postData().isPoll)  setPostData({ ...postData(), isPoll: false });
-                else  setPostData({ ...postData(), isPoll: true })
-              }
-              }
-            />
+             
           </div>
           {/**
            * verticle line
