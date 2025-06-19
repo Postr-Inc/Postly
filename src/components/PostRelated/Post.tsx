@@ -96,10 +96,10 @@ export default function Post(props: Props) {
   let [views, setViews] = createSignal<any[]>(props.views || []);
   function updateLikes(userid: string, isComment: boolean = false, cacheKey: string) {
     let index = likes().findIndex((like) => like === userid);
-    if (index === -1) {
+    if (index === -1) { 
       setLikes([...likes(), userid]);
     } else {
-      let newLikes = likes().filter((like) => like !== userid);
+      let newLikes = likes().filter((like) => like !== userid); 
       setLikes(newLikes);
     }
     api.updateCache(isComment ? "comments" : "posts", props.id, {
@@ -110,32 +110,12 @@ export default function Post(props: Props) {
       .update(props.id, { likes: likes() });
   }
   
-  let [totalVotes, setTotalVotes] = createSignal(0);
-  let [pollVotes, setPollVotes] = createSignal(props.pollVotes || 0);
-  let [pollOptions, setPollOptions] = createSignal([]);
-  let [hasVoted, setHasVoted] = createSignal(props.whoVoted && props.whoVoted.includes(api.authStore.model.id) ? true : false);
+  let [totalVotes, setTotalVotes] = createSignal(0); 
+  let [pollOptions, setPollOptions] = createSignal([]); 
   let [pollEnds, setPollEnds] = createSignal(new Date());
 
-  function calculateVotePercentage(votes: number, totalVotes: number) {
-    let percentage = (votes / totalVotes) * 100;
-    if (isNaN(percentage)) {
-      return 0;
-    }
-    return Math.round(percentage);
-  }
-
- 
-  onMount(()=>{
-     createEffect(() => {
-    if (props.isPoll) {
-      let votes = 0;
-      props.pollOptions.forEach((option: any) => {
-        votes += option.votes;
-      });
-      setTotalVotes(parseInt(votes));
-    }
-  });
-  })
+   
+  
 
   function calculatePollEnds(ends: Date) {
     const date = new Date(ends);
@@ -173,11 +153,7 @@ export default function Post(props: Props) {
   }
 
   async function updatePoll() {
-    await api.collection(props.isComment ? "comments" : "posts").update(props.id, {
-      pollVotes: pollVotes(),
-      pollOptions: pollOptions(),
-      whoVoted: [...props.whoVoted, api.authStore.model.id],
-    })
+    
   }
 
 
@@ -356,78 +332,13 @@ export default function Post(props: Props) {
 
         </a>
       </CardContent>
-      <Show when={props.isPoll && !hasVoted() && calculatePollEnds(props.pollEnds) !== "Ended"}>
-        <div>
-          <For each={props.pollOptions}>
-            {(item) => (
-              <CardContent class="p-1 cursor-pointer">
-                <div class="flex gap-2">
-                  <div class="flex items-center gap-2">
-                    <input type="radio" name="poll" onClick={() => {
-                      setPollOptions(props.pollOptions.map((option: any) => {
-                        if (option.choice === item.choice) {
-                          option.votes++;
-                        }
-                        return option;
-                      }));
-                      setHasVoted(true);
-                      setTotalVotes(totalVotes() + 1);
-                      setPollVotes(pollVotes() + 1);
-                      updatePoll();
-                    }} />
-                    <p>{item.content}</p>
-                  </div>
-                </div>
-              </CardContent>
-            )}
-          </For>
-          <div class="flex gap-2 text-sm mt-2 text-gray-500">
-            <div  >
-              <Show when={calculatePollEnds(props.pollEnds) !== "Ended"}>
-
-                votes {totalVotes()} - {calculatePollEnds(props.pollEnds)} left
-              </Show>
-              <Show when={calculatePollEnds(props.pollEnds) == "Ended"}>
-                Poll Results - Total Votes {totalVotes()}
-              </Show>
-            </div>
-          </div>
-        </div>
-      </Show>
-      <Show when={props.isPoll && hasVoted() || props.isPoll && calculatePollEnds(props.pollEnds) == "Ended"}>
-        <For each={props.pollOptions}>
-          {(item) => (
-            <CardContent class="p-1 items-center cursor-pointer flex  gap-12 justify-between w-full">
-              <div class="flex gap-2 w-full">
-                <div class={joinClass("flex items-center gap-2")}
-                  style={{ width: `${calculateVotePercentage(parseInt(item.votes), totalVotes())}%`, "background-color": "skyblue", padding: "0.5rem", "border-radius": "0.2rem" }}
-                >
-                  <p>{item.content}</p>
-
-                </div>
-              </div>
-              <p class="font-bold">{calculateVotePercentage(parseInt(item.votes), totalVotes())}%</p>
-            </CardContent>
-          )}
-        </For>
-        <div class="flex gap-2 text-sm mt-2 text-gray-500">
-          <div  >
-            <Show when={calculatePollEnds(props.pollEnds) !== "Ended"}>
-
-              votes {totalVotes()} - {calculatePollEnds(props.pollEnds)} left
-            </Show>
-            <Show when={calculatePollEnds(props.pollEnds) == "Ended"}>
-              Poll Results - Total Votes {totalVotes()}
-            </Show>
-          </div>
-        </div>
-      </Show>
+      
       <Show when={props.files && props.files.length > 0}>
 
         <CardContent class="p-1   h-[300px]">
 
           <Carousel >
-          <For each={props.files} fallback={<></>}>
+            <For each={props.files} fallback={<></>}>
               {(item) => ( 
                 <CarouselItem
 
@@ -518,7 +429,7 @@ export default function Post(props: Props) {
                 d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12Z"
               />
             </svg>
-            <span class="countdown">  <span style={{ "--value": Math.abs(props.likes.length) }}></span></span>
+            <span class="countdown">  <span style={{ "--value": Math.abs(likes().length) }}></span></span>
 
           </div>
           <div class="flex items-center gap-2 ">
