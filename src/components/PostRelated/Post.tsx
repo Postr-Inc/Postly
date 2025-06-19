@@ -75,6 +75,11 @@ type Props = {
 function getFileType(file: File) {
   switch (true) {
     case file.type == "image/png":
+    case file.type == "image/gif":
+    case file.type == "image/jpeg":
+    case file.type == "image/jpg":
+    case file.type == "image/svg":
+    case file.type == "image/webp":
       return "image"
     case file.type == "video/mp4":
       return "video"
