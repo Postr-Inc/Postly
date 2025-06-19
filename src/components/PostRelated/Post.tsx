@@ -72,16 +72,16 @@ type Props = {
   isLast: boolean;
 };
 
-function getFileType(file: File) {
+function getFileType(file: string) {
   switch (true) {
-    case file.type == "image/png":
-    case file.type == "image/gif":
-    case file.type == "image/jpeg":
-    case file.type == "image/jpg":
-    case file.type == "image/svg":
-    case file.type == "image/webp":
+    case file.endsWith(".png") :
+    case  file.endsWith(".gif"):
+    case  file.endsWith(".webp"):
+    case file.endsWith(".jpeg"):
+    case  file.endsWith(".jpg"):
+    case  file.endsWith(".svg"):
       return "image"
-    case file.type == "video/mp4":
+    case  file.endsWith(".mp4"):
       return "video"
   }
 }
