@@ -17,9 +17,11 @@ export default  function Home() {
         window.scrollTo(0, 0);
       }
     });
-    if (!api.authStore.isValid()) {
+    if (!localStorage.getItem("postly_auth")) {
       // check if we can retrieve a basic access token 
       api.authStore.getBasicAuthToken()
+    }else if(!api.authStore.isValid()){
+       navigate("/auth/login", null);
     }
     api.on("authChange", () => {
       if (!api.authStore.isValid()) {
