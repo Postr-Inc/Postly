@@ -427,18 +427,15 @@ export default function Post(props: Props) {
         <CardContent class="p-1   h-[300px]">
 
           <Carousel >
-            <For each={props.files} fallback={<></>}>
-              {(item) => (
-                console.log(item),
+          <For each={props.files} fallback={<></>}>
+              {(item) => ( 
                 <CarouselItem
 
                   onClick={() => {
                     window.open(api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item), "_blank");
                   }}>
                   <Switch>
-                    <Match when={item.includes(".png") || item.includes(".jpg") || item.includes(".jpeg") || item.includes('.webp')
-                      || item.includes('.svg')
-                    }>
+                    <Match when={getFileType(item) == "image"}>
                       <img
                         src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)}
                         class={joinClass(
@@ -450,7 +447,7 @@ export default function Post(props: Props) {
                         )}
                       />
                     </Match>
-                    <Match when={item.includes(".mp4")}>
+                    <Match when={getFileType(item) == "video"}>
                       <video class={joinClass(
                         "  w-full object-cover rounded-xl",
                         "cursor-pointer",
