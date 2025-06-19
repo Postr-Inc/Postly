@@ -181,6 +181,8 @@ export default class SDK {
         if(c){
           console.log('[DEBUG] Authenticated via basic auth token')
         }
+        
+        window.location.reload()
         return;
       }
       if (this.ws === null) this.connectToWS();
