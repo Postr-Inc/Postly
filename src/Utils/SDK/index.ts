@@ -167,6 +167,8 @@ export default class SDK {
     }
   }
 
+ 
+
   checkAuth = async () => {
 
     if (localStorage.getItem("postr_auth") && !this.hasChecked) {
@@ -180,9 +182,7 @@ export default class SDK {
         var c = this.authStore.getBasicAuthToken()
         if(c){
           console.log('[DEBUG] Authenticated via basic auth token')
-        }
-        
-        window.location.reload()
+        } 
         return;
       }
       if (this.ws === null) this.connectToWS();
@@ -215,6 +215,13 @@ export default class SDK {
 
   authStore: authStore = {
     model: JSON.parse(localStorage.getItem("postr_auth") || "{}"),
+    deleteAccount: ()=> {
+      return new Promise(async( resolve,reject) =>{
+        const res = await fetch(`${this.serverURL}/auth/delete-account`, {
+          method: "DELETE"
+        })
+      })
+    },
     getBasicAuthToken: () => {
        return new Promise(async (resolve, reject)=> {
             const response = await fetch(`${this.serverURL}/auth/get-basic-auth-token`, {
@@ -230,7 +237,8 @@ export default class SDK {
             else{
              localStorage.setItem("postr_auth", JSON.stringify({token}))
              this.authStore.model.token = token
-              resolve(true)
+             window.dispatchEvent(this.changeEvent)
+             resolve(true)
             }
       })
     },
@@ -282,7 +290,8 @@ export default class SDK {
           reject("Invalid email or password")
           return;
         }
-        const response = await fetch(`${this.serverURL}/auth/login`, {
+       try {
+          const response = await fetch(`${this.serverURL}/auth/login`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -299,6 +308,9 @@ export default class SDK {
         this.connectToWS();
         localStorage.setItem("postr_auth", JSON.stringify(data));
         return resolve(data);
+       } catch (error) {
+          resolve(error)
+       } 
 
       })
     },
@@ -327,6 +339,11 @@ export default class SDK {
     }
   };
 
+    resetCache = () =>{
+      const { set, get, remove, clear } = useCache();
+      clear()
+      }
+
 
 
   sendMsg = async (msg: any, type: any,) => {
@@ -341,12 +358,13 @@ export default class SDK {
           message: "WebSocket is not open",
         };
       }
+      
       this.waitUntilSocketIsOpen(() => {
         let cid = this.callback((data: any) => {
           console.log("Received data from WebSocket", data);
           switch (data.type) {
             case GeneralTypes.AUTH_ROLL_TOKEN:
-              let newToken = data.token;
+              let newToken = data.token; 
               let authData = JSON.parse(localStorage.getItem("postr_auth") || "{}");
               authData.token = newToken;
               localStorage.setItem("postr_auth", JSON.stringify(authData));
