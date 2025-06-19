@@ -13,6 +13,7 @@ export default function useAuth() {
       await api.authStore.login(email, password);
       setIsAuthenticated(api.authStore.isValid());
       setIsLoading(false); 
+      navigate("/", null);
     } catch (error: any) { 
       setIsLoading(false);
       setError(error.message);
