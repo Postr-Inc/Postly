@@ -47,7 +47,7 @@ export default function Login() {
       if(e.key === "Enter") {
         setIsTyping(false);
         await login( email(), password());
-        
+        navigate("/", null);
       }
       startTyping();
     }
