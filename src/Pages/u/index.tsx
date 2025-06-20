@@ -19,6 +19,7 @@ import { Portal } from "solid-js/web";
 import useFeed from "@/src/Utils/Hooks/useFeed";
 import { useParams } from "@solidjs/router";
 import LoadingIndicator from "@/src/components/Icons/loading";
+import FollowingListModal from "@/src/components/Modals/FollowingListModal";
 async function handleFeed(
   type: string,
   params: any,
@@ -51,6 +52,7 @@ export default function User() {
   let [totalPages, setTotalPages] = createSignal(0);
   const [feed, setFeed] = createSignal(savedFeed === 1 ? "posts" : savedFeed === 2 ? "Replies" : savedFeed === 3 ? "likes" : "posts");
 
+  const [showFollowingModal, setShowFollowingModal] = createSignal(false)
 
   onMount(()=>{
      createEffect(() => {
@@ -285,37 +287,30 @@ export default function User() {
     }, 1000)
   }
 
-  function follow(type: string) {
-    let followers = user().followers as any[]
-    let isFollowing = api.authStore.model.following
-    switch (type) {
-      case "unfollow":
-        followers = followers.filter((u) => u != api.authStore.model.id) 
-        user().followers = followers
-        setUser({ ...user(), followers })
-        setLoading(false)
-        isFollowing = isFollowing.filter((d) => d != user().id)
-        break;
-      case "follow":
-        followers.push(api.authStore.model.id)
-        const lastViewedPost = localStorage.getItem("lastViewedPost")
-        user().followers = followers
-        setUser({ ...user(), followers })
-        setLoading(false)
-        !isFollowing.includes(user().id) && isFollowing.push(user().id)
-        break;
-    }
-    api.collection("users").update(user().id, {
-      followers,
-    }, {
-      expand: ["followers", "following"],
-      cacheKey: `/u/user_${user().username}`,
-    })
-    api.collection("users").update(api.authStore.model.id, { following: isFollowing }, {
-      expand: ["followers", "following"],
-      cacheKey: `/u/${api.authStore.model.username}`
-    })
+
+  async function follow(type: "follow" | "unfollow") { 
+  try { 
+    const targetUserId = user().id;
+
+    // Server-side endpoint handles logic
+    await api.send("/actions/usrs/" + type, {
+      method: "POST",
+      body: { 
+        targetUserId
+      }
+    });
+
+    // Optionally update local UI (after server confirms)
+    // Fetch fresh state or update safely
+    const updated = await api.collection("users").get(targetUserId, { expand: ["followers"] })
+    setUser(updated)
+  } catch (err) {
+    console.error("Follow error", err)
+  } finally { 
   }
+}
+
+  
   const months = [
     "Jan",
     "Feb",
@@ -489,13 +484,18 @@ export default function User() {
               {user() && user().following && (
                 <p>
                   <span class="font-bold">{user().following.length} </span>{" "}
-                  <span class="text-gray-500"> Following</span>
+                  <span onClick={() => {
+                    setShowFollowingModal(!showFollowingModal())
+                  }} class="text-gray-500 hover:underline cursor-pointer"> Following</span>
                 </p>
               )}
               {user() && user().followers && (
                 <p>
                   <span class="font-bold">{user().followers.length} </span>
-                  <span class="text-gray-500"> Followers</span>
+                  <span class="text-gray-500 hover:underline cursor-pointer"  onClick={() => {
+                    const modal = document.getElementById("followers-modal");
+                    if (modal) (modal as HTMLDialogElement).showModal();
+                  }}> Followers</span>
                 </p>
               )}
             </div>
@@ -624,6 +624,7 @@ export default function User() {
       </Switch>
       <Portal>
         <EditProfileModal updateUser={(data: any) => { setUser({ ...user(), ...data }) }} />
+        <FollowingListModal user={user} setFollowing={(following)=> {}} show={showFollowingModal}></FollowingListModal>
       </Portal>
     </Page>
   );
