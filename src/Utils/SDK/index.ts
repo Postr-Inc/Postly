@@ -94,6 +94,46 @@ export default class SDK {
       cb(event);
     });
   };
+ 
+  // Existing methods like collection(), authStore, etc...
+  
+  async send<T = any>(
+    endpoint: string,
+    options: {
+      method?: "GET" | "POST" | "PUT" | "DELETE",
+      body?: any,
+      headers?: Record<string, string>
+    } = {}
+  ): Promise<T> {
+    const method = options.method || "POST";
+
+    const headers: Record<string, string> = {
+      "Content-Type": "application/json",
+      ...options.headers,
+    };
+
+    const token = this.authStore.model.token;
+    console.log(token)
+    if (token) {
+      headers["Authorization"] = `${token}`;
+    }
+
+    const response = await fetch(`${this.serverURL}${endpoint}`, {
+      method,
+      headers,
+      body: options.body ? JSON.stringify(options.body) : undefined,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({
+        message: "Unknown error occurred",
+        status: response.status,
+      }));
+      throw new Error(error.message || `Request failed with status ${response.status}`);
+    }
+
+    return response.json();
+  }
 
   wsReconnect = () => {
     this.ws = new WebSocket(`${this.serverURL}/subscriptions`);
