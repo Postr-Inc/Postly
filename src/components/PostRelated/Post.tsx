@@ -94,27 +94,45 @@ export default function Post(props: Props) {
     props?.comments?.length || 0
   );
   let [views, setViews] = createSignal<any[]>(props.views || []);
-  function updateLikes(userid: string, isComment: boolean = false, cacheKey: string) {
-    let index = likes().findIndex((like) => like === userid);
-    if (index === -1) { 
-      setLikes([...likes(), userid]);
-    } else {
-      let newLikes = likes().filter((like) => like !== userid); 
-      setLikes(newLikes);
-    }
-    api.updateCache(isComment ? "comments" : "posts", props.id, {
-      likes: likes(),  
-    })
-    api
-      .collection(isComment ? "comments" : "posts")
-      .update(props.id, { likes: likes() });
-  }
+   
   
   let [totalVotes, setTotalVotes] = createSignal(0); 
   let [pollOptions, setPollOptions] = createSignal([]); 
   let [pollEnds, setPollEnds] = createSignal(new Date());
 
-   
+  async function updateLikes(userId: string, isComment: boolean = false) {
+  const currentLikes = likes();
+  const hasLiked = currentLikes.includes(userId);
+  const action = hasLiked ? "unlike" : "like";
+  const collection = isComment ? "comments" : "posts";
+
+  try {
+    const { res } = await api.send(`/actions/${collection}/${action}`, {
+      body: { targetPostId: props.id }
+    });
+
+    // Assuming res.likes is the updated likes array from backend
+    if (res && Array.isArray(res.likes)) {
+      setLikes(res.likes);
+       api.updateCache(isComment ? "comments" : "posts", props.id, {
+      likes: likes(),  
+    })
+    } else {
+      // fallback in case res.likes not returned
+      setLikes(hasLiked
+        ? currentLikes.filter(id => id !== userId)
+        : [...currentLikes, userId]
+      );
+       api.updateCache(isComment ? "comments" : "posts", props.id, {
+      likes: likes(),  
+    })
+    }
+
+  } catch (error) {
+    console.error("Failed to update likes:", error);
+  }
+}
+
   
 
   function calculatePollEnds(ends: Date) {
@@ -292,8 +310,8 @@ export default function Post(props: Props) {
               </DropdownItem>
               <Show when={props.expand.author.id !== api.authStore.model.id}>
                 <DropdownItem>
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="size-6">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5" />
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width={1.5} stroke="currentColor" class="size-6">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5" />
                   </svg>
 
 
@@ -392,6 +410,7 @@ export default function Post(props: Props) {
             expand={props.expand.repost.expand}
             comments={props.expand.repost.comments}
             files={props.expand.repost.files}
+            isLast={false}
           />
         </Show>
       </CardContent>
@@ -411,7 +430,7 @@ export default function Post(props: Props) {
               onClick={() => {
                 if(!api.authStore.model.id){
                   // assume they have a basic access token
-                  document.getElementById("register").showModal()
+                  (document.getElementById("register") as HTMLDialogElement)?.showModal()
                 }else{
                    updateLikes(api.authStore.model.id, props.isComment)
                 }
@@ -478,7 +497,7 @@ export default function Post(props: Props) {
 
           <div class="flex absolute right-5 gap-5">
             <Bookmark class="w-6 h-6" />
-            <div onClick={()=>{
+            <div class=" hover:cursor-pointer" onClick={()=>{
                   const shareData = {
                     title: `Postly - Post by ${props.expand.author.username}`,
                     text: props.content,
@@ -487,7 +506,7 @@ export default function Post(props: Props) {
                   navigator.share(shareData)
             }} >
 
-            <Share class="w-6 h-6"  />
+            <Share class="w-6 h-6 "  />
             </div> 
           </div>
         </CardFooter>
