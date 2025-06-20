@@ -50,7 +50,7 @@ export default  function Home() {
         <Switch>
           <Match when={!loading()}>
             <div class="flex flex-col   ">
-              <For each={posts()} fallback={<div>Feed is Empty</div>}>
+              <For each={posts()}>
                 {(item, index) => <div class={joinClass(index() == posts().length - 1 ? "sm:mb-[90px]" : "")}>   <Post {...{ navigate, route, params, isLast: true, ...item }} />  </div>}
               </For>
             </div>
