@@ -218,7 +218,7 @@ export function SideBarRight(props:  {
                </Show>
               <div class="flex flex-col gap-5 mt-2 p-2 text-sm">
                 <li class="flex flex-row gap-5">
-                  <a class="cursor-pointer hover:underline">
+                  <a class="cursor-pointer hover:underline" href="/information/terms.pdf">
                     Terms of service
                   </a>
                   <a
