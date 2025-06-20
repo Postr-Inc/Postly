@@ -9,7 +9,7 @@ import LoadingIndicator from "../components/Icons/loading";
 import { joinClass } from "../Utils/Joinclass";
 export default  function Home() {
   const { route, params, navigate } = useNavigation("/");
-  const { feed, currentPage, setFeed, posts, loading } = useFeed("posts", { filter: `author.id !="${api.authStore.model.id}" && author.deactivated=false`, _for: "home" });
+  const { feed, currentPage, setFeed, posts, loading, reset} = useFeed("posts", { filter: `author.id !="${api.authStore.model.id}" && author.deactivated=false`, _for: "home" });
 
   onMount(() => {
     createEffect(() => {
@@ -22,12 +22,14 @@ export default  function Home() {
     }
     api.on("authChange", () => {
       if (!api.authStore.isValid()) {
-        navigate("/auth/login", null);
+        
       }
+      reset()
     });
 
 
   })
+  console.log("test")
 
 
   return (
