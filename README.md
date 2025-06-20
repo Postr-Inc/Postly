@@ -11,6 +11,7 @@
 # Feature List
 
 ## Upcoming    
+- [ ] Buisness Accounts, allow buisnesses to create content that promotes their brand! 
 - [ ] Ability to mute & block creators
 - [ ] Notifications
 - [ ] Search
