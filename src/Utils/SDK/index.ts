@@ -1,10 +1,22 @@
 import useCache from "../Hooks/useCache";
 import isTokenExpired from "./jwt";
-import { HttpCodes } from "./opCodes";
+import { ErrorCodes, HttpCodes } from "./opCodes";
 import { authStore } from "./Types/AuthStore";
 import { GeneralTypes } from "./Types/GeneralTypes";
 import { Buffer } from "buffer/";
 const ip = null;
+
+export type AlertPayload = {
+  type: "error" | "success" | "info" | "warning";
+  message: string;
+};
+
+export function dispatchAlert(payload: AlertPayload) {
+  const event = new CustomEvent("custom-alert", {
+    detail: payload,
+  });
+  window.dispatchEvent(event);
+}
 
 export default class SDK {
   serverURL: string;
@@ -231,8 +243,7 @@ export default class SDK {
               }
             })
 
-            const { status, token, message } = await response.json();
-            console.log(token)
+            const { status, token, message } = await response.json(); 
             if(status !== 200) return reject(message)
             else{
              localStorage.setItem("postr_auth", JSON.stringify({token}))
@@ -346,76 +357,109 @@ export default class SDK {
 
 
 
-  sendMsg = async (msg: any, type: any,) => {
-    if (!this.ws && msg.byWebsocket) {
-      this.wsReconnect();
+  sendMsg = async (msg: any, type: any) => {
+  if (!this.ws && msg.byWebsocket) {
+    this.wsReconnect();
+  }
+
+  if (msg.byWebsocket && this.ws) {
+    if (this.ws.readyState !== WebSocket.OPEN) {
+      return {
+        opCode: HttpCodes.INTERNAL_SERVER_ERROR,
+        message: "WebSocket is not open",
+      };
     }
-    if (msg.byWebsocket && this.ws) {
-      if (this.ws.readyState !== WebSocket.OPEN) {
-        return {
-          //@ts-ignore
-          opCode: HttpCodes.INTERNAL_SERVER_ERROR,
-          message: "WebSocket is not open",
-        };
-      }
-      
-      this.waitUntilSocketIsOpen(() => {
-        let cid = this.callback((data: any) => {
-          console.log("Received data from WebSocket", data);
-          switch (data.type) {
-            case GeneralTypes.AUTH_ROLL_TOKEN:
-              let newToken = data.token; 
-              let authData = JSON.parse(localStorage.getItem("postr_auth") || "{}");
-              authData.token = newToken;
-              localStorage.setItem("postr_auth", JSON.stringify(authData));
-              this.authStore.model = authData;
-              window.dispatchEvent(this.changeEvent);
-              break;
-          }
-        });
-        msg.callback = cid;
-        this.ws?.send(JSON.stringify(msg));
+
+    this.waitUntilSocketIsOpen(() => {
+      let cid = this.callback((data: any) => {
+        console.log("Received data from WebSocket", data);
+        if (data.type === GeneralTypes.AUTH_ROLL_TOKEN) {
+          const newToken = data.token;
+          let authData = JSON.parse(localStorage.getItem("postr_auth") || "{}");
+          authData.token = newToken;
+          localStorage.setItem("postr_auth", JSON.stringify(authData));
+          this.authStore.model = authData;
+          window.dispatchEvent(this.changeEvent);
+        }
       });
-      return;
-    }
 
+      msg.callback = cid;
+      this.ws?.send(JSON.stringify(msg));
+    });
 
+    return;
+  }
 
-    let body;
-    let headers;
+  // HTTP Path
+  try {
+    // Validate token
     if (!msg.security || !msg.security.token || isTokenExpired(msg.security.token)) {
       if (!this.authStore.isValid()) {
         return {
-          opCode: HttpCodes.UNAUTHORIZED,
+          opCode: ErrorCodes.INVALID_OR_MISSING_TOKEN,
           message: "You are not authorized to perform this action",
         };
       }
     }
-    body = JSON.stringify(msg);
-    headers = {
+
+    const token = JSON.parse(localStorage.getItem("postr_auth") || "{}").token;
+    const body = JSON.stringify(msg);
+    const headers = {
       "Content-Type": "application/json",
-      Authorization: JSON.parse(localStorage.getItem("postr_auth") || "{}").token,
+      Authorization: token,
     };
-    const data = await fetch(
+
+    const endpoint =
       type === "search"
         ? `${this.serverURL}/deepsearch`
-        : `${this.serverURL}/collection/${msg.payload.collection}`,
-      {
-        method: "POST",
-        headers,
-        body,
-      }
-    );
+        : `${this.serverURL}/collection/${msg.payload.collection}`;
 
-    if (data.status !== 200) {
+    const response = await fetch(endpoint, {
+      method: "POST",
+      headers,
+      body,
+    });
+
+    const remaining = parseInt(response.headers.get("Ratelimit-Remaining") || "0");
+    const retryAfter = parseInt(response.headers.get("Retry-After") || "0");
+
+    if (!response.ok) {
+      if (remaining === 0 && retryAfter > 0) {
+        dispatchAlert({
+          type: "error",
+          message: `You've been rate-limited. Try again in ${retryAfter} seconds.`,
+        });
+      }
+
+      // Try to parse server response, but fallback to default message
+      let errorMessage = "An error occurred";
+      try {
+        const errorData = await response.json();
+        errorMessage = errorData.message || errorMessage;
+      } catch (_) {
+        // ignore bad JSON
+      }
+
       return {
-        opCode: data.status,
-        message: "An error occurred",
+        opCode: response.status,
+        message: errorMessage,
       };
     }
 
-    return data.json();
-  };
+    return await response.json();
+  } catch (err) { 
+    dispatchAlert({
+      type: "error",
+      message: "Something went wrong while sending your request.", 
+    });
+
+    return {
+      opCode: ErrorCodes.SYSTEM_ERROR,
+      message: "Network or unexpected error occurred",
+    };
+  }
+};
+
 
 
   callback(cb: (data: any) => void) {
