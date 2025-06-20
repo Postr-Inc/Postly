@@ -478,7 +478,17 @@ export default function Post(props: Props) {
 
           <div class="flex absolute right-5 gap-5">
             <Bookmark class="w-6 h-6" />
-            <Share class="w-6 h-6" />
+            <div onClick={()=>{
+                  const shareData = {
+                    title: `Postly - Post by ${props.expand.author.username}`,
+                    text: props.content,
+                    url: `https://postlyapp.com/view/posts/${props.id}`,
+                  };
+                  navigator.share(shareData)
+            }} >
+
+            <Share class="w-6 h-6"  />
+            </div> 
           </div>
         </CardFooter>
       </Show>
