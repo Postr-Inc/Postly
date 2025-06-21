@@ -46,7 +46,15 @@ export default function CreatePostModal() {
   let [isPosting, setIsPosting] = createSignal(false);
   let [files, setFiles] = createSignal<any>([], { equals: false });
   let [canCommentOnPost, setCanCommentOnPost] = createSignal(true)
-  let [mainPost, setMainPost] = createSignal({})
+  type MainPostType = {
+    expand?: {
+      author?: {
+        id?: string;
+      };
+    };
+    [key: string]: any;
+  };
+  let [mainPost, setMainPost] = createSignal<MainPostType>({});
   let [replyRule, setReplyRule] = createSignal("public")
   let [hasError, setHasError] = createSignal(false, {equals: false})
   let [error, setError] = createSignal(null)
@@ -241,7 +249,16 @@ export default function CreatePostModal() {
             class="w-10 h-10 rounded"
             alt="logo"
           />
-          <div class="flex flex-col gap-2 w-full">
+            placeholder={
+              (canCommentOnPost() && replyRule() == "public") ||
+              (!canCommentOnPost() &&
+                mainPost() &&
+                mainPost().expand &&
+                mainPost().expand.author &&
+                mainPost().expand.author.id === api.authStore.model.id)
+                ? "What is on your mind?"
+                : "Post replies are restricted, only the author can reply"
+            }
           <textarea
             value={postData().content}
             maxLength={200}
