@@ -63,24 +63,29 @@ export default class SDK {
     }, 3600000) // every hour
 
     //@ts-ignore
-    this.isOnIos = navigator.userAgent.match(/iPad/i)|| navigator.userAgent.match(/iPhone/i) 
-    if(this.isOnIos){
-      window.onpagehide = (e)=>{
-        console.log("Clearing app cache");
-      caches.keys().then((keys) => {
-        keys.forEach((key) => {
-          caches.delete(key);
-        });
-      });
-      }
-    }else{
-      console.log("Clearing app cache");
-      caches.keys().then((keys) => {
-        keys.forEach((key) => {
-          caches.delete(key);
-        });
-      });
-    } 
+    this.isOnIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+const clearCache = async () => {
+  console.log("Clearing app cache");
+  const keys = await caches.keys();
+  for (const key of keys) {
+    await caches.delete(key);
+  }
+};
+
+if (this.isOnIos) {
+  // Both events to maximize the chance it runs
+  window.addEventListener("pagehide", clearCache);
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState === "hidden") {
+      clearCache();
+    }
+  });
+} else {
+  // Non-iOS can clear immediately or on unload
+  clearCache();
+}
+
     // check if logged in and check if ws is closed periodically
     setInterval(() => {
       if (this.ws === null || this.ws.readyState === WebSocket.CLOSED && localStorage.getItem("postr_auth") && this.authStore.model.id) {
