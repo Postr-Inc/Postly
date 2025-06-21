@@ -80,6 +80,7 @@ function getFileType(file: string) {
     case file.endsWith(".jpeg"):
     case  file.endsWith(".jpg"):
     case  file.endsWith(".svg"):
+    case file.endsWith(".avif"):
       return "image"
     case  file.endsWith(".mp4"):
       return "video"
