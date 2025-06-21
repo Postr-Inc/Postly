@@ -36,7 +36,7 @@ export default  function Home() {
         }
       >
         <Switch>
-          <Match when={!loading()}>
+          <Match when={!loading() && posts() && posts().length > 0}>
             <div class="flex flex-col   ">
               <For each={posts()}>
                 {(item, index) => <div class={joinClass(index() == posts().length - 1 ? "sm:mb-[90px]" : "")}>   <Post {...{ navigate, route, params, isLast: true, ...item }} />  </div>}
