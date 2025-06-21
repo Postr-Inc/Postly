@@ -56,7 +56,7 @@ export default function EditProfileModal(
         setIsSaving(true);
         try {
             let data2 = await api.collection("users").update(api.authStore.model.id, data, {
-                invalidateCache:[`u/${api.authStore.model.username}`]
+                invalidateCache:[`/u/user_${api.authStore.model.username}`]
             });
             console.log(data2)
             setIsSaving(false);
