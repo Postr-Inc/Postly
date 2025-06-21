@@ -53,7 +53,7 @@ export default function User() {
   const [feed, setFeed] = createSignal(savedFeed === 1 ? "posts" : savedFeed === 2 ? "Replies" : savedFeed === 3 ? "likes" : "posts");
   const [following, setFollowing] = createSignal([])
   const [showFollowingModal, setShowFollowingModal] = createSignal(false)
-
+ 
   onMount(()=>{
      createEffect(() => {
     api.checkAuth()
@@ -325,6 +325,7 @@ export default function User() {
     "Nov",
     "Dec",
   ];
+ 
 
   return (
     <Page {...{ params, route, navigate, id: "user" }}>
@@ -346,9 +347,9 @@ export default function User() {
               class="flex flex-row justify-between p-2 h-[10rem]"
               style={{
                 "background-size": "cover",
-                "background-image":
+                "background-image": 
                   user() && user().banner
-                    ? `url(${user().banner.includes("blob") ? user().banner : api.cdn.getUrl("users", user().id, user().banner)})`
+                    ? `url(${user().banner?.includes("blob") ? user().banner : api.cdn.getUrl("users", user().id, user().banner)})`
                     : "linear-gradient(90deg, #ff5858 0%, #f09819 49%, #ff5858 100%)",
               }}
             >
@@ -378,7 +379,7 @@ export default function User() {
               <Switch>
                 <Match when={user() && user().avatar}>
                   <img
-                    src={user().avatar.includes("blob") ? user().avatar : api.cdn.getUrl("users", user().id, user().avatar)}
+                    src={user().avatar?.includes("blob") ? user().avatar : api.cdn.getUrl("users", user().id, user().avatar)}
                     class={`
                       rounded-full xl:w-24 xl:h-24 w-[5rem] h-[5rem] mx-1 border-2  -mt-12 object-cover
                      ${theme() === "dark" ? "border-white" : "border-base-200"}  
