@@ -80,8 +80,8 @@ export default function EditProfileModal(
         updateUser({ ...api.authStore.model, ...copiedData });
     }
     return (
-        <dialog id="editProfileModal" class="modal overflow-scroll  ">
-            <div class={joinClass("modal-content   sm:w-[23rem]      w-[27rem]  rounded-xl", theme() === "dark" ? "bg-black" : "bg-white")}>
+        <dialog id="editProfileModal" class="modal xl:overflow-scroll   sm:h-screen sm:w-screen ">
+            <div class={joinClass("modal-content   sm:w-screen sm:h-screen     w-[27rem]  xl:rounded-xl", theme() === "dark" ? "bg-black" : "bg-white")}>
                 <div class="modal-header p-3 flex justify-between">
                     <svg
                         onClick={() => document.getElementById("editProfileModal")?.close()}
