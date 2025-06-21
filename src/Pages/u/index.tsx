@@ -51,7 +51,7 @@ export default function User() {
   let [feedLoading, setFeedLoading] = createSignal(false);
   let [totalPages, setTotalPages] = createSignal(0);
   const [feed, setFeed] = createSignal(savedFeed === 1 ? "posts" : savedFeed === 2 ? "Replies" : savedFeed === 3 ? "likes" : "posts");
-
+  const [following, setFollowing] = createSignal([])
   const [showFollowingModal, setShowFollowingModal] = createSignal(false)
 
   onMount(()=>{
@@ -403,7 +403,7 @@ export default function User() {
                     class={
                       theme() === "dark"
                         ? "bg-white text-black p-2 w-24 mr-2 mt-2 text-sm"
-                        : "bg-black text-white p-2 rounded-full mt-2 w-24 mr-2 text-sm"
+                        : "bg-black text-white p-2 rounded-full w-24 mr-2 text-sm"
                     }
                     onclick={() => notFound() ? null : api.authStore.model.id  && follow("unfollow")}
                   >
@@ -624,7 +624,7 @@ export default function User() {
       </Switch>
       <Portal>
         <EditProfileModal updateUser={(data: any) => { setUser({ ...user(), ...data }) }} />
-        <FollowingListModal user={user} setFollowing={(following)=> {}} show={showFollowingModal}></FollowingListModal>
+        <FollowingListModal user={user} setFollowing={following}  setUser={user} show={showFollowingModal} setShow={setShowFollowingModal}></FollowingListModal>
       </Portal>
     </Page>
   );
