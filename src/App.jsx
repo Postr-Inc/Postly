@@ -3,8 +3,7 @@ import { api } from '.';
 import useNavigation from './Utils/Hooks/useNavigation';
 import Login from './Pages/auth/login';
 import Home from './Pages';
-import Registration from './Pages/auth/Registration';
-import Settings from './Pages/settings';
+import Registration from './Pages/auth/Registration'; 
 import useTheme from './Utils/Hooks/useTheme';
 import { joinClass } from './Utils/Joinclass';
 
@@ -38,9 +37,7 @@ function App() {
   const renderContent = () => {
     switch (route()) {
       case '/':
-        return <Home navigate={navigate} />;
-      case '/settings':
-        return <Settings navigate={navigate} />;
+        return <Home navigate={navigate} />; 
       case '/auth/login':
         return <Login navigate={navigate} />;
       case '/auth/register':
