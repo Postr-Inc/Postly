@@ -403,7 +403,7 @@ export default function User() {
                     class={
                       theme() === "dark"
                         ? "bg-white text-black p-2 w-24 mr-2 mt-2 text-sm"
-                        : "bg-black text-white p-2 rounded-full w-24 mr-2 text-sm"
+                        : "bg-black text-white p-2 rounded-full mt-2 w-24 mr-2 text-sm"
                     }
                     onclick={() => notFound() ? null : api.authStore.model.id  && follow("unfollow")}
                   >
