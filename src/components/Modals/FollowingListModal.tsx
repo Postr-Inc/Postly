@@ -38,7 +38,7 @@ export default function FollowingListModal({
             >
                 <div
                     class={joinClass(
-                        "modal-content overflow-y-auto  sm:w-[24rem] h-fit p-5 w-[27rem] rounded-xl",
+                        "modal-content overflow-y-scroll  sm:w-[24rem] h-fit p-5 w-[27rem] rounded-xl",
                         theme() === "dark" ? "bg-black" : "bg-white"
                     )}
                 >
