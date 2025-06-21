@@ -12,9 +12,33 @@ import useDevice from "@/src/Utils/Hooks/useDevice";
 import Modal from "@/src/components/Modal";
 import RegisterModal from "@/src/Utils/Modals/RegisterModal";
 import { Portal } from "solid-js/web";
-export default function Login() {
-  const { navigate, params } = useNavigation("/auth/login");
-  const { isAuthenticated, isLoading, error, login } = useAuth();
+export default function Login() { 
+  const { navigate } = useNavigation()
+    const [isAuthenticated, setIsAuthenticated] = createSignal(
+      api.authStore.isValid()
+    );
+    const [isLoading, setIsLoading] = createSignal(false);
+    const [error, setError] = createSignal("");
+  
+    const login = async (email: string, password: string) => {
+      return new Promise(async (resolve, reject) => {
+        try {
+          setIsLoading(true);
+          await api.authStore.login(email, password);
+          setIsAuthenticated(true);
+          setIsLoading(false);
+          navigate("/")
+          resolve(true)
+        } catch (error: any) {
+          setIsLoading(false);
+          setError(error.message);
+          reject(error)
+        }
+      })
+  
+    };
+  
+    
   const { theme } = useTheme();
   let { mobile } = useDevice();
   let [isTyping, setIsTyping] = createSignal(false);
@@ -22,8 +46,7 @@ export default function Login() {
   let [password, setPassword] = createSignal("");
    
   createEffect(() => {  
-    if (isAuthenticated()) {
-      navigate("/", null);
+    if (isAuthenticated()) { 
     } else if (error()) {
       console.log("Error", error());
     }
@@ -47,7 +70,7 @@ export default function Login() {
       if(e.key === "Enter") {
         setIsTyping(false);
         await login( email(), password());
-        navigate("/", null);
+        
       }
       startTyping();
     }
@@ -75,7 +98,7 @@ export default function Login() {
                   Join the community building a safer, more secure social space.
                 </p>
               </div>
-              <label for="email" class="text-white">Email</label>
+              <label for="email" class="text-white">Email or Username</label>
               <div class="relative w-full">
                 <input
                   name="email"
@@ -108,8 +131,10 @@ export default function Login() {
               >
                 {isLoading() ? "Loading..." : "Sign in"}
               </button>
-
-              <p class="text-xs text-red-500">{error()}</p>
+ 
+              {
+                error() && "error"
+              }
               <p class="text-xs text-white">
                 Forgot your password?{" "}
                 <button
@@ -123,7 +148,7 @@ export default function Login() {
                 <p class="text-xs">
                   Don't have an account?{" "}
                   <button
-                    onClick={() =>  document.getElementById("register")?.showModal()}
+                    onClick={() => (document.getElementById("register") as HTMLDialogElement | null)?.showModal()}
                     class="text-blue-500"
                   >
                     Sign up
