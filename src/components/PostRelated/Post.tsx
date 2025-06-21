@@ -74,15 +74,15 @@ type Props = {
 
 function getFileType(file: string) {
   switch (true) {
-    case file.endsWith(".png") :
-    case  file.endsWith(".gif"):
-    case  file.endsWith(".webp"):
+    case file.endsWith(".png"):
+    case file.endsWith(".gif"):
+    case file.endsWith(".webp"):
     case file.endsWith(".jpeg"):
-    case  file.endsWith(".jpg"):
-    case  file.endsWith(".svg"):
+    case file.endsWith(".jpg"):
+    case file.endsWith(".svg"):
     case file.endsWith(".avif"):
       return "image"
-    case  file.endsWith(".mp4"):
+    case file.endsWith(".mp4"):
       return "video"
   }
 }
@@ -95,46 +95,69 @@ export default function Post(props: Props) {
     props?.comments?.length || 0
   );
   let [views, setViews] = createSignal<any[]>(props.views || []);
-   
-  
-  let [totalVotes, setTotalVotes] = createSignal(0); 
-  let [pollOptions, setPollOptions] = createSignal([]); 
+
+
+  let [totalVotes, setTotalVotes] = createSignal(0);
+  let [pollOptions, setPollOptions] = createSignal([]);
   let [pollEnds, setPollEnds] = createSignal(new Date());
+  const [loadedMeta, setLoadedMeta] = createSignal(false)
+  const [_preview_meta, set_preview_meta] = createSignal(null)
 
-  async function updateLikes(userId: string, isComment: boolean = false) {
-  const currentLikes = likes();
-  const hasLiked = currentLikes.includes(userId);
-  const action = hasLiked ? "unlike" : "like";
-  const collection = isComment ? "comments" : "posts";
-
-  try {
-    const { res } = await api.send(`/actions/${collection}/${action}`, {
-      body: { targetId: props.id }
-    });
-
-    // Assuming res.likes is the updated likes array from backend
-    if (res && Array.isArray(res.likes)) {
-      setLikes(res.likes);
-       api.updateCache(isComment ? "comments" : "posts", props.id, {
-      likes: likes(),  
-    })
-    } else {
-      // fallback in case res.likes not returned
-      setLikes(hasLiked
-        ? currentLikes.filter(id => id !== userId)
-        : [...currentLikes, userId]
-      );
-       api.updateCache(isComment ? "comments" : "posts", props.id, {
-      likes: likes(),  
-    })
-    }
-
-  } catch (error) {
-    console.error("Failed to update likes:", error);
-  }
-}
-
+   createEffect(() => { 
+    const url = props.embedded_link;
   
+    // Avoid refetching if the link hasn't changed
+    if (!url) return;
+  
+    
+  
+    fetch(`${api.serverURL}/opengraph/embed?url=${encodeURIComponent(url)}`)
+      .then((res) => res.json())
+      .then((meta) => { 
+        console.log(meta)
+        set_preview_meta(meta)
+        setLoadedMeta(true)
+      })
+      .catch(() => {
+        set_preview_meta(null)
+        setLoadedMeta(false)
+      });
+  });
+  
+  async function updateLikes(userId: string, isComment: boolean = false) {
+    const currentLikes = likes();
+    const hasLiked = currentLikes.includes(userId);
+    const action = hasLiked ? "unlike" : "like";
+    const collection = isComment ? "comments" : "posts";
+
+    try {
+      const { res } = await api.send(`/actions/${collection}/${action}`, {
+        body: { targetId: props.id }
+      });
+
+      // Assuming res.likes is the updated likes array from backend
+      if (res && Array.isArray(res.likes)) {
+        setLikes(res.likes);
+        api.updateCache(isComment ? "comments" : "posts", props.id, {
+          likes: likes(),
+        })
+      } else {
+        // fallback in case res.likes not returned
+        setLikes(hasLiked
+          ? currentLikes.filter(id => id !== userId)
+          : [...currentLikes, userId]
+        );
+        api.updateCache(isComment ? "comments" : "posts", props.id, {
+          likes: likes(),
+        })
+      }
+
+    } catch (error) {
+      console.error("Failed to update likes:", error);
+    }
+  }
+
+
 
   function calculatePollEnds(ends: Date) {
     const date = new Date(ends);
@@ -172,7 +195,7 @@ export default function Post(props: Props) {
   }
 
   async function updatePoll() {
-    
+
   }
 
 
@@ -351,14 +374,40 @@ export default function Post(props: Props) {
 
         </a>
       </CardContent>
-      
+
+       <Switch>
+        <Match when={props.embedded_link && !loadedMeta()}>
+          
+       <span className="loading loading-spinner loading-2xl flex mx-auto justify-center text-blue-500 mb-5"></span>
+        </Match>
+        <Match when={props.embedded_link && loadedMeta()}>
+          <Show when={loadedMeta() && _preview_meta()}>
+
+        <a
+          href={props.embedded_link}
+          target="_blank"
+          rel="noopener noreferrer"
+          class="block w-full h-[20rem] mt-5 relative rounded-xl overflow-hidden border"
+        >
+          <img
+            src={_preview_meta().image || '/placeholder.png'}
+            class="w-full h-full object-cover"
+            alt="Link preview"
+          />
+          <div class="absolute bottom-0 bg-black bg-opacity-60 text-white p-2 text-sm w-full">
+            {_preview_meta().title || "Untitled"}
+          </div>
+        </a>
+      </Show>
+        </Match>
+       </Switch>
       <Show when={props.files && props.files.length > 0}>
 
         <CardContent class="p-1   h-[300px]">
 
           <Carousel >
             <For each={props.files} fallback={<></>}>
-              {(item) => ( 
+              {(item) => (
                 <CarouselItem
 
                   onClick={() => {
@@ -429,11 +478,11 @@ export default function Post(props: Props) {
               stroke-width="1.5"
               stroke="currentColor"
               onClick={() => {
-                if(!api.authStore.model.id){
+                if (!api.authStore.model.id) {
                   // assume they have a basic access token
                   (document.getElementById("register") as HTMLDialogElement)?.showModal()
-                }else{
-                   updateLikes(api.authStore.model.id, props.isComment)
+                } else {
+                  updateLikes(api.authStore.model.id, props.isComment)
                 }
               }}
               class={joinClass(
@@ -498,17 +547,17 @@ export default function Post(props: Props) {
 
           <div class="flex absolute right-5 gap-5">
             <Bookmark class="w-6 h-6" />
-            <div class=" hover:cursor-pointer" onClick={()=>{
-                  const shareData = {
-                    title: `Postly - Post by ${props.expand.author.username}`,
-                    text: props.content,
-                    url: `https://postlyapp.com/view/posts/${props.id}`,
-                  };
-                  navigator.share(shareData)
+            <div class=" hover:cursor-pointer" onClick={() => {
+              const shareData = {
+                title: `Postly - Post by ${props.expand.author.username}`,
+                text: props.content,
+                url: `https://postlyapp.com/view/posts/${props.id}`,
+              };
+              navigator.share(shareData)
             }} >
 
-            <Share class="w-6 h-6 "  />
-            </div> 
+              <Share class="w-6 h-6 " />
+            </div>
           </div>
         </CardFooter>
       </Show>
