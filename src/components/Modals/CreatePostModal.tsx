@@ -361,7 +361,7 @@ export default function CreatePostModal() {
           {/**
            * verticle line
            */}
-          <span>{postData().content.length} / 200</span>
+          <span>{postData().content.length} / 400</span>
           <button class="btn-sm bg-blue-500 text-white rounded-full  " onClick={createPost}>
             {isPosting() ? "Posting..." : collection() === "posts" ? "Post" : "Create Comment"}
           </button>
@@ -380,7 +380,9 @@ export default function CreatePostModal() {
           <p class="text-blue-500 btn btn-sm rounded-full">Drafts</p>
         </div>
         <div class="flex flex-row  text-lg mt-5">
-          <img
+          <Switch>
+            <Match when={api.authStore.model.avatar}>
+               <img
             src={api.cdn.getUrl(
               "users",
               api.authStore.model.id,
@@ -389,9 +391,16 @@ export default function CreatePostModal() {
             class="w-10 h-10 rounded"
             alt="logo"
           />
-          <div class="flex flex-col gap-2 w-full">
+            </Match>
+            <Match when={!api.authStore.model.avatar}>
+               <div class="rounded-full w-12 h-12    bg-base-200 text-white flex items-center justify-center">
+                                                                    <p class={theme() == "dark" ? "text-white" : "text-black"}>{api.authStore.model.username[0]}</p>
+                                                </div>
+            </Match>
+          </Switch>
+          <div class="flex flex-col gap-2">
           <textarea
-            maxLength={200}
+            maxLength={400}
             class={joinClass(
               "w-full h-fit  rounded-lg mx-5 resize-none outline-none scroll",
               theme() === "dark" ? "bg-black text-white" : "bg-white"
