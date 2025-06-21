@@ -1,3 +1,4 @@
+
 import { api } from "@/src";
 import useTheme from "@/src/Utils/Hooks/useTheme";
 import { createSignal, For, Match, Show, Switch } from "solid-js"; 
@@ -216,6 +217,7 @@ export function SideBarRight(props:  {
                 </a>
               </li>
                </Show>
+              <a href="https://www.producthunt.com/products/postly-5?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-postly&#0045;7" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=981494&theme=light&t=1750508772558" alt="Postly - Open&#0045;source&#0032;social&#0032;media&#0046;&#0032;No&#0032;ads&#0044;&#0032;no&#0032;tracking | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
               <div class="flex flex-col gap-5 mt-2 p-2 text-sm">
                 <li class="flex flex-row gap-5">
                   <a class="cursor-pointer hover:underline" href="/information/terms.pdf">
