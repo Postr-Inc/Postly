@@ -17,20 +17,8 @@ export default  function Home() {
         window.scrollTo(0, 0);
       }
     });
-    if(!api.authStore.isValid()){
-       api.authStore.getBasicAuthToken()
-    }
-    api.on("authChange", () => {
-      if (!api.authStore.isValid()) {
-        
-      }
-      reset()
-    });
-
-
-  })
-  console.log("test")
-
+    
+  }) 
 
   return (
     <Page {...{ navigate, params, route: route }} id={feed()}>
