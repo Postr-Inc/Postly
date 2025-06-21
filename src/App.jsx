@@ -1,16 +1,20 @@
-import { createSignal, onMount } from 'solid-js';
+import { createSignal, onMount, lazy, Suspense } from 'solid-js';
 import { api } from '.';
 import useNavigation from './Utils/Hooks/useNavigation';
-import Login from './Pages/auth/login';
-import Home from './Pages';
-import Registration from './Pages/auth/Registration'; 
 import useTheme from './Utils/Hooks/useTheme';
 import { joinClass } from './Utils/Joinclass';
+
+// Lazily import components for route-based loading
+const Home = lazy(() => import('./Pages'));
+const Login = lazy(() => import('./Pages/auth/login'));
+const Registration = lazy(() => import('./Pages/auth/Registration'));
+const Settings = lazy(() => import('./Pages/settings'));
 
 function App() {
   const { route, navigate } = useNavigation();
   const [checkedAuth, setCheckedAuth] = createSignal(false);
-  const { theme } = useTheme()
+  const { theme } = useTheme();
+
   onMount(async () => {
     await api.checkAuth();
 
@@ -18,12 +22,13 @@ function App() {
     if (!api.authStore.isValid()) {
       try {
         await api.authStore.getBasicAuthToken();
+        setTimeout(() => setCheckedAuth(true), 3000);
       } catch (err) {
         console.warn("Unable to issue basic auth token:", err);
       }
+    } else {
+      setCheckedAuth(true);
     }
-
-    setTimeout(()=>{   setCheckedAuth(true); }, 2000);
 
     window.addEventListener('beforeunload', () => {
       caches.keys().then(names => names.forEach(name => caches.delete(name)));
@@ -37,16 +42,20 @@ function App() {
   const renderContent = () => {
     switch (route()) {
       case '/':
-        return <Home navigate={navigate} />; 
+        return <Home navigate={navigate} />;
+      case '/settings':
+        return <Settings navigate={navigate} />;
       case '/auth/login':
         return <Login navigate={navigate} />;
       case '/auth/register':
         return <Registration navigate={navigate} />;
       default:
         return (
-          <div>
-            <h1>404 Not Found</h1>
-            <button onClick={() => navigate('/')}>Go Home</button>
+          <div class="flex flex-col items-center justify-center h-screen w-full">
+            <h1 class="text-2xl font-bold mb-4">404 - Not Found</h1>
+            <button onClick={() => navigate('/')} class="text-blue-600 underline">
+              Go Home
+            </button>
           </div>
         );
     }
@@ -54,9 +63,19 @@ function App() {
 
   return (
     <>
-      {checkedAuth() ? renderContent() : (
+      {checkedAuth() ? (
+        <Suspense>
+          {renderContent()}
+        </Suspense>
+      ) : (
         <div class="flex h-screen w-full items-center justify-center text-xl font-bold text-gray-600">
-          <img src='/icons/icon_transparent.png' class={joinClass('rounded-full w-32 h-32 ', theme() == "light" ? "black" : "light")}/>
+          <img
+            src="/icons/icon_transparent.png"
+            class={joinClass(
+              'rounded-full w-32 h-32',
+              theme() === "light" ? "black" : "light"
+            )}
+          />
         </div>
       )}
     </>
