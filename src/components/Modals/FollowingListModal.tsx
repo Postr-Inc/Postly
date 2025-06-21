@@ -38,8 +38,8 @@ export default function FollowingListModal({
             >
                 <div
                     class={joinClass(
-                        "modal-content overflow-y-scroll  sm:w-[24rem] h-fit p-5 w-[27rem] rounded-xl",
-                        theme() === "dark" ? "bg-black" : "bg-white"
+                        "modal-content overflow-y-scroll  sm:w-[24rem] sm:h-[30vh] p-5 w-[27rem] rounded-xl",
+                        theme() === "dark" ? "bg-base-300 text-white" : "bg-white text-black"
                     )}
                 >
                     <div class="flex justify-between items-center mb-4">
@@ -81,8 +81,8 @@ export default function FollowingListModal({
                                             />
                                              </Show>
                                              <Show when={!following.avatar}>
-                                                 <div class="rounded-full w-12 h-12  border-4 border-white te   bg-base-300 flex items-center justify-center">
-                                                                    <p class="text-sm text-black">{following.username[0]}</p>
+                                                 <div class="rounded-full w-12 h-12    bg-base-200 text-white flex items-center justify-center">
+                                                                    <p class={theme() == "dark" ? "text-white" : "text-black"}>{following.username[0]}</p>
                                                 </div>
                                                                  
                                              </Show>
