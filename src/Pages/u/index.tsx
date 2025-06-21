@@ -594,6 +594,7 @@ export default function User() {
                               navigate={navigate}
                               pinned={copiedObj.pinned}
                               expand={copiedObj.expand}
+                              embedded_link={copiedObj.embedded_link}
                               route={route}
                               files={copiedObj.files}
                               isPoll={copiedObj.isPoll}
