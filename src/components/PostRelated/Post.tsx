@@ -108,7 +108,7 @@ export default function Post(props: Props) {
 
   try {
     const { res } = await api.send(`/actions/${collection}/${action}`, {
-      body: { targetPostId: props.id }
+      body: { targetId: props.id }
     });
 
     // Assuming res.likes is the updated likes array from backend
