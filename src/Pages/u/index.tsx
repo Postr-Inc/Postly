@@ -293,10 +293,10 @@ export default function User() {
     const targetUserId = user().id;
 
     // Server-side endpoint handles logic
-    await api.send("/actions/usrs/" + type, {
+    await api.send("/actions/users/" + type, {
       method: "POST",
       body: { 
-        targetUserId
+        targetId: targetUserId
       }
     });
 
