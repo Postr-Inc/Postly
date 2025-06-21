@@ -25,6 +25,14 @@ function getFileType(file: File): "image" | "video" | "unknown" {
   }
 }
 
+
+function extractFirstURL(text: string): string | null {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  const matches = text.match(urlRegex);
+  return matches ? matches[0] : null;
+}
+
+
 export default function CreatePostModal() {
   const getMaxDate = () => {
   const date = new Date();
@@ -52,7 +60,31 @@ export default function CreatePostModal() {
     isRepost: false,
     isPoll: false, 
     whoCanSee: "public",
+    embedded_link: null,
+    _preview_meta: null,
   });
+
+ createEffect(() => {
+  const content = postData().content;
+  const url = extractFirstURL(content);
+
+  // Avoid refetching if the link hasn't changed
+  if (!url || url === postData().embedded_link) return;
+
+  // Update only if new URL
+  setPostData((prev) => ({ ...prev, embedded_link: url, _preview_meta: null }));
+
+  fetch(`${api.serverURL}/opengraph/embed?url=${encodeURIComponent(url)}`)
+    .then((res) => res.json())
+    .then((meta) => {
+      // Avoid set loop by checking if meta already set
+      console.log(meta)
+      setPostData((prev) => ({ ...prev, _preview_meta: meta, content: prev.content.replace(url, "").trim(), }));
+    })
+    .catch(() => {
+      setPostData((prev) => ({ ...prev, _preview_meta: null, content: prev.content.replace(url, "").trim(),  }));
+    });
+});
 
   let [Drafts, setDrafts] = createSignal(
     localStorage.getItem("postDrafts") ? JSON.parse(localStorage.getItem("drafts") as any) : [] 
@@ -109,7 +141,7 @@ export default function CreatePostModal() {
           "repost.author",
           "repost"
         ],
-        invalidateCache: [`/u/${api.authStore.model.username}_posts`, `/u/${api.authStore.model.username}/comments`],
+        invalidateCache: [`/u/user_${api.authStore.model.username}_posts`, `/u/user_${api.authStore.model.username}/comments`],
       })  
       setPostData({
         content: "",
@@ -119,6 +151,8 @@ export default function CreatePostModal() {
         isPoll: false, 
         hashtags: [], 
         whoCanSee: "public", 
+        _preview_meta: null,
+        embedded_link:null,
       });
       setFiles([]);
       setIsPosting(false); 
@@ -178,16 +212,16 @@ export default function CreatePostModal() {
   }
  
   return (
-    <dialog id="createPostModal" class="modal z-[-1f]">
+    <dialog id="createPostModal" class="modal w-screen h-screen z-[-1f]">
        <Switch>
         <Match when={isPosting() && !hasError()}>
-          <div class="modal-box scroll p-2 z-[-1] h-fit">
+          <div class="modal-box scroll p-2 z-[-1]  ">
           <p>Wait one second creating your post!</p>
           <div class="spinner spinner-lg"></div>
           </div>
         </Match>
         <Match when={!isPosting() && !hasError()}>
-          <div class="modal-box scroll p-2 z-[-1] h-fit">
+          <div class="modal-box scroll p-2 z-[-1]  ">
         <div class="flex flex-row justify-between  ">
           <button
             class="btn btn-sm focus:outline-none btn-circle btn-ghost  "
@@ -209,6 +243,7 @@ export default function CreatePostModal() {
           />
           <div class="flex flex-col gap-2 w-full">
           <textarea
+            value={postData().content}
             maxLength={200}
             class={joinClass(
               "w-full h-fit  rounded-lg mx-5 resize-none outline-none scroll",
@@ -221,11 +256,32 @@ export default function CreatePostModal() {
             }}
           ></textarea>
 
+     
+
+
           <Show when={postData().isRepost}>
             <Post {...postData().repost} />
           </Show>
           </div>
         </div>
+         <Show when={postData()._preview_meta}>
+ 
+   <a
+        href={postData().embedded_link}
+        target="_blank"
+        rel="noopener noreferrer"
+        class="block w-full h-[20rem] mt-12 relative rounded-xl overflow-hidden border"
+      >
+        <img
+          src={postData()._preview_meta?.image || '/placeholder.png'}
+          class="w-full h-full object-cover"
+          alt="Link preview"
+        />
+        <div class="absolute bottom-0 bg-black bg-opacity-60 text-white p-2 text-sm w-full">
+          {postData()._preview_meta?.title || "Untitled"}
+        </div>
+      </a>
+</Show>
         <Show when={files().length > 0}>
           <Carousel>
             <For each={files()}>
@@ -369,7 +425,7 @@ export default function CreatePostModal() {
       </div>
         </Match>
         <Match when={hasError()}>
-       <div class="modal-box scroll p-2 z-[-1] h-fit">
+       <div class="modal-box  p-2 z-[-1] h-fit">
         <div class="flex flex-row justify-between  ">
           <button
             class="btn btn-sm focus:outline-none btn-circle btn-ghost  "
@@ -392,7 +448,7 @@ export default function CreatePostModal() {
             alt="logo"
           />
             </Match>
-            <Match when={!api.authStore.model.avatar}>
+            <Match when={!api.authStore.model.avatar.length > 0}>
                <div class="rounded-full w-12 h-12    bg-base-200 text-white flex items-center justify-center">
                                                                     <p class={theme() == "dark" ? "text-white" : "text-black"}>{api.authStore.model.username[0]}</p>
                                                 </div>
@@ -447,70 +503,26 @@ export default function CreatePostModal() {
             </For>
           </Carousel>
         </Show>
-        <Show when ={postData().isPoll}>
-          <div class="flex flex-col gap-2">
-            <input
-              type="date"
-              class="input input-bordered rounded-lg"
-              max={getMaxDate()}
-              onInput={(e: any) =>
-                setPostData({ ...postData(), pollEnds: e.target.value })
-              }
-            />
-            <For each={postData().pollOptions}>
-              {(option: any) => (
-                <div class="flex flex-row gap-2">
-                  <input
-                    type="text"
-                    class="input input-bordered rounded-lg"
-                    placeholder="Option"
-                    value={option.content}
-                    onChange={(e: any) =>
-                      setPostData({
-                        ...postData(),
-                        pollOptions: postData().pollOptions.map((o: any) =>
-                          o.choice === option.choice
-                            ? { ...o, content: e.target.value }
-                            : o
-                        ),
-                      })
-                    }
-                  />
-                  <button
-                    class="btn btn-circle btn-ghost"
-                    onClick={() =>
-                      setPostData({
-                        ...postData(),
-                        pollOptions: postData().pollOptions.filter(
-                          (o: any) => o.choice !== option.choice
-                        ),
-                      })
-                    }
-                  >
-                    ✕
-                  </button>
-                </div>
-              )}
-            </For>
-            <button
-              class="btn btn-sm bg-blue-500 text-white rounded-full"
-              onClick={() =>
-                setPostData({
-                  ...postData(),
-                  pollOptions: [
-                    ...postData().pollOptions,
-                    {
-                      choice: postData().pollOptions.length + 1,
-                      content: "",
-                    },
-                  ],
-                })
-              }
-            >
-              Add option
-            </button>
-          </div>
+           <Show when={postData()._preview_meta}>
+          <a
+            href={postData()._preview_meta.url}
+            target="_blank"
+            class="block border p-2 rounded mt-2"
+          >
+            <div class="flex gap-4">
+              <img
+                src={postData()._preview_meta.image}
+                class="w-20 h-20 object-cover rounded"
+              />
+              <div>
+                <p class="font-bold">{postData()._preview_meta.title}</p>
+                <p class="text-sm text-gray-500">{postData()._preview_meta.description}</p>
+                <p class="text-xs text-blue-500">{postData()._preview_meta.url}</p>
+              </div>
+            </div>
+          </a>
         </Show>
+
         <div
           class="flex flex-row fill-blue-500 hero text-blue-500 font-semibold gap-2 hover:bg-base-200  w-fit cursor-pointer p-2 rounded-full"
           onClick={() => document.getElementById("visibility")?.showModal()}
