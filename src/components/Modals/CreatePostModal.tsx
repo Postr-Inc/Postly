@@ -218,6 +218,12 @@ export default function CreatePostModal() {
   window.setMainPost = (data) => {
     setMainPost(data)
   }
+  const isReplyRestricted =
+  !canCommentOnPost() &&
+  mainPost()?.expand 
+  && 
+  mainPost()?.expand.author &&
+  mainPost()?.expand.author.id !== api.authStore.model.id;
  
   return (
     <dialog id="createPostModal" class="modal w-screen h-screen z-[-1f]">
@@ -249,7 +255,15 @@ export default function CreatePostModal() {
             class="w-10 h-10 rounded"
             alt="logo"
           />
-            placeholder={
+             
+          <textarea
+            value={postData().content}
+            maxLength={200}
+            class={joinClass(
+              "w-full h-fit  rounded-lg mx-5 resize-none outline-none scroll",
+              theme() === "dark" ? "bg-black text-white" : "bg-white"
+            )}
+             placeholder={
               (canCommentOnPost() && replyRule() == "public") ||
               (!canCommentOnPost() &&
                 mainPost() &&
@@ -259,14 +273,6 @@ export default function CreatePostModal() {
                 ? "What is on your mind?"
                 : "Post replies are restricted, only the author can reply"
             }
-          <textarea
-            value={postData().content}
-            maxLength={200}
-            class={joinClass(
-              "w-full h-fit  rounded-lg mx-5 resize-none outline-none scroll",
-              theme() === "dark" ? "bg-black text-white" : "bg-white"
-            )}
-            placeholder={canCommentOnPost() && replyRule() == "public" || !canCommentOnPost() && mainPost() && mainPost()?.expand.author.id == api.authStore.model.id ? "What is on your mind?" : "Post replies are restricted, only the author can reply"}
             disabled={!canCommentOnPost()}
             onInput={(e: any) => {
               setPostData({ ...postData(), content: e.target.value });
