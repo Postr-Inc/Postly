@@ -230,11 +230,9 @@ export default class SDK {
         },
       });
       this.hasChecked = true;
-      if (res.status !== 200) {
-        var c = this.authStore.getBasicAuthToken()
-        if(c){
-          console.log('[DEBUG] Authenticated via basic auth token')
-        } 
+      if (res.status !== 200) { 
+        this.authStore.model = {}
+        localStorage.removeItem("postr_auth")
         return;
       }
       if (this.ws === null) this.connectToWS();
@@ -284,11 +282,12 @@ export default class SDK {
             })
 
             const { status, token, message } = await response.json(); 
-            if(status !== 200) return reject(message)
-            else{
+            if(status !== 200) { 
+              return reject(message)
+            }
+            else{ 
              localStorage.setItem("postr_auth", JSON.stringify({token}))
              this.authStore.model.token = token
-             window.dispatchEvent(this.changeEvent)
              resolve(true)
             }
       })
@@ -330,10 +329,12 @@ export default class SDK {
         return resolve();
       });
     },
-    logout: () => {
-      localStorage.removeItem("postr_auth");
-      window.dispatchEvent(this.changeEvent);
-      if (window.location.pathname !== "/auth/login") window.location.href = "/auth/login";
+    logout: () => {  
+      if (window.location.pathname !== "/auth/login") { 
+         localStorage.removeItem("postr_auth");
+         window.location.href = "/auth/login";
+      } 
+      
     },
     login: async (emailOrUsername: string, password: string) => {
       return new Promise(async (resolve, reject) => {
