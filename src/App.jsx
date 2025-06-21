@@ -7,9 +7,7 @@ import { joinClass } from './Utils/Joinclass';
 // Lazily import components for route-based loading
 const Home = lazy(() => import('./Pages'));
 const Login = lazy(() => import('./Pages/auth/login'));
-const Registration = lazy(() => import('./Pages/auth/Registration'));
-const Settings = lazy(() => import('./Pages/settings'));
-
+const Registration = lazy(() => import('./Pages/auth/Registration')); 
 function App() {
   const { route, navigate } = useNavigation();
   const [checkedAuth, setCheckedAuth] = createSignal(false);
@@ -42,9 +40,7 @@ function App() {
   const renderContent = () => {
     switch (route()) {
       case '/':
-        return <Home navigate={navigate} />;
-      case '/settings':
-        return <Settings navigate={navigate} />;
+        return <Home navigate={navigate} />; 
       case '/auth/login':
         return <Login navigate={navigate} />;
       case '/auth/register':
