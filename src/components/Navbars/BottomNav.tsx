@@ -21,7 +21,7 @@ export default function BottomNav() {
         "xl:hidden lg:hidden 2xl:hidden",
       )}
     >
-        <div class={joinClass("btn btn-circle btn-xl  fixed bottom-24 right-3", scrollingDirection() == "down" ? "bg-opacity-50" : 
+        <div class={joinClass("btn btn-circle border-none btn-xl  fixed bottom-24 right-3", scrollingDirection() == "down" ? "bg-opacity-50" : 
         scrollingDirection() == "up" ? "bg-opacity-100" : "bg-opacity-100", theme() == "dark" ? "bg-white text-black" : "bg-black text-white"
         )}>
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class={joinClass(" size-6", theme() == "dark" ? "fill-black" : "fill-white" )} onClick={() =>{
