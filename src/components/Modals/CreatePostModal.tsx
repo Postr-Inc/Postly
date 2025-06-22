@@ -228,7 +228,7 @@ export default function CreatePostModal() {
                 class="btn btn-sm focus:outline-none btn-circle btn-ghost  "
                 onClick={() => document.getElementById("createPostModal")?.close()}
               >
-                ✕
+                X
               </button>
               <p class="text-blue-500 btn btn-sm rounded-full">Drafts</p>
             </div>
@@ -247,8 +247,8 @@ export default function CreatePostModal() {
                   value={postData().content}
                   maxLength={200}
                   class={joinClass(
-                    "w-full h-fit  rounded-lg mx-5 resize-none outline-none scroll",
-                    theme() === "dark" ? "bg-black text-white" : "bg-white"
+                    "w-full h-fit  bg-base-200 rounded-lg mx-5 resize-none outline-none scroll"
+                    
                   )}
                   placeholder={
                     (canCommentOnPost() && replyRule() == "public") ||
