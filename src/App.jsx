@@ -20,7 +20,7 @@ function App() {
     if (!api.authStore.isValid()) {
       try {
         await api.authStore.getBasicAuthToken();
-        setTimeout(() => setCheckedAuth(true), 3000);
+        setTimeout(() => setCheckedAuth(true), 3500);
       } catch (err) {
         console.warn("Unable to issue basic auth token:", err);
       }
