@@ -1,4 +1,4 @@
-import { createSignal, For, createEffect } from "solid-js";
+import { createSignal, For, createEffect, onMount, onCleanup } from "solid-js";
 import useTheme from "../../Utils/Hooks/useTheme";
 import { api } from "@/src";
 import { joinClass } from "@/src/Utils/Joinclass";
@@ -15,16 +15,8 @@ import Carousel from "../UI/UX/Carousel";
 import NumberedList from "../Icons/NumberedList";
 import { HttpCodes } from "@/src/Utils/SDK/opCodes";
 import useNavigation from "@/src/Utils/Hooks/useNavigation";
-function getFileType(file: File): "image" | "video" | "unknown" {
-  if (file.type.startsWith("image/")) {
-    return "image";
-  } else if (file.type.startsWith("video/")) {
-    return "video";
-  } else {
-    return "unknown";
-  }
-}
-
+import { getFileType, getDynamicImageQuality, compressImage, prepareFile } from "@/src/Utils/BetterHandling";
+import { dispatchAlert } from "@/src/Utils/SDK";
 
 function extractFirstURL(text: string): string | null {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
@@ -94,100 +86,100 @@ export default function CreatePostModal() {
   console.log(postData())
 
 
+
   async function createPost() {
     if (isPosting()) return;
     setIsPosting(true);
-    let data = postData();
-    console.log(data)
-    if(data.isRepost){
-      data.repost = data.repost.id
+    setHasError(false);
+
+
+    const data = { ...postData() };
+    if (!data.author) {
+      document.getElementById("createPostModal")?.close();
+      dispatchAlert({ type: "error", "message": "Author missing can not create post" })
+      return;
     }
-    if (files().length > 0) {
-      let filesData = files().map((file: any) => {
-        let fileObj = {
-          name: file.name,
-          type: file.type,
-          size: file.size,
-        }
-        if (getFileType(file) == "video") {
-          data.isSnippet = true
-        }
-        let reader = new FileReader();
-        reader.readAsArrayBuffer(file);
-        return new Promise((resolve, reject) => {
-          /**
-           * if(fileObj.size >  5242880) { // 
-           alert("File size wayy to big please compress or try a different file!")
-           reject("File way too big")
-         }
-           */
-          reader.onload = () => {
-            resolve({ data: Array.from(new Uint8Array(reader.result as ArrayBuffer)), ...fileObj });
-          };
-        });
-      });
-      filesData = await Promise.all(filesData);
-      data.files = filesData;
-    }
+    if (data.isRepost) data.repost = data.repost.id;
+
     try {
+      if (files().length > 0) {
+        data.files = await Promise.all(
+          files().map((f) => prepareFile(f))
+        );
+        if (data.files.some((f: any) => f.type.includes("video"))) {
+          data.isSnippet = true;
+        }
+      }
 
-      console.log(collection())
+      if (collection() === "comments") {
+        const parts = window.location.pathname.split("/");
+        data.post = parts[3];
+        if (!window.location.pathname.includes("posts")) {
+          data.mainComment = parts[3];
+        }
+      }
 
-      collection() === "comments" && (data.post = window.location.pathname.split("/")[3]);
-      collection() === "comments" && !window.location.pathname.includes("posts") && (data.mainComment = window.location.pathname.split("/")[3])
-      let res = await api.collection(collection()).create(data, {
+      const res = await api.collection(collection()).create(data, {
         expand: [
-          "author",
-          "author.following",
-          "author.followers",
-          "author.TypeOfContentPosted",
-          "likes",
-          "repost.likes",
-          "repost.author",
-          "repost"
+          "author", "author.following", "author.followers",
+          "author.TypeOfContentPosted", "likes", "repost.likes",
+          "repost.author", "repost"
         ],
-        invalidateCache: [`/u/user_${api.authStore.model.username}_posts`, `/u/user_${api.authStore.model.username}/comments`],
-      })
+        invalidateCache: [
+          `/u/user_${api.authStore.model.username}_posts`,
+          `/u/user_${api.authStore.model.username}/comments`
+        ],
+      }) as any;
+
       setPostData({
-        content: "",
-        links: [],
-        tags: [],
-        isRepost: false,
-        isPoll: false,
-        hashtags: [],
-        whoCanSee: "public",
-        _preview_meta: null,
-        embedded_link: null,
+        content: "", links: [], tags: [],
+        isRepost: false, isPoll: false,
+        hashtags: [], whoCanSee: "public",
+        _preview_meta: null, embedded_link: null,
       });
       setFiles([]);
       setIsPosting(false);
+
       if (collection() === "comments") {
         document.getElementById("createPostModal")?.close();
-        window.dispatchEvent(
-          new CustomEvent("commentCreated", {
-            detail: res,
-          })
-        );
-        // update the post in db
+        window.dispatchEvent(new CustomEvent("commentCreated", { detail: res }));
+
         const postId = window.location.pathname.split("/")[3];
-        var p = await api.collection(collection() == "comments" ? "posts" : "comments").get(postId)
-        await api.collection(p.collectionName).update(postId, {
-          ...({ comments: [...(p.comments || []), (res as any).id] })
+        const p = await api.collection("posts").get(postId);
+        await api.collection("posts").update(postId, {
+          comments: [...(p.comments || []), res.id]
         });
       } else {
-        setTimeout(() => {
-          navigate(`/view/posts/${(res as any).id}`);
-        }, 100)
+        setTimeout(() => navigate(`/view/posts/${res.id}`), 100);
       }
 
-    } catch (error) {
-      setHasError(true)
+    } catch (error: any) {
+      setHasError(true);
+      setError(error.message || "Unknown error");
       setIsPosting(false);
-      setError(error.message)
-      console.log("Error", error);
+      console.error("Error creating post:", error);
     }
   }
 
+
+  const postMessages = [
+    "We’re creating your post. This might take a few seconds if you added images or videos.",
+    "Compressing media and optimizing your content...",
+    "Uploading... almost there!",
+    "Hang tight! Wrapping up your post creation.",
+    "Finalizing your post. We’ll be done shortly.",
+  ];
+
+  const [currentMessage, setCurrentMessage] = createSignal(postMessages[0]);
+
+  onMount(() => {
+    const interval = setInterval(() => {
+      const randomIndex = Math.floor(Math.random() * postMessages.length);
+      setCurrentMessage(postMessages[randomIndex]);
+    }, 3000); // Change every 3 seconds
+
+    onCleanup(() => clearInterval(interval));
+  });
 
   //@ts-ignore
   window.setParams = (params: any) => {
@@ -195,7 +187,7 @@ export default function CreatePostModal() {
   };
 
   //@ts-ignore
-  window.repost = (post: any) => { 
+  window.repost = (post: any) => {
     setPostData({ ...postData(), isRepost: true, repost: post, hidden: ["repostButton"] });
   }
   //@ts-ignore
@@ -220,9 +212,13 @@ export default function CreatePostModal() {
     <dialog id="createPostModal" class="modal w-screen h-screen z-[-1f]">
       <Switch>
         <Match when={isPosting() && !hasError()}>
-          <div class="modal-box scroll p-2 z-[-1]  ">
-            <p>Wait one second creating your post!</p>
-            <div class="spinner spinner-lg"></div>
+          <div class={joinClass("modal-box scroll p-4 h-fitrelative border-4 rounded-xl border-transparent z-[-1] animate-gradient-border bg-base-200 text-black shadow-xl text-center")}>
+            <div class="absolute inset-0 rounded-xl border-4 border-transparent pointer-events-none animate-border-overlay"></div>
+
+            <h2 class="text-xl font-semibold mb-4">Hang tight!</h2>
+            <p class="text-sm  mb-6">{currentMessage()}</p>
+
+            <div class="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin mx-auto"></div>
           </div>
         </Match>
         <Match when={!isPosting() && !hasError()}>
