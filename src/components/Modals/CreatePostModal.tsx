@@ -212,7 +212,7 @@ export default function CreatePostModal() {
     <dialog id="createPostModal" class="modal w-screen h-screen z-[-1f]">
       <Switch>
         <Match when={isPosting() && !hasError()}>
-          <div class={joinClass("modal-box scroll p-4 h-fitrelative border-4 rounded-xl border-transparent z-[-1] animate-gradient-border bg-base-200 text-black shadow-xl text-center")}>
+          <div class={joinClass("modal-box scroll p-4 h-fit relative text-white border-4 rounded-xl border-transparent z-[-1] animate-gradient-border bg-base-200 text-black shadow-xl text-center")}>
             <div class="absolute inset-0 rounded-xl border-4 border-transparent pointer-events-none animate-border-overlay"></div>
 
             <h2 class="text-xl font-semibold mb-4">Hang tight!</h2>
@@ -222,7 +222,7 @@ export default function CreatePostModal() {
           </div>
         </Match>
         <Match when={!isPosting() && !hasError()}>
-          <div class="modal-box scroll p-2 z-[-1]  ">
+          <div class="modal-box bg-base-200 rounded-xl scroll p-2 z-[-1]  ">
             <div class="flex flex-row justify-between  ">
               <button
                 class="btn btn-sm focus:outline-none btn-circle btn-ghost  "
