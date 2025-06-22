@@ -148,7 +148,7 @@ export default function HomeNav({
           </div>
         </div>
       </div>
-      <div class={joinClass("  sm:p-3  mt-3  text-sm    justify-between  flex  ",)}>
+      <div class={joinClass("  sm:p-3  mt-2 text-sm    justify-between  flex  ",)}>
         <div class="flex flex-col rounded">
           <p
             class={joinClass("cursor-pointer", page() !== "recommended" ? "text-gray-500" : "")}
