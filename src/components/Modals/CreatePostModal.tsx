@@ -59,6 +59,7 @@ export default function CreatePostModal() {
     author: api.authStore.model.id,
     isRepost: false,
     isPoll: false,
+    repost: "",
     whoCanSee: "public",
     embedded_link: null,
     _preview_meta: null,
@@ -97,6 +98,10 @@ export default function CreatePostModal() {
     if (isPosting()) return;
     setIsPosting(true);
     let data = postData();
+    console.log(data)
+    if(data.isRepost){
+      data.repost = data.repost.id
+    }
     if (files().length > 0) {
       let filesData = files().map((file: any) => {
         let fileObj = {
@@ -190,7 +195,7 @@ export default function CreatePostModal() {
   };
 
   //@ts-ignore
-  window.repost = (post: any) => {
+  window.repost = (post: any) => { 
     setPostData({ ...postData(), isRepost: true, repost: post, hidden: ["repostButton"] });
   }
   //@ts-ignore
