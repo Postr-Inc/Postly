@@ -48,7 +48,7 @@ export default function CreatePostModal() {
     content: "",
     links: [],
     tags: [],
-    author: api.authStore.model.id,
+    author: JSON.parse(localStorage.getItem("postr_auth")).id,
     isRepost: false,
     isPoll: false,
     repost: "",
@@ -226,7 +226,18 @@ export default function CreatePostModal() {
             <div class="flex flex-row justify-between  ">
               <button
                 class="btn btn-sm focus:outline-none btn-circle btn-ghost  "
-                onClick={() => document.getElementById("createPostModal")?.close()}
+                onClick={() => {
+setPostData(content: "",
+    links: [],
+    tags: [],
+    author: JSON.parse(localStorage.getItem("postr_auth")).id,
+    isRepost: false,
+    isPoll: false,
+    repost: "",
+    whoCanSee: "public",
+    embedded_link: null,
+    _preview_meta: null)
+document.getElementById("createPostModal")?.close()}}
               >
                 X
               </button>
