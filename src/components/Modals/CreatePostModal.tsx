@@ -234,8 +234,7 @@ export default function CreatePostModal() {
               </button>
               <p class="text-blue-500 btn btn-sm rounded-full">Drafts</p>
             </div>
-            <div class={joinClass("flex flex-row h-full text-lg mt-5",
-               postData().content.length > 20 ? "h-[25rem]" : ""
+            <div class={joinClass("flex flex-row h-full text-lg mt-5", 
             )}>
               <img
                 src={api.cdn.getUrl(
@@ -252,7 +251,7 @@ export default function CreatePostModal() {
                   maxLength={400}
                   class={joinClass(
                     "    bg-transparent  w-full rounded-lg mx-5  outline-none scroll", 
-                    postData().content.length > 20 ? "h-[24rem]" : ""
+                    postData().content.length > 20 ? "h-[34rem]" : ""
                   )}
                   placeholder={
                     (canCommentOnPost() && replyRule() == "public") ||
