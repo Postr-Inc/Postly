@@ -201,15 +201,13 @@ export default function Post(props: Props) {
 
   return (
     <Card
-      class={joinClass(
-        theme() === "dark"
-          ? "bg-black text-white border-[#1c1c1c]  "
-          : "  border-gray-200 border   ",
+      class={joinClass( 
+        
+        props.wasReposted ? "border border-slate-200 rounded-xl" : "",
         theme() === "dark" && !props.page ? "hover:bg-[#121212]" : theme() === "light" && !props.page ? "hover:bg-[#faf9f9]" : "",
         "z-10  relative h-fit",
         "p-2 text-md shadow-none ",
-        window.location.pathname.includes("view") ? "border-r-0 border-b-0  border-l-0" : window.location.pathname.includes('view') && props.isComment ?
-          "border-t-0" : "",
+        
         props.disabled
           ? "rounded "
           : `   rounded-none shadow-none${theme() === "dark" && !props.page ? "hover:bg-[#121212]" : theme() === "light" && !props.page ? "hover:bg-[#faf9f9]" : ""
@@ -228,16 +226,11 @@ export default function Post(props: Props) {
 
         <Switch fallback={<></>}>
           <Match when={!props.expand?.author.avatar}>
-            <div
-              class={joinClass(
-                "w-10 h-10  text-center p-2 rounded ",
-                theme() === "dark"
-                  ? "bg-[#121212] text-white"
-                  : "bg-[#e2e1e1] text-black"
-              )}
-            >
-              {props.expand?.author.username.slice(0, 1).charAt(0).toUpperCase()}
-            </div>
+            <img
+              src="/icons/usernotfound/image.png"
+              alt={props.author}
+              class="w-10 h-10 rounded object-cover"
+            />
           </Match>
 
           <Match when={props.expand.author.avatar}>
@@ -460,14 +453,16 @@ export default function Post(props: Props) {
             expand={props.expand.repost.expand}
             comments={props.expand.repost.comments}
             files={props.expand.repost.files}
-            isLast={false}
+            isLast={false} 
+            wasReposted={true}
+            navigate={props.navigate}
           />
         </Show>
       </CardContent>
 
       {/**
        * @search - footer section
-       */}
+       */} 
       <Show when={!props.disabled}>
         <CardFooter class="p-1 flex gap-3 relative items-start">
           <div class="flex items-center gap-2">
