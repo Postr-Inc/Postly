@@ -212,7 +212,7 @@ export default function CreatePostModal() {
     <dialog id="createPostModal" class="modal w-screen h-screen z-[-1f]">
       <Switch>
         <Match when={isPosting() && !hasError()}>
-          <div class={joinClass("modal-box scroll p-4 h-fitrelative border-4 rounded-xl border-transparent z-[-1] animate-gradient-border bg-base-200 text-black shadow-xl text-center")}>
+          <div class={joinClass("modal-box scroll focus:outline-none p-4 h-fit relative   border-4 rounded-xl border-transparent z-[-1] animate-gradient-border   shadow-xl text-center")}>
             <div class="absolute inset-0 rounded-xl border-4 border-transparent pointer-events-none animate-border-overlay"></div>
 
             <h2 class="text-xl font-semibold mb-4">Hang tight!</h2>
@@ -222,8 +222,10 @@ export default function CreatePostModal() {
           </div>
         </Match>
         <Match when={!isPosting() && !hasError()}>
-          <div class="modal-box scroll p-2 z-[-1]  ">
-            <div class="flex flex-row justify-between  ">
+          <div class={joinClass("modal-box scroll focus:outline-none       p-2  text-black z-[-1] rounded-xl   ",
+            theme() == "dark" ? "bg-base-300 text-white"  : "bg-white"
+          )}>
+            <div class="flex flex-row  h-full justify-between  ">
               <button
                 class="btn btn-sm focus:outline-none btn-circle btn-ghost  "
                 onClick={() => document.getElementById("createPostModal")?.close()}
@@ -232,7 +234,9 @@ export default function CreatePostModal() {
               </button>
               <p class="text-blue-500 btn btn-sm rounded-full">Drafts</p>
             </div>
-            <div class="flex flex-row  text-lg mt-5">
+            <div class={joinClass("flex flex-row h-full text-lg mt-5",
+               postData().content.length > 20 ? "h-[25rem]" : ""
+            )}>
               <img
                 src={api.cdn.getUrl(
                   "users",
@@ -242,13 +246,13 @@ export default function CreatePostModal() {
                 class="w-10 h-10 rounded"
                 alt="logo"
               />
-              <div class="flex flex-col gap-2 w-full">
+              <div class="flex flex-col h-full gap-2  ">
                 <textarea
                   value={postData().content}
-                  maxLength={200}
+                  maxLength={400}
                   class={joinClass(
-                    "w-full h-fit  rounded-lg mx-5 resize-none outline-none scroll",
-                    theme() === "dark" ? "bg-black text-white" : "bg-white"
+                    "    bg-transparent  w-full rounded-lg mx-5  outline-none scroll", 
+                    postData().content.length > 20 ? "h-[34rem]" : ""
                   )}
                   placeholder={
                     (canCommentOnPost() && replyRule() == "public") ||
@@ -260,7 +264,12 @@ export default function CreatePostModal() {
                       ? "What is on your mind?"
                       : "Post replies are restricted, only the author can reply"
                   }
-                  disabled={!canCommentOnPost()}
+                  disabled={(canCommentOnPost() && replyRule() == "public") == false ||
+                      (!canCommentOnPost() &&
+                        mainPost() &&
+                        mainPost().expand &&
+                        mainPost().author &&
+                        mainPost().author !== api.authStore.model.id)}
                   onInput={(e: any) => {
                     setPostData({ ...postData(), content: e.target.value });
                   }}
@@ -428,8 +437,11 @@ export default function CreatePostModal() {
            * verticle line
            */}
               <span>{postData().content.length} / 400</span>
-              <button class="btn-sm bg-blue-500 text-white rounded-full  " onClick={createPost}>
-                {isPosting() ? "Posting..." : collection() === "posts" ? "Post" : "Create Comment"}
+              <button class="btn-sm bg-blue-500 text-white rounded-full  " onClick={()=>{
+                if(replyRule() == "private") return;
+                createPost()
+              }}>
+                {isPosting() ? "Posting..." : collection() === "posts" ? "Post" : replyRule() == "private" ? "Author Set Comments Private":"Create Comment"}
               </button>
             </div>
           </div>
