@@ -252,7 +252,7 @@ export default function CreatePostModal() {
                   maxLength={400}
                   class={joinClass(
                     "    bg-transparent  w-full rounded-lg mx-5  outline-none scroll", 
-                    postData().content.length > 20 ? "h-[34rem]" : ""
+                    postData().content.length > 20 ? "h-[24rem]" : ""
                   )}
                   placeholder={
                     (canCommentOnPost() && replyRule() == "public") ||
