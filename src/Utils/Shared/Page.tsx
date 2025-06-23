@@ -16,7 +16,7 @@ export default function Page(props: { children: any , params: ()=> any, route: (
      const { theme } = useTheme();
     return <>
     
-   <div id={props.id} class={joinClass("relative xl:flex xl:w-[30vw] w-[100vw]   xl:p-0  lg:flex   2xl:w-[79rem]    justify-center xl:mx-auto ", )}>
+   <div id={props.id} class={joinClass("relative xl:flex xl:w-[30vw] w-[100vw]     xl:p-0  lg:flex   2xl:w-[79rem]    justify-center xl:mx-auto ", )}>
          <Show when={props.route() !== "/auth/login" && props.route() !== "/auth/signup" && props.route() !== "/auth/forgot"}>
          <SideBarLeft {...{
              params: props.params,
@@ -25,7 +25,9 @@ export default function Page(props: { children: any , params: ()=> any, route: (
         }} />
         </Show>
         
-        <div class={joinClass("flex flex-col  h-full w-full  ", theme() === "dark" ? "border border-[#3e3e3e] sm:border-none" : "sm:border-none border border-gray-200")}>
+        <div class={joinClass("flex flex-col  h-full w-full  ", 
+          theme() == "dark"  ? "bg-black" : ""
+        )}>
             
         {props.children}
         </div>
