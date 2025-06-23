@@ -48,7 +48,7 @@ export default function CreatePostModal() {
     content: "",
     links: [],
     tags: [],
-    author: JSON.parse(localStorage.getItem("postr_auth")).id,
+    author: JSON.parse(localStorage.getItem("postr_auth") || "{}").id,
     isRepost: false,
     isPoll: false,
     repost: "",
@@ -212,7 +212,7 @@ export default function CreatePostModal() {
     <dialog id="createPostModal" class="modal w-screen h-screen z-[-1f]">
       <Switch>
         <Match when={isPosting() && !hasError()}>
-          <div class={joinClass("modal-box scroll p-4 h-fit relative text-white border-4 rounded-xl border-transparent z-[-1] animate-gradient-border bg-base-200 text-black shadow-xl text-center")}>
+          <div class={joinClass("modal-box scroll p-4 h-fitrelative border-4 rounded-xl border-transparent z-[-1] animate-gradient-border bg-base-200 text-black shadow-xl text-center")}>
             <div class="absolute inset-0 rounded-xl border-4 border-transparent pointer-events-none animate-border-overlay"></div>
 
             <h2 class="text-xl font-semibold mb-4">Hang tight!</h2>
@@ -222,24 +222,13 @@ export default function CreatePostModal() {
           </div>
         </Match>
         <Match when={!isPosting() && !hasError()}>
-          <div class="modal-box bg-base-200 rounded-xl scroll p-2 z-[-1]  ">
+          <div class="modal-box scroll p-2 z-[-1]  ">
             <div class="flex flex-row justify-between  ">
               <button
                 class="btn btn-sm focus:outline-none btn-circle btn-ghost  "
-                onClick={() => {
-setPostData(content: "",
-    links: [],
-    tags: [],
-    author: JSON.parse(localStorage.getItem("postr_auth")).id,
-    isRepost: false,
-    isPoll: false,
-    repost: "",
-    whoCanSee: "public",
-    embedded_link: null,
-    _preview_meta: null)
-document.getElementById("createPostModal")?.close()}}
+                onClick={() => document.getElementById("createPostModal")?.close()}
               >
-                X
+                ✕
               </button>
               <p class="text-blue-500 btn btn-sm rounded-full">Drafts</p>
             </div>
@@ -258,8 +247,8 @@ document.getElementById("createPostModal")?.close()}}
                   value={postData().content}
                   maxLength={200}
                   class={joinClass(
-                    "w-full h-fit  bg-base-200 rounded-lg mx-5 resize-none outline-none scroll"
-                    
+                    "w-full h-fit  rounded-lg mx-5 resize-none outline-none scroll",
+                    theme() === "dark" ? "bg-black text-white" : "bg-white"
                   )}
                   placeholder={
                     (canCommentOnPost() && replyRule() == "public") ||
