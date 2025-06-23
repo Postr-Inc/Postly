@@ -130,7 +130,7 @@ export default function useFeed(
         scrollTimeout = setTimeout(async () => {
           scrollTimeout = null;
 
-          if (window.innerHeight + window.scrollY < document.body.offsetHeight) return;
+          if (window.innerHeight + window.scrollY < document.body.offsetHeight - 350) return;
 
           if (hasMore() && totalPages() > currentPage()) {
             const nextPage = currentPage() + 1;
