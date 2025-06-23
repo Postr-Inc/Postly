@@ -381,15 +381,20 @@ export default function User() {
                   <img
                     src={user().avatar?.includes("blob") ? user().avatar : api.cdn.getUrl("users", user().id, user().avatar)}
                     class={`
-                      rounded-full xl:w-24 xl:h-24 w-[5rem] h-[5rem] mx-1 border-2  -mt-12 object-cover
-                     ${theme() === "dark" ? "border-white" : "border-base-200"}  
+                      rounded-full xl:w-24 xl:h-24 w-[5rem] h-[5rem] mx-1   -mt-12 object-cover
+                       
                     `}
                   />
                 </Match>
                 <Match when={!user() || !user().avatar}>
-                  <div class="rounded-full w-24 h-24 mx-1 border-4 border-white -mt-12 bg-base-300 flex items-center justify-center">
-                    <p class="text-2xl text-black">{user() && user()?.username[0]}</p>
-                  </div>
+                   <img
+              src="/icons/usernotfound/image.png"
+              alt={user().username}
+              class={`
+                      rounded-full xl:w-24 xl:h-24 w-[5rem] h-[5rem] mx-1   -mt-12 object-cover
+                  
+                    `}
+            />
                 </Match>
               </Switch>
               <Switch>
@@ -404,7 +409,7 @@ export default function User() {
                     class={
                       theme() === "dark"
                         ? "bg-white text-black p-2 w-24 mr-2 mt-2 text-sm"
-                        : "bg-black text-white p-2 rounded-full mt-2 w-24 mr-2 text-sm"
+                        : "bg-black text-white mt-2 p-2 rounded-full w-24 mr-2 text-sm"
                     }
                     onclick={() => notFound() ? null : api.authStore.model.id  && follow("unfollow")}
                   >
@@ -459,17 +464,32 @@ export default function User() {
               @{user() && user().username}
               {user() && user().id.slice(0, 5)}
             </span>
-            <p class=" mt-2">{user() && user().bio}</p>
+            <p class=" mt-2">{user() && user().bio}</p> 
             <div class="flex flex-row gap-5 mt-2">
-              {user() && user().social && (
+              {user() && typeof user().social === "string" && user().social.trim() !== "" && (
                 <p class="flex flex-row gap-1 items-center text-sm  ">
                   <Link class="h-4 w-4" />
-                  <span onClick={() => {
-                    if (user().social.startsWith("https://")) {
-                      window.open(user().social, "_blank");
-                    }
-                  }} class="text-blue-500">
-                    {user() && user().social.split("/")[2].split(".")[0]}
+                  <span
+                    onClick={() => {
+                      if (user().social && user().social.startsWith("https://")) {
+                        window.open(user().social, "_blank");
+                      }
+                    }}
+                    class="text-blue-500"
+                  >
+                    {(() => {
+                      try {
+                        if (user().social && user().social.trim() !== "") {
+                          const parts = user().social.split("/");
+                          if (parts.length > 2 && parts[2]) {
+                            return parts[2].split(".")[0];
+                          }
+                        }
+                        return user().social;
+                      } catch {
+                        return user().social;
+                      }
+                    })()}
                   </span>
                 </p>
               )}
