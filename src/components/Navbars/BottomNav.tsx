@@ -43,7 +43,7 @@ export default function BottomNav() {
         </div>
       <ul
         class={joinClass(
-          " flex justify-between p-5   h-full bg[#121212]   border border-l-0 border-b-0 border-r-0",
+          " flex justify-between p-5   h-full bg[#121212] rounded-xl  border border-l-0 border-b-0 border-r-0",
           theme() === "dark"
             ? "text-white fill-white stroke-white bg-black border-t-[#53535322]"
             : "bg-white border-t-[#e0e0e0]",
