@@ -28,7 +28,7 @@ export default function HomeNav({
   return (
     <div
       class={joinClass(
-        "flex border-t-none flex-col sticky top-0 sm:p-0 md:p-4 z-[9999]",
+        "flex flex-col sticky top-0 sm:p-0 md:p-4 z-[9999]",
         theme() === "dark"
           ? "bg-black z-[99999] text-white border-[#121212] border border-l-0 border-r-0 border-b-none"
           : "bg-white border border-[#f3f3f3]",
@@ -52,13 +52,11 @@ export default function HomeNav({
                             class="rounded object-cover w-12 h-12 cursor-pointer"
                           ></img>
                         ) : (
-                          <div class="avatar placeholder">
-                            <div class="bg-base-300 text-black   avatar  w-16 h-16   border cursor-pointer rounded   border-white">
-                              <span class="text-2xl">
-                                {api.authStore.model.username ? api.authStore.model.username.charAt(0).toUpperCase() : "U"}
-                              </span>
-                            </div>
-                          </div>
+                           <img
+                            src={"/icons/usernotfound/image.png"}
+                            alt={api.authStore.model.username}
+                            class="rounded object-cover w-12 h-12 cursor-pointer"
+                          ></img>
                         )}
                       </>
                     ) : (
@@ -139,7 +137,11 @@ export default function HomeNav({
 
               <div class="flex gap-4">
                 <Bookmark class="w-7 h-7" />
-                <Settings class="w-7 h-7 hover:cursor-pointers" onClick={() => {
+                <Settings class="w-7 h-7 hover:cursor-pointer" onClick={() => {
+                  if(!api.authStore.model.id) {
+                    document.getElementById("register").showModal()
+                    return;
+                  }  
                   navigate("/settings");
                 }} />
               </div>
@@ -148,7 +150,7 @@ export default function HomeNav({
           </div>
         </div>
       </div>
-      <div class={joinClass("  sm:p-3  mt-2 text-sm    justify-between  flex  ",)}>
+      <div class={joinClass("  sm:p-3  mt-3  text-sm    justify-between  flex  ",)}>
         <div class="flex flex-col rounded">
           <p
             class={joinClass("cursor-pointer", page() !== "recommended" ? "text-gray-500" : "")}
