@@ -175,10 +175,14 @@ export default function EditProfileModal(
                         <label>
                             Socials
                         </label> 
-                        <input type="text" class={joinClass("input focus:outline-none", theme() === "dark" ? "border border-[#464646] rounded" : "border border-[#cac9c9] focus:border-[#cac9c9]")}
+                        <label class="input">
+  <span class="label">https://</span>
+ <input type="text" placeholder="URL" class={joinClass("input focus:outline-none", theme() === "dark" ? "border border-[#464646] rounded" : "border border-[#cac9c9] focus:border-[#cac9c9]")}
                             value={api.authStore.model.social}
                             onChange={(e) => setSocial(e.currentTarget.value)}
                         />
+</label>
+                         
                     </div>
                     <div class="flex flex-col mt-2 gap-5 p-2">
                         <label>
