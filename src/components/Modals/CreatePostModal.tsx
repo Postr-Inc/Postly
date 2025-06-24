@@ -126,7 +126,8 @@ export default function CreatePostModal() {
           "repost.author", "repost"
         ],
         invalidateCache: [
-          `/u/user_${api.authStore.model.username}_posts`,
+          `/u/user_${api.authStore.model.username}_posts`, 
+             ...(collection() == "comments"  ?`${collection()}-${data.mainComment}-comments` : `post-${data.post}`),
           `/u/user_${api.authStore.model.username}/comments`
         ],
       }) as any;
@@ -147,7 +148,12 @@ export default function CreatePostModal() {
         const postId = window.location.pathname.split("/")[3];
         const p = await api.collection("posts").get(postId);
         await api.collection("posts").update(postId, {
-          comments: [...(p.comments || []), res.id]
+          comments: [...(p.comments || []), res.id],
+          invalidateCache: [
+          `/u/user_${api.authStore.model.username}_posts`, 
+            `post-${data.post}`,
+          `/u/user_${api.authStore.model.username}/comments`
+        ],
         });
       } else {
         setTimeout(() => navigate(`/view/posts/${res.id}`), 100);
