@@ -50,7 +50,7 @@ export default function () {
                                 </span>
                                  
                             </label>
-                            <input type="checkbox" class="toggle toggle-primary" checked={api.authStore.model?.smartDataCollection} onChange={(e) => {
+                            <input type="checkbox" class="toggle rounded-xl toggle-primary" checked={api.authStore.model?.smartDataCollection} onChange={(e) => {
                                     setProfile({ ...profile(), smartDataCollection: e.currentTarget.checked });
                             }} />
                          
@@ -80,7 +80,7 @@ export default function () {
                                 Password
                             </span>
                         </label>
-                         <button class="btn  bg-blue-500 text-white w-full" onClick={() => {
+                         <button class="btn  bg-blue-500 text-white rounded-xl w-full" onClick={() => {
                             navigate("/auth/ForgotPassword");
                         }}>
                             Request Password Reset
@@ -102,7 +102,7 @@ export default function () {
                                     <br />
                                     <span class="text-red-500">This action cannot be undone.</span>
                                 </span>
-                                <button class="btn btn-error" onClick={() => {
+                                <button class="btn rounded-xl text-white btn-error" onClick={() => {
                                     //@ts-ignore
                                     document.getElementById("deleteModalConfirm").showModal(); 
                                 }}>
