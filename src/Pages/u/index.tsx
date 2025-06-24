@@ -333,8 +333,7 @@ export default function User() {
 
         <Match when={loading()}>
           <div class={
-            joinClass("flex flex-col items-center justify-center h-screen z-[99999]  ",
-              theme() === "dark" ? "bg-black" : "bg-white"
+            joinClass("flex flex-col items-center justify-center h-screen z-[99999]  ", 
             )
           }>
             <div class="loading loading-spinner text-blue-500">
@@ -375,7 +374,7 @@ export default function User() {
               </div>
             </div>
 
-            <div class="flex justify-between items-center ">
+            <div class="flex justify-between  items-center ">
               <Switch>
                 <Match when={user() && user().avatar}>
                   <img
@@ -453,7 +452,7 @@ export default function User() {
               </Show>
             </div>
           </div>
-          <div class="flex flex-col p-2">
+          <div class="flex flex-col   p-2">
             <h1 class="text-2xl font-bold flex hero gap-2">
               {user() ? user().username : "Loading..."}
               <Show when={user() && user().verified}>
@@ -525,7 +524,7 @@ export default function User() {
             <Show when={!user()}>
               <div class="w-screen justify-center flex mx-auto"></div>
             </Show>
-            <div class="flex flex-row justify-between p-2 border-b-base-200">
+            <div class="flex  flex-row justify-between p-2 border-b-base-200">
               <p
                 class="flex flex-col cursor-pointer border-b-gray-500"
                 onClick={() => {
@@ -581,7 +580,7 @@ export default function User() {
                 </Show>
               </p>
             </div>
-            <div class="flex flex-col">
+            <div class="flex  flex-col">
 
               <Switch>
                 <Match when={feedLoading()}>

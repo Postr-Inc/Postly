@@ -66,7 +66,7 @@ export default function View(props: any) {
     }
 
     api.collection("comments").create(data, {
-      expand: ["author"],
+      expand: ["author", "post", "post.author"],
       invalidateCache: [`${collection}-${id}-comments`],
     }).then((data: any) => {
       let author = api.authStore.model;
@@ -118,6 +118,8 @@ export default function View(props: any) {
           "repost",
           "repost.likes",
           "repost.author",
+          "post.author",
+          "post"
         ],
       })
       .then((data) => {
@@ -212,6 +214,15 @@ export default function View(props: any) {
         </Show>
         <div>
           <Switch>
+            <Match when={loading()}>
+               {
+                Array.from(Array(10), ()=>{
+                  return (
+                    <LoadingIndicator />
+                  )
+                })
+               }
+            </Match>
             <Match when={post() && !loading() && comments().length > 0}>
               <For each={comments()}>
                 {(comment, index) => (
