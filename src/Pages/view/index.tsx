@@ -215,13 +215,7 @@ export default function View(props: any) {
         <div>
           <Switch>
             <Match when={loading()}>
-               {
-                Array.from(Array(10), ()=>{
-                  return (
-                    <LoadingIndicator />
-                  )
-                })
-               }
+             <LoadingIndicator />
             </Match>
             <Match when={post() && !loading() && comments().length > 0}>
               <For each={comments()}>
