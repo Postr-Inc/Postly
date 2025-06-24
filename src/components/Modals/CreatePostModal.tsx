@@ -441,12 +441,36 @@ export default function CreatePostModal() {
            * verticle line
            */}
               <span>{postData().content.length} / 400</span>
-              <button class="btn-sm bg-blue-500 text-white rounded-full  " onClick={()=>{
-                if(replyRule() == "private") return;
-                createPost()
-              }}>
-                {isPosting() ? "Posting..." : collection() === "posts" ? "Post" : replyRule() == "private" ? "Author Set Comments Private":"Create Comment"}
-              </button>
+             <button
+                class="btn-sm bg-blue-500 text-white rounded-full"
+                onClick={() => {
+                  if (
+                  replyRule() == "private" &&
+                  !(
+                    mainPost() &&
+                    mainPost().expand &&
+                    mainPost().expand.author &&
+                    mainPost().expand.author.id === api.authStore.model.id
+                  )
+                  )
+                  return;
+                  createPost();
+                }}
+                >
+                {isPosting()
+                  ? "Posting..."
+                  : collection() === "posts"
+                  ? "Post"
+                  : replyRule() == "private" &&
+                  !(
+                    mainPost() &&
+                    mainPost().expand &&
+                    mainPost().expand.author &&
+                    mainPost().expand.author.id === api.authStore.model.id
+                  )
+                  ? "Author Set Comments Private"
+                  : "Create Comment"}
+                </button>
             </div>
           </div>
         </Match>
