@@ -250,30 +250,35 @@ export default function CreatePostModal() {
                   value={postData().content}
                   maxLength={400}
                   class={joinClass(
-                    "    bg-transparent  w-full rounded-lg mx-5  outline-none scroll", 
-                    postData().content.length > 20 ? "h-[34rem]" : ""
+                  "    bg-transparent  w-full rounded-lg mx-5  outline-none scroll", 
+                  postData().content.length > 20 ? "h-[34rem]" : ""
                   )}
                   placeholder={
-                    (canCommentOnPost() && replyRule() == "public") ||
-                      (!canCommentOnPost() &&
-                        mainPost() &&
-                        mainPost().expand &&
-                        mainPost().expand.author &&
-                        mainPost().expand.author.id === api.authStore.model.id)
-                      ? "What is on your mind?"
-                      : "Post replies are restricted, only the author can reply"
+                  (canCommentOnPost() && replyRule() == "public") ||
+                    (!canCommentOnPost() &&
+                    mainPost() &&
+                    mainPost().expand &&
+                    mainPost().expand.author &&
+                    mainPost().expand.author.id === api.authStore.model.id)
+                    ? "What is on your mind?"
+                    : "Post replies are restricted, only the author can reply"
                   }
-                  disabled={(canCommentOnPost() && replyRule() == "public") == false ||
-                      (!canCommentOnPost() &&
-                        mainPost() &&
-                        mainPost().expand &&
-                        mainPost().author &&
-                        mainPost().author !== api.authStore.model.id)}
+                  disabled={
+                  !(
+                    (canCommentOnPost() && replyRule() == "public") ||
+                    (
+                    !canCommentOnPost() &&
+                    mainPost() &&
+                    mainPost().expand &&
+                    mainPost().expand.author &&
+                    mainPost().expand.author.id === api.authStore.model.id
+                    )
+                  )
+                  }
                   onInput={(e: any) => {
-                    setPostData({ ...postData(), content: e.target.value });
+                  setPostData({ ...postData(), content: e.target.value });
                   }}
                 ></textarea>
-
 
 
 
