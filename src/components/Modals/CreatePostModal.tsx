@@ -193,7 +193,7 @@ export default function CreatePostModal() {
   };
 
   //@ts-ignore
-  window.repost = (post: any) => {
+  window.repost = (post: any) => { 
     setPostData({ ...postData(), isRepost: true, repost: post, hidden: ["repostButton"] });
   }
   //@ts-ignore
@@ -212,6 +212,25 @@ export default function CreatePostModal() {
   //@ts-ignore
   window.setMainPost = (data) => {
     setMainPost(data)
+  }
+
+  function closeAndReset(){
+    console.log("yesss")
+    setCanCommentOnPost(true)
+    setReplyRule("public")
+    setCollection(window.location.pathname.split("/")[2] === "posts" ? "comments" : "posts");
+    setPostData({ content: "",
+    links: [],
+    tags: [],
+    author: JSON.parse(localStorage.getItem("postr_auth") || "{}").id,
+    isRepost: false,
+    isPoll: false,
+    repost: "",
+    whoCanSee: "public",
+    embedded_link: null,
+    _preview_meta: null
+  })
+    document.getElementById("createPostModal")?.close();
   }
 
   return (
@@ -234,30 +253,22 @@ export default function CreatePostModal() {
             <div class="flex flex-row  h-full justify-between  ">
               <button
                 class="btn btn-sm focus:outline-none btn-circle btn-ghost  "
-                onClick={() => document.getElementById("createPostModal")?.close()}
+                onClick={closeAndReset}
               >
                 ✕
               </button>
               <p class="text-blue-500 btn btn-sm rounded-full">Drafts</p>
             </div>
-            <div class={joinClass("flex flex-row h-full text-lg mt-5", 
+            <div class={joinClass("flex flex-row h-full overflow-hidden  text-lg mt-5", 
             )}>
-              <img
-                src={api.cdn.getUrl(
-                  "users",
-                  api.authStore.model.id,
-                  api.authStore.model.avatar
-                )}
-                class="w-10 h-10 rounded"
-                alt="logo"
-              />
-              <div class="flex flex-col h-full gap-2  ">
+               
+              <div class="flex flex-col w-full h-full gap-2 overflow-hidden  ">
                 <textarea
                   value={postData().content}
                   maxLength={400}
                   class={joinClass(
-                  "    bg-transparent  w-full rounded-lg mx-5  outline-none scroll", 
-                  postData().content.length > 20 ? "h-[34rem]" : ""
+                  "    bg-transparent  w-full rounded-lg  p-3 resize-none overflow-hidden  outline-none scroll", 
+                  postData().content.length > 100 ? "h-[24rem]" : ""
                   )}
                   placeholder={
                   (canCommentOnPost() && replyRule() == "public") ||
@@ -285,6 +296,7 @@ export default function CreatePostModal() {
                   setPostData({ ...postData(), content: e.target.value });
                   }}
                 ></textarea>
+
 
 
 
@@ -447,7 +459,7 @@ export default function CreatePostModal() {
            * verticle line
            */}
               <span>{postData().content.length} / 400</span>
-             <button
+                <button
                 class="btn-sm bg-blue-500 text-white rounded-full"
                 onClick={() => {
                   if (
@@ -485,32 +497,14 @@ export default function CreatePostModal() {
             <div class="flex flex-row justify-between  ">
               <button
                 class="btn btn-sm focus:outline-none btn-circle btn-ghost  "
-                onClick={() => document.getElementById("createPostModal")?.close()}
+                onClick={closeAndReset}
               >
                 ✕
               </button>
               <p class="text-blue-500 btn btn-sm rounded-full">Drafts</p>
             </div>
-            <div class="flex flex-row  text-lg mt-5">
-              <Switch>
-                <Match when={api.authStore.model.avatar}>
-                  <img
-                    src={api.cdn.getUrl(
-                      "users",
-                      api.authStore.model.id,
-                      api.authStore.model.avatar
-                    )}
-                    class="w-10 h-10 rounded"
-                    alt="logo"
-                  />
-                </Match>
-                <Match when={!api.authStore.model.avatar.length > 0}>
-                  <div class="rounded-full w-12 h-12    bg-base-200 text-white flex items-center justify-center">
-                    <p class={theme() == "dark" ? "text-white" : "text-black"}>{api.authStore.model.username[0]}</p>
-                  </div>
-                </Match>
-              </Switch>
-              <div class="flex flex-col gap-2">
+            <div class="flex flex-row  text-lg mt-5"> 
+              <div class="flex flex-col w-full gap-2">
                 <textarea
                   maxLength={400}
                   class={joinClass(
@@ -521,7 +515,7 @@ export default function CreatePostModal() {
                   disabled={true}
                 ></textarea>
 
-                <Show when={postData().isRepost}>
+                <Show when={postData().repost}>
                   <Post {...postData().repost} />
                 </Show>
               </div>
