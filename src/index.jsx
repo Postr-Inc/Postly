@@ -17,7 +17,7 @@ import deviceManagement from './Pages/settings/device-management';
 import applicationUpdates from './Pages/settings/application-updates';
 import myFeed from './Pages/settings/my-feed';
 const root = document.getElementById('root');
-export const api = new SDK({serverURL:'http://localhost:8080'});  
+export const api = new SDK({serverURL:'https://api.postlyapp.com'});  
 if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
   throw new Error(
     'Root element not found. Did you forget to add it to your index.html? Or maybe the id attribute got misspelled?',
