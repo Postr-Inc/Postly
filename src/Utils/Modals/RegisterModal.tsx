@@ -18,9 +18,9 @@ export default function RegisterModal() {
     let [confirmPassword, setConfirmPassword] = createSignal("");
     let [emailExists, setEmailExists] = createSignal(false);
     let [userNameExists, setUserNameExists] = createSignal(false);
-    function checkEmailandUsername() {
-        // Check if email exists 
-        console.log(api.serverURL)
+    let [businessname, setbusinessname]  = createSignal(false)
+    const [isBuisnessAccount, setIsBuisinessAccount] = createSignal(false)
+    function checkEmailandUsername() { 
         fetch(`${api.serverURL}/auth/check`, {
             method: "POST",
             headers: {
@@ -79,12 +79,18 @@ export default function RegisterModal() {
         })
     }
     return (
-        <Modal id="register" className=" xl:w-[600px] focus:outline-none xl:h-[700px] md:w-[600px] self-center w-full h-full flex flex-col mx-auto xl:mt-12 md:mt-12 md:rounded-xl xl:rounded-xl"  >
-            <Modal.Content className="xl:w-[600px] xl:h-[600px] relative  md:w-[600px] md:h-1/2 w-full h-full">
+        <Modal id="register" className={
+            joinClass(" xl:w-[600px] focus:outline-none xl:h-[800px] md:w-[600px] self-center w-full h-full flex flex-col mx-auto xl:mt-12 md:mt-12 md:rounded-xl xl:rounded-xl" ,
+                theme() == "dark" ? "bg-black" : ""
+            )
+        } >
+            <Modal.Content className={
+                joinClass("xl:w-[600px] xl:h-[600px] relative  md:w-[600px] md:h-1/2 w-full h-full", theme() == "dark" ? "bg-black" : "")
+            }>
                 <div class="flex justify-between p-2">
                      <Switch>
                         <Match when={stages() === 1}>
-                            <button onClick={() => document.getElementById("register")?.close()} class="  text-lg w-6 h-6 size-6  p-2">X</button>
+                            <button onClick={() => document.getElementById("register")?.close()} class="  text-lg w-6 h-6 size-6 focus:outline-none  p-2">X</button>
                         </Match>
                         <Match when={stages() === 2}>
                             <button>
@@ -103,7 +109,7 @@ export default function RegisterModal() {
                     </Switch>
                     <div></div>
                 </div>
-                <Show when={stages() === 1}>
+                <Show when={stages() === 1 && !isBuisnessAccount()}>
                     <div class="flex flex-col p-5 mt-2 gap-5">
                         <h1 class="flex  font-bold text-2xl  ">Join the community! Empowering open source social media</h1>
                         <label>
@@ -134,11 +140,81 @@ export default function RegisterModal() {
                             Next
                         </button>
 
-                          <a href="/auth/login" class="text-blue-500">Already Have an Account? Login to continue</a>
+                          <button class="btn btn-md text-white bg-blue-500 rounded-full" onClick={()=> setIsBuisinessAccount(true) && setStages(1)}>Or Create A Buisiness Account</button>
+                          <a href="/auth/login" class="text-blue-500">Already Have an Account? Login to continue</a> 
 
                     </div>
                 </Show>
-                <Show when={stages() === 2}>
+                <Show when={stages() === 1 && isBuisnessAccount()}>
+                    <div class="flex flex-col p-5 mt-2 gap-5">
+                        <h1 class="flex  font-bold text-2xl  ">Grow your Brand With Postly!</h1>
+                        <label>
+                            {username() && userNameExists() ? <span class="text-red-500">Account Name already exists</span> : "Business Name"}
+                        </label>
+                        <input type="text" class="input input-bordered" placeholder="Business Name" onInput={(e: any) => setUsername(e.target.value)} value={username()} />
+                        <label>
+                            First and Last Name
+                        </label>
+                        <input type="text" class="input input-bordered" placeholder="Full name" onInput={(e: any) => setUsername(e.target.value)} value={username()} />
+                        <label>
+                            Business Email
+                        </label>
+                        <input type="email" class={joinClass("input input-bordered", emailExists() ? "border-red-500" : "")} placeholder="Email" onInput={(e: any) => setEmail(e.target.value)}
+                            value={email()} />
+                        
+                        <button
+                            onClick={() => {
+                                if (emailExists()  || !email() || !username() || !dob() ||   userNameExists()) {
+                                    return;
+                                }
+                                setStages(2)
+                            }} 
+                            disabled={emailExists() || !email() || !username() || !dob() ||   userNameExists()}
+                            class="btn rounded-full btn-primary"
+                        >
+                            Next
+                        </button>
+ 
+                          <a href="/auth/login" class="text-blue-500">Already Have an Account? Login to continue</a> 
+
+                    </div>
+                </Show>
+                 <Show when={stages() === 2 && isBuisnessAccount()}>
+                    <div class="flex flex-col p-5 mt-2 gap-5">
+                        <h1 class="flex  font-bold text-2xl  ">Lets Setup More Details!</h1>
+                        <label>
+                            {username() && userNameExists() ? <span class="text-red-500">Account Name already exists</span> : "Business Name"}
+                        </label>
+                        <input type="text" class="input input-bordered" placeholder="Business Name" onInput={(e: any) => setUsername(e.target.value)} value={username()} />
+                        <label>
+                            First and Last Name
+                        </label>
+                        <input type="text" class="input input-bordered" placeholder="Full name" onInput={(e: any) => setUsername(e.target.value)} value={username()} />
+                        <label>
+                            Business Email
+                        </label>
+                        <input type="email" class={joinClass("input input-bordered", emailExists() ? "border-red-500" : "")} placeholder="Email" onInput={(e: any) => setEmail(e.target.value)}
+                            value={email()} />
+                        
+                        <button
+                            onClick={() => {
+                                if (emailExists()  || !email() || !username() || !dob() ||   userNameExists()) {
+                                    return;
+                                }
+                                setStages(2)
+                            }} 
+                            disabled={emailExists() || !email() || !username() || !dob() ||   userNameExists()}
+                            class="btn rounded-full btn-primary"
+                        >
+                            Next
+                        </button>
+ 
+                          <a href="/auth/login" class="text-blue-500">Already Have an Account? Login to continue</a> 
+
+                    </div>
+                </Show>
+                
+                <Show when={stages() === 2 && !isBuisnessAccount()}>
                     <div class="flex flex-col p-5 mt-2 gap-5">
                         <h1 class="flex  font-bold text-2xl  ">Create Your Account</h1>
                         <label>
