@@ -129,6 +129,14 @@ export default function Post(props: Props) {
     const hasLiked = currentLikes.includes(userId);
     const action = hasLiked ? "unlike" : "like";
     const collection = isComment ? "comments" : "posts";
+    if(action === "like"){
+      setLikes([...likes(), userId]);
+    }else{
+      setLikes(hasLiked
+          ? currentLikes.filter(id => id !== userId)
+          : [...currentLikes, userId]
+        );
+    }
 
     try {
       const { res } = await api.send(`/actions/${collection}/${action}`, {
@@ -374,7 +382,7 @@ export default function Post(props: Props) {
        <span className="loading loading-spinner loading-2xl flex mx-auto justify-center text-blue-500 mb-5"></span>
         </Match>
         <Match when={props.embedded_link && loadedMeta()}>
-          <Show when={loadedMeta() && _preview_meta()}>
+          <Show when={ _preview_meta().image}>
 
         <a
           href={props.embedded_link}
