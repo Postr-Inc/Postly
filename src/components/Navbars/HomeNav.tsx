@@ -29,9 +29,7 @@ export default function HomeNav({
     <div
       class={joinClass(
         "flex flex-col sticky top-0 sm:p-0 md:p-4 z-[9999]",
-        theme() === "dark"
-          ? "bg-black z-[99999] text-white  "
-          : "bg-white border  ",
+        
         "backdrop-blur-sm",
       )}
     >
