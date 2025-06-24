@@ -30,8 +30,8 @@ export default function HomeNav({
       class={joinClass(
         "flex flex-col sticky top-0 sm:p-0 md:p-4 z-[9999]",
         theme() === "dark"
-          ? "bg-black z-[99999] text-white border-[#121212] border border-l-0 border-r-0 border-b-none"
-          : "bg-white border border-[#f3f3f3]",
+          ? "bg-black z-[99999] text-white  "
+          : "bg-white border  ",
         "backdrop-blur-sm",
       )}
     >
