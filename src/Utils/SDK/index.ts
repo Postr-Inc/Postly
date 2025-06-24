@@ -272,8 +272,11 @@ if (this.isOnIos) {
     model: JSON.parse(localStorage.getItem("postr_auth") || "{}"),
     deleteAccount: ()=> {
       return new Promise(async( resolve,reject) =>{
-        const res = await fetch(`${this.serverURL}/auth/delete-account`, {
-          method: "DELETE"
+        const res = await fetch(`${this.serverURL}/auth/delete`, {
+          method: "DELETE",
+          headers: {
+            "Authorization": this.authStore.model.token
+          }
         })
       })
     },
