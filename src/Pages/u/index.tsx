@@ -1,3 +1,4 @@
+
 import { api } from "@/src";
 import ArrowLeft from "@/src/components/Icons/ArrowLeft";
 import Calendar from "@/src/components/Icons/Calendar";
@@ -20,6 +21,7 @@ import useFeed from "@/src/Utils/Hooks/useFeed";
 import { useParams } from "@solidjs/router";
 import LoadingIndicator from "@/src/components/Icons/loading";
 import FollowingListModal from "@/src/components/Modals/FollowingListModal";
+import MapPin from "@/src/components/Icons/MapPin";
 async function handleFeed(
   type: string,
   params: any,
@@ -489,6 +491,16 @@ export default function User() {
                         return user().social;
                       }
                     })()}
+                  </span>
+                </p>
+              )}
+               {user() && typeof user().location === "string" && user().location.trim() !== "" && (
+                <p class="flex flex-row gap-1 items-center text-sm  "> 
+                  <MapPin class="h-4 w-4" />
+                  <span
+                     
+                  >
+                      {user().location}
                   </span>
                 </p>
               )}
