@@ -10,9 +10,14 @@ import View from './Pages/view';
 import User from './Pages/u';
 import ForgotPassword from './Pages/auth/ForgotPassword';
 import Registration from './Pages/auth/Registration';
-
+import Settings from './Pages/settings';
+import profileSettings from './Pages/settings/profile-settings';
+import accountSecurity from './Pages/settings/account-security';
+import deviceManagement from './Pages/settings/device-management';
+import applicationUpdates from './Pages/settings/application-updates';
+import myFeed from './Pages/settings/my-feed';
 const root = document.getElementById('root');
-export const api = new SDK({serverURL:'https://api.postlyapp.com'});  
+export const api = new SDK({serverURL:'http://localhost:8080'});  
 if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
   throw new Error(
     'Root element not found. Did you forget to add it to your index.html? Or maybe the id attribute got misspelled?',
@@ -28,5 +33,11 @@ render(() =>  (
     <Route path="/" component={App} />
     <Route path="/view/:collection/:id" component={View} />
     <Route path="/u/:id" component={User} />
+    <Route path="/settings" component={Settings} />
+    <Route path="/settings/profile-settings" component={profileSettings} />
+    <Route path={"/settings/account-security"} component={accountSecurity} />
+    <Route path={"/settings/device-management"} component={deviceManagement} />
+    <Route path={"/settings/application-updates"} component={applicationUpdates} />
+    <Route path={"/settings/my-feed"} component={myFeed} />
   </Router>
 ), root);
