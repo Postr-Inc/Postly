@@ -13,6 +13,8 @@ export default function RequireSignupModal(props: RequireSignupModalProps = {}) 
   onMount(() => {
     ;(window as any).requireSignup = () => {
       setVisible(true)
+      //@ts-ignore
+      window.hideBottomNav() 
       setIsAnimating(true)
     }
   })
@@ -35,6 +37,8 @@ export default function RequireSignupModal(props: RequireSignupModalProps = {}) 
     setIsAnimating(false)
     setTimeout(() => {
       setVisible(false)
+      //@ts-ignore
+      window.showBottomNav()
       props.onClose?.()
     }, 300)
   }
@@ -159,7 +163,7 @@ export default function RequireSignupModal(props: RequireSignupModalProps = {}) 
           }}
         >
           <div
-            class="relative bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden max-w-md w-full"
+            class="relative bg-white dark:bg-gray-900 rounded-2xl sm:h-[675px] sm:mt-24 shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden max-w-md w-full"
             style={{
               animation: isAnimating() ? "modalEnter 0.3s ease-out" : "modalExit 0.3s ease-in",
             }}
@@ -181,9 +185,7 @@ export default function RequireSignupModal(props: RequireSignupModalProps = {}) 
                 </div>
 
                 <h2 class="text-xl font-bold mb-2">Unlock Full Access by Joining Early</h2>
-                <p class="text-blue-100 text-sm">
-                  You need an account to use this feature. Sign up today and become a founding member of Postly!
-                </p>
+                 
               </div>
             </div>
 
