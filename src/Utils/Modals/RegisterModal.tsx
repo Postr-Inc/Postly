@@ -129,17 +129,17 @@ export default function RegisterModal() {
                         <label>
                             {username() && userNameExists() ? <span class="text-red-500">Username already exists</span> : "Username"}
                         </label>
-                        <input type="text" class="input input-bordered" placeholder="Username" onInput={(e: any) => setUsername(e.target.value)} value={username()} />
+                        <input type="text" class="input  rounded-xl input-bordered" placeholder="Username" onInput={(e: any) => setUsername(e.target.value)} value={username()} />
                         <label>
                             Email
                         </label>
-                        <input type="email" class={joinClass("input input-bordered", emailExists() ? "border-red-500" : "")} placeholder="Email" onInput={(e: any) => setEmail(e.target.value)}
+                        <input type="email" class={joinClass("input  rounded-xl input-bordered", emailExists() ? "border-red-500" : "")} placeholder="Email" onInput={(e: any) => setEmail(e.target.value)}
                             value={email()} />
                         <label>
                             {dob() && !checkDateOfBirth() ? <span class="text-red-500">You must be atleast 17 years old</span> : "Date of Birth "}
                         </label>
                         <input type="date" placeholder="Date of Birth" value={dob()} onInput={(e: any) => setDob(e.target.value)}
-                            class={joinClass("input input-bordered", !checkDateOfBirth() ? "border-red-500" : "")}
+                            class={joinClass("input  rounded-xl input-bordered", !checkDateOfBirth() ? "border-red-500" : "")}
                         />
                         <button
                             onClick={() => {
@@ -149,12 +149,12 @@ export default function RegisterModal() {
                                 setStages(2)
                             }}
                             disabled={emailExists() || !email() || !username() || !dob() || !checkDateOfBirth() || userNameExists()}
-                            class="btn rounded-full btn-primary"
+                            class="btn  rounded-xl btn-primary"
                         >
                             Next
                         </button>
 
-                        <button class="btn btn-md text-white bg-blue-500 rounded-full" onClick={() => {
+                        <button class="btn btn-md text-white bg-blue-500  rounded-xl" onClick={() => {
                         setIsBuisinessAccount(true) 
                         setStages(1)
                         }}>Or Create A Buisiness Account</button>
@@ -168,21 +168,21 @@ export default function RegisterModal() {
                         <label>
                             {username() && userNameExists() ? <span class="text-red-500">Buisness Name already exists</span> : "Business Name"}
                         </label>
-                        <input type="text" class="input input-bordered" placeholder="Business Name" onChange={(e: any) => setUsername(e.target.value)} value={username()} />
+                        <input type="text" class="input  rounded-xl input-bordered" placeholder="Business Name" onChange={(e: any) => setUsername(e.target.value)} value={username()} />
                         <label>
                             First and Last Name
                         </label>
-                        <input type="text" class="input input-bordered" placeholder="Full name" onChange={(e: any) => setFirstLastName(e.target.value)} value={firstLastName()} />
+                        <input type="text" class="input  rounded-xl input-bordered" placeholder="Full name" onChange={(e: any) => setFirstLastName(e.target.value)} value={firstLastName()} />
                         <label>
                             Business Email
                         </label>
-                        <input type="email" class={joinClass("input input-bordered", emailExists() ? "border-red-500" : "")} placeholder="Email" onInput={(e: any) => setEmail(e.target.value)}
+                        <input type="email" class={joinClass("input  rounded-xl input-bordered", emailExists() ? "border-red-500" : "")} placeholder="Email" onInput={(e: any) => setEmail(e.target.value)}
                             value={email()} />
 
                         <label>
                            Account Password
                         </label>
-                        <input type="password" minLength={8}   placeholder="Password" class={joinClass("input input-bordered")}  onInput={(e: any) => setPassword(e.target.value)}
+                        <input type="password" minLength={8}   placeholder="Password" class={joinClass("input  rounded-xl input-bordered")}  onInput={(e: any) => setPassword(e.target.value)}
                             value={password()} />
 
                         <button
@@ -193,7 +193,7 @@ export default function RegisterModal() {
                                 setStages(2)
                             }}
                             disabled={emailExists() || !email() || !firstLastName() || userNameExists() || !password()}
-                            class="btn rounded-full btn-primary"
+                            class="btn  rounded-xl btn-primary"
                         >
                             Next
                         </button>
@@ -208,11 +208,11 @@ export default function RegisterModal() {
                         <label>
                             Website
                         </label>
-                        <input type="text" class="input input-bordered" placeholder="Website Url" onInput={(e: any) => setBusinessWebsite(e.target.value)} value={buisnessWebsite()} />
+                        <input type="text" class="input  rounded-xl input-bordered" placeholder="Website Url" onInput={(e: any) => setBusinessWebsite(e.target.value)} value={buisnessWebsite()} />
                         <label>
                             Industry & Niche
                         </label>
-                        <select class="select  border" onInput={(e) => setNiche(e.currentTarget.value)}>
+                        <select class="select  rounded-xl  border" onInput={(e) => setNiche(e.currentTarget.value)}>
                             <option disabled selected>Choose your company's niche</option>
                             <option>Tech startups</option>
                             <option>Personal brands</option>
@@ -249,25 +249,25 @@ export default function RegisterModal() {
                         </label>
                         <div>
                             <label class="flex gap-2">
-                                <input type="radio" name="postlyUse" class="radio" value="Engage with a community" onInput={(e) => setPostlyUse(e.currentTarget.value)} />
+                                <input type="radio" name="postlyUse" class="radio rounded-full" value="Engage with a community" onInput={(e) => setPostlyUse(e.currentTarget.value)} />
                                 Engage with a community
                             </label>
                         </div>
                         <div>
                             <label class="flex gap-2">
-                                <input type="radio" name="postlyUse" class="radio" value="Build a brand presence" onInput={(e) => setPostlyUse(e.currentTarget.value)} />
+                                <input type="radio" name="postlyUse" class="radio rounded-full" value="Build a brand presence" onInput={(e) => setPostlyUse(e.currentTarget.value)} />
                                 Build a brand presence
                             </label>
                         </div>
                         <div>
                             <label class="flex gap-2">
-                                <input type="radio" name="postlyUse" class="radio" value="Post personally under a founder or team voice" onInput={(e) => setPostlyUse(e.currentTarget.value)} />
+                                <input type="radio" name="postlyUse" class="radio rounded-full" value="Post personally under a founder or team voice" onInput={(e) => setPostlyUse(e.currentTarget.value)} />
                                 Post personally under a founder or team voice
                             </label>
                         </div>
                         <div>
                             <label class="flex gap-2">
-                                <input type="radio" name="postlyUse" class="radio" value="Still figuring it out" onInput={(e) => setPostlyUse(e.currentTarget.value)} />
+                                <input type="radio" name="postlyUse" class="radio rounded-full" value="Still figuring it out" onInput={(e) => setPostlyUse(e.currentTarget.value)} />
                                 Still figuring it out
                             </label>
                         </div>
