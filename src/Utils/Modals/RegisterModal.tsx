@@ -68,6 +68,7 @@ export default function RegisterModal() {
                 email: email(),
                 password: password(),
                 username: username(),
+                isEarlyUser: true,
                 dob: dob()
             })
         }).then(res => res.json()).then(async res => {
@@ -141,7 +142,7 @@ export default function RegisterModal() {
                         </button>
 
                           <button class="btn btn-md text-white bg-blue-500 rounded-full" onClick={()=> setIsBuisinessAccount(true) && setStages(1)}>Or Create A Buisiness Account</button>
-                          <a href="/auth/login" class="text-blue-500">Already Have an Account? Login to continue</a> 
+                          <a href="/auth/login" class="text-blue-500 text-center">Already Have an Account? Login to continue</a> 
 
                     </div>
                 </Show>
@@ -175,7 +176,7 @@ export default function RegisterModal() {
                             Next
                         </button>
  
-                          <a href="/auth/login" class="text-blue-500">Already Have an Account? Login to continue</a> 
+                          <a href="/auth/login" class="text-blue-500 text-center">Already Have an Account? Login to continue</a> 
 
                     </div>
                 </Show>
@@ -183,7 +184,7 @@ export default function RegisterModal() {
                     <div class="flex flex-col p-5 mt-2 gap-5">
                         <h1 class="flex  font-bold text-2xl  ">Lets Setup More Details!</h1>
                         <label>
-                            {username() && userNameExists() ? <span class="text-red-500">Account Name already exists</span> : "Business Name"}
+                            {username() && userNameExists() ? <span class="text-red-500">What do you sell?</span> : "Business Name"}
                         </label>
                         <input type="text" class="input input-bordered" placeholder="Business Name" onInput={(e: any) => setUsername(e.target.value)} value={username()} />
                         <label>
