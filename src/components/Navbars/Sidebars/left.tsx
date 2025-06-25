@@ -220,10 +220,10 @@ export function SideBarLeft(props: {
                 if(api.authStore.model.id){
                     //@ts-ignore
                 document.getElementById("createPostModal").showModal();
-                  //@ts-ignore
-                resetCreatePost()
+                  //@ts-ignore 
                 }else{
-                  document.getElementById("register").showModal();
+                  //@ts-ignore
+                  requireSignup()
                 }
               }}
               class="btn rounded-full  text-lg hero btn-ghost  hover:bg-blue-500 focus:bg-blue-500 bg-blue-500 text-white "
