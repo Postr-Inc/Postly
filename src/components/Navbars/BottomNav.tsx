@@ -7,21 +7,35 @@ import useNavigation from "@/src/Utils/Hooks/useNavigation";
 import Heart from "../Icons/heart";
 import Mail from "../Icons/Mail";
 import Scissors from "../Icons/Scissors";
-import { createEffect, createSignal } from "solid-js";
+import { createEffect, createSignal, onMount, Show } from "solid-js";
 import { api } from "@/src";
+import useDevice from "@/src/Utils/Hooks/useDevice";
 
 export default function BottomNav() {
   const { theme } = useTheme();
   const { route, navigate } = useNavigation();
+  const [ hide, setHide] = createSignal(false)
   const { scrollingDirection } = useScrollingDirection()
+  const { mobile } = useDevice()
+  onMount(()=>{
+    //@ts-ignore
+    window.hideBottomNav = ()=>{
+           setHide(true)
+    } 
+    window.showBottomNav = ()=>{
+           setHide(false)
+    } 
+  })
   return (
     <div
       class={joinClass(
         "fixed bottom-[-2px] sm:bottom-[0px]  z-[999999] w-full", 
         "xl:hidden lg:hidden 2xl:hidden",
+        hide() && mobile() ? "hidden" : ""
       )}
     >
-        <div class={joinClass("btn btn-circle border-none btn-xl  fixed bottom-24 right-3", scrollingDirection() == "down" ? "bg-opacity-50" : 
+         <Show when={!window.location.pathname.includes("/settings")}>
+         <div class={joinClass("btn btn-circle border-none btn-xl  fixed bottom-24 right-3", scrollingDirection() == "down" ? "bg-opacity-50" : 
         scrollingDirection() == "up" ? "bg-opacity-100" : "bg-opacity-100", theme() == "dark" ? "bg-white text-black" : "bg-black text-white"
         )}>
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class={joinClass(" size-6", theme() == "dark" ? "fill-black" : "fill-white" )} onClick={() =>{
@@ -41,6 +55,7 @@ export default function BottomNav() {
 </svg>
 
         </div>
+        </Show>
       <ul
         class={joinClass(
           " flex justify-between p-5   h-full bg[#121212] rounded-xl  border border-l-0 border-b-0 border-r-0",
