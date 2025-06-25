@@ -35,7 +35,9 @@ render(() =>  (
     <Route path="/u/:id" component={User} />
     <Route path="/settings" component={Settings} />
     <Route path="/settings/profile-settings" component={profileSettings} />
-    <Route path={"/settings/account-security"} component={accountSecurity} />
+    <Route path={"/settings/account-management"} component={AccountManagement} />
+    <Route path={"/settings/account-management/account"} component={Account} />
+    <Route path={"/settings/account-management/password"}component={Password}/>
     <Route path={"/settings/device-management"} component={deviceManagement} />
     <Route path={"/settings/application-updates"} component={applicationUpdates} />
     <Route path={"/settings/my-feed"} component={myFeed} />
