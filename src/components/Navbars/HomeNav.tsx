@@ -99,8 +99,8 @@ export default function HomeNav({
                         onClick={() => {
                           //@ts-ignore
                           if (!api.authStore.model.id) {
-                            //@ts-ignore
-                            document.getElementById("register").showModal()
+                            //@ts-ignore 
+                            requireSignup()
                           } else {
                             //@ts-ignore
                             document
@@ -201,7 +201,7 @@ export default function HomeNav({
         </div>
 
 
-      </div>
+      </div> 
       <Portal >
         <LogoutModal />
       </Portal>
