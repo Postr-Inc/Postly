@@ -47,7 +47,7 @@ export default function BottomNav() {
            //@ts-ignore   
            window.modal = "comments" 
           }else{
-            document.getElementById("register").showModal()
+            requireSignup()
           }
             
         }}>
