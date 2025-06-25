@@ -1,4 +1,4 @@
-import { ErrorBoundary, Show } from "solid-js";
+import { createSignal, ErrorBoundary, onMount, Show } from "solid-js";
 import { Resizable, ResizablePanel, ResizableHandle } from "@/components/ui/resizable";
 import { SideBarLeft } from "@/src/components/Navbars/Sidebars/left";
 import { SideBarRight } from "@/src/components/Navbars/Sidebars/right";
@@ -10,10 +10,26 @@ import CreatePostModal from "@/src/components/Modals/CreatePostModal";
 import Browser from "@/src/components/Browser";
 import RegisterModal from "../Modals/RegisterModal";
 import { Portal } from "solid-js/web";
-import DeleteAccountModal from "@/src/components/Modals/DeleteAccountModal";
+import DeleteAccountModal from "@/src/components/Modals/DeleteAccountModal";  
 import Alert from "../Alerts/Alert";
+import EditProfileModal from "@/src/components/Modals/EditProfileModal";
+import EditAccountModal from "@/src/components/Modals/EditAccountModal";
+import JoinPostlyModal from "../Modals/JoinPostlyModal";
 export default function Page(props: { children: any , params: ()=> any, route: () => string, navigate: any, id: string, hide?: string[] }) {
-     const { theme } = useTheme();
+     
+       const [checkedAuth, setCheckedAuth] = createSignal(false);
+       onMount(async () => {
+         await api.checkAuth();
+     
+         // If still not valid, try basic token
+         if (!api.authStore.isValid()) {
+           try {
+             await api.authStore.getBasicAuthToken(); 
+           } catch (err) {
+             console.warn("Unable to issue basic auth token:", err);
+           }
+         }  
+       });
     return <>
     
    <div id={props.id} class={joinClass("relative xl:flex xl:w-[30vw] w-[100vw]     xl:p-0  lg:flex   2xl:w-[79rem]    justify-center xl:mx-auto ", )}>
@@ -25,8 +41,7 @@ export default function Page(props: { children: any , params: ()=> any, route: (
         }} />
         </Show>
         
-        <div class={joinClass("flex flex-col  h-full w-full  ", 
-          theme() == "dark"  ? "bg-black" : ""
+        <div class={joinClass("flex flex-col  h-full w-full  ",  
         )}>
             
         {props.children}
@@ -54,7 +69,9 @@ export default function Page(props: { children: any , params: ()=> any, route: (
     
     <RegisterModal />
     <CreatePostModal />
-    <DeleteAccountModal />  
+    <DeleteAccountModal />   
+    <EditAccountModal/>
+    <JoinPostlyModal />
     </Portal>
     
     </>
