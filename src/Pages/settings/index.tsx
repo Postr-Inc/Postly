@@ -4,11 +4,12 @@ import { api } from "@/src"
 import useNavigation from "@/src/Utils/Hooks/useNavigation"
 import useTheme from "@/src/Utils/Hooks/useTheme"
 import { joinClass } from "@/src/Utils/Joinclass"
+import Page from "@/src/Utils/Shared/Page"
 
 
-export default function SettingsPage() {
-  const { goBack, navigate} = useNavigation()
+export default function SettingsPage() { 
  
+  const { params, route, navigate, goBack } = useNavigation("/settings");
   const { theme } = useTheme()
 
   const resetCache = () => {
@@ -25,7 +26,7 @@ export default function SettingsPage() {
           <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
         </svg>
       ),
-      path: "/settings/account",
+      path: "/settings/account-management",
     },
     {
       title: "Security and account access",
@@ -89,7 +90,8 @@ export default function SettingsPage() {
   ]
 
   return (
-    <div class={joinClass("min-h-screen  ", 
+    <Page  {...{ navigate, params, route: route }} >
+         <div class={joinClass("min-h-screen  ", 
         theme() == "dark" ? "bg-black text-white" : "bg-white text-black"
     )}> 
       {/* Header */}
@@ -123,8 +125,8 @@ export default function SettingsPage() {
       {/* Settings Options */}
       <div class="px-4 space-y-0">
         {settingsOptions.map((option) => (
-          <div
-            key={option.title}
+          <div 
+            onClick={()=> navigate(option.path)}
             class={joinClass("flex items-start py-4 cursor-pointer  transition-colors -mx-4 px-4" , theme() == "dark" ? "hover:bg-gray-900" : "hover:bg-base-300")}
           >
             <div class="mr-4 mt-1 text-gray-400">{option.icon}</div>
@@ -153,5 +155,6 @@ export default function SettingsPage() {
 
        
     </div>
+    </Page>
   )
 }
