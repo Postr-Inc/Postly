@@ -1,5 +1,5 @@
 /* @refresh reload */
-import { render } from 'solid-js/web';
+import { render } from 'solid-js/web'; 
 
 import './index.css';
 import App from './App';
@@ -12,9 +12,11 @@ import ForgotPassword from './Pages/auth/ForgotPassword';
 import Registration from './Pages/auth/Registration';
 import Settings from './Pages/settings';
 import profileSettings from './Pages/settings/profile-settings';
-import accountSecurity from './Pages/settings/account-security';
+import AccountManagement from './Pages/settings/account-management';
 import deviceManagement from './Pages/settings/device-management';
 import applicationUpdates from './Pages/settings/application-updates';
+import Account from './Pages/settings/account-management/account';
+import Password from './Pages/settings/account-management/password';
 import myFeed from './Pages/settings/my-feed';
 const root = document.getElementById('root');
 export const api = new SDK({serverURL:'https://api.postlyapp.com'});  
