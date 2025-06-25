@@ -483,7 +483,7 @@ export default function Post(props: Props) {
               onClick={() => {
                 if (!api.authStore.model.id) {
                   // assume they have a basic access token
-                  (document.getElementById("register") as HTMLDialogElement)?.showModal()
+                  requireSignup();
                 } else {
                   updateLikes(api.authStore.model.id, props.isComment)
                 }
