@@ -7,6 +7,7 @@ import { api } from "@/src";
 import { joinClass } from "../Joinclass";
 import ArrowLeft from "@/src/components/Icons/ArrowLeft";
 import useNavigation from "../Hooks/useNavigation";
+import { HttpCodes } from "../SDK/opCodes";
 export default function RegisterModal() {
     const { route, navigate } = useNavigation();
     let { theme } = useTheme();
@@ -18,9 +19,13 @@ export default function RegisterModal() {
     let [confirmPassword, setConfirmPassword] = createSignal("");
     let [emailExists, setEmailExists] = createSignal(false);
     let [userNameExists, setUserNameExists] = createSignal(false);
-    let [businessname, setbusinessname]  = createSignal(false)
+    let [businessname, setbusinessname] = createSignal(false)
+    const [firstLastName, setFirstLastName] = createSignal("")
     const [isBuisnessAccount, setIsBuisinessAccount] = createSignal(false)
-    function checkEmailandUsername() { 
+    let [buisnessWebsite, setBusinessWebsite] = createSignal("")
+    let [postlyUse, setPostlyUse] = createSignal("")
+    let [niche, setNiche] = createSignal("")
+    function checkEmailandUsername() {
         fetch(`${api.serverURL}/auth/check`, {
             method: "POST",
             headers: {
@@ -28,7 +33,7 @@ export default function RegisterModal() {
             },
             body: JSON.stringify({ email: email(), username: username() })
         }).then(res => res.json()).then(res => {
-            let { data } = res;  
+            let { data } = res;
             setEmailExists(data.emailExists);
             setUserNameExists(data.usernameExists);
         })
@@ -58,30 +63,38 @@ export default function RegisterModal() {
         return true;
     }
 
-    function register() {
-        fetch(`${api.serverURL}/auth/register`, {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-                email: email(),
-                password: password(),
-                username: username(),
-                isEarlyUser: true,
-                dob: dob()
-            })
-        }).then(res => res.json()).then(async res => {
-             document.getElementById("register")?.remove();
-              api.authStore.login(email(), password()).then(res => { 
-                    navigate("/", null)
-              })
-             
+    async function register() {
+        return new Promise((resolve, reject) => {
+            fetch(`${api.serverURL}/auth/register`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    email: email(),
+                    password: password(),
+                    username: username(),
+                    isEarlyUser: true,
+                    dob: isBuisnessAccount() ? new Date().toDateString() : dob(),
+                    isBuisinessAccount: isBuisnessAccount(),
+                    first_last_name: firstLastName(),
+                    social: buisnessWebsite(),
+                    niche: niche(),
+                    postlyUse: postlyUse()
+                })
+            }).then(res => res.json()).then(async res => { 
+                if(res.status !== HttpCodes.OK){
+                    reject(false)
+                    return;
+                }
+                resolve(true)
+
+            }) 
         })
     }
     return (
         <Modal id="register" className={
-            joinClass(" xl:w-[600px] focus:outline-none xl:h-[800px] md:w-[600px] self-center w-full h-full flex flex-col mx-auto xl:mt-12 md:mt-12 md:rounded-xl xl:rounded-xl" ,
+            joinClass(" xl:w-[600px] focus:outline-none xl:h-[800px] md:w-[600px] self-center w-full h-full flex flex-col mx-auto xl:mt-12 md:mt-12 md:rounded-xl xl:rounded-xl",
                 theme() == "dark" ? "bg-black" : ""
             )
         } >
@@ -89,17 +102,17 @@ export default function RegisterModal() {
                 joinClass("xl:w-[600px] xl:h-[600px] relative  md:w-[600px] md:h-1/2 w-full h-full", theme() == "dark" ? "bg-black" : "")
             }>
                 <div class="flex justify-between p-2">
-                     <Switch>
+                    <Switch>
                         <Match when={stages() === 1}>
                             <button onClick={() => document.getElementById("register")?.close()} class="  text-lg w-6 h-6 size-6 focus:outline-none  p-2">X</button>
                         </Match>
                         <Match when={stages() === 2}>
                             <button>
-                                
-                            <ArrowLeft onClick={() => setStages(1)}  class="w-6 h-6 size-6   " />
+
+                                <ArrowLeft onClick={() => setStages(1)} class="w-6 h-6 size-6   " />
                             </button>
                         </Match>
-                     </Switch>
+                    </Switch>
                     <Switch>
                         <Match when={theme() === "light"}>
                             <img src="/icons/icon_transparent.png" class="w-12 h-12 xl:w-20 xl:h-20 black" />
@@ -123,26 +136,29 @@ export default function RegisterModal() {
                         <input type="email" class={joinClass("input input-bordered", emailExists() ? "border-red-500" : "")} placeholder="Email" onInput={(e: any) => setEmail(e.target.value)}
                             value={email()} />
                         <label>
-                             {dob() && !checkDateOfBirth() ? <span class="text-red-500">You must be atleast 17 years old</span> : "Date of Birth "}
+                            {dob() && !checkDateOfBirth() ? <span class="text-red-500">You must be atleast 17 years old</span> : "Date of Birth "}
                         </label>
-                        <input type="date"   placeholder="Date of Birth"  value={dob()} onInput={(e: any) => setDob(e.target.value)}
-                        class={joinClass("input input-bordered", !checkDateOfBirth() ? "border-red-500" : "")}
+                        <input type="date" placeholder="Date of Birth" value={dob()} onInput={(e: any) => setDob(e.target.value)}
+                            class={joinClass("input input-bordered", !checkDateOfBirth() ? "border-red-500" : "")}
                         />
                         <button
                             onClick={() => {
-                                if (emailExists()  || !email() || !username() || !dob() || !checkDateOfBirth() || userNameExists()) {
+                                if (emailExists() || !email() || !username() || !dob() || !checkDateOfBirth() || userNameExists()) {
                                     return;
                                 }
                                 setStages(2)
-                            }} 
+                            }}
                             disabled={emailExists() || !email() || !username() || !dob() || !checkDateOfBirth() || userNameExists()}
                             class="btn rounded-full btn-primary"
                         >
                             Next
                         </button>
 
-                          <button class="btn btn-md text-white bg-blue-500 rounded-full" onClick={()=> setIsBuisinessAccount(true) && setStages(1)}>Or Create A Buisiness Account</button>
-                          <a href="/auth/login" class="text-blue-500 text-center">Already Have an Account? Login to continue</a> 
+                        <button class="btn btn-md text-white bg-blue-500 rounded-full" onClick={() => {
+                        setIsBuisinessAccount(true) 
+                        setStages(1)
+                        }}>Or Create A Buisiness Account</button>
+                        <a href="/auth/login" class="text-blue-500 text-center">Already Have an Account? Login to continue</a>
 
                     </div>
                 </Show>
@@ -150,71 +166,157 @@ export default function RegisterModal() {
                     <div class="flex flex-col p-5 mt-2 gap-5">
                         <h1 class="flex  font-bold text-2xl  ">Grow your Brand With Postly!</h1>
                         <label>
-                            {username() && userNameExists() ? <span class="text-red-500">Account Name already exists</span> : "Business Name"}
+                            {username() && userNameExists() ? <span class="text-red-500">Buisness Name already exists</span> : "Business Name"}
                         </label>
-                        <input type="text" class="input input-bordered" placeholder="Business Name" onInput={(e: any) => setUsername(e.target.value)} value={username()} />
+                        <input type="text" class="input input-bordered" placeholder="Business Name" onChange={(e: any) => setUsername(e.target.value)} value={username()} />
                         <label>
                             First and Last Name
                         </label>
-                        <input type="text" class="input input-bordered" placeholder="Full name" onInput={(e: any) => setUsername(e.target.value)} value={username()} />
+                        <input type="text" class="input input-bordered" placeholder="Full name" onChange={(e: any) => setFirstLastName(e.target.value)} value={firstLastName()} />
                         <label>
                             Business Email
                         </label>
                         <input type="email" class={joinClass("input input-bordered", emailExists() ? "border-red-500" : "")} placeholder="Email" onInput={(e: any) => setEmail(e.target.value)}
                             value={email()} />
-                        
+
+                        <label>
+                           Account Password
+                        </label>
+                        <input type="password" minLength={8}   placeholder="Password" class={joinClass("input input-bordered")}  onInput={(e: any) => setPassword(e.target.value)}
+                            value={password()} />
+
                         <button
                             onClick={() => {
-                                if (emailExists()  || !email() || !username() || !dob() ||   userNameExists()) {
+                                if (emailExists() || !email() || !firstLastName() || userNameExists() ||!password()) {
                                     return;
                                 }
                                 setStages(2)
-                            }} 
-                            disabled={emailExists() || !email() || !username() || !dob() ||   userNameExists()}
+                            }}
+                            disabled={emailExists() || !email() || !firstLastName() || userNameExists() || !password()}
                             class="btn rounded-full btn-primary"
                         >
                             Next
                         </button>
- 
-                          <a href="/auth/login" class="text-blue-500 text-center">Already Have an Account? Login to continue</a> 
+
+                        <a href="/auth/login" class="text-blue-500 text-center">Already Have an Account? Login to continue</a>
 
                     </div>
                 </Show>
-                 <Show when={stages() === 2 && isBuisnessAccount()}>
+                <Show when={stages() === 2 && isBuisnessAccount()}>
                     <div class="flex flex-col p-5 mt-2 gap-5">
                         <h1 class="flex  font-bold text-2xl  ">Lets Setup More Details!</h1>
                         <label>
-                            {username() && userNameExists() ? <span class="text-red-500">What do you sell?</span> : "Business Name"}
+                            Website
                         </label>
-                        <input type="text" class="input input-bordered" placeholder="Business Name" onInput={(e: any) => setUsername(e.target.value)} value={username()} />
+                        <input type="text" class="input input-bordered" placeholder="Website Url" onInput={(e: any) => setBusinessWebsite(e.target.value)} value={buisnessWebsite()} />
                         <label>
-                            First and Last Name
+                            Industry & Niche
                         </label>
-                        <input type="text" class="input input-bordered" placeholder="Full name" onInput={(e: any) => setUsername(e.target.value)} value={username()} />
+                        <select class="select  border" onInput={(e) => setNiche(e.currentTarget.value)}>
+                            <option disabled selected>Choose your company's niche</option>
+                            <option>Tech startups</option>
+                            <option>Personal brands</option>
+                            <option>Indie SaaS companies</option>
+                            <option>Coaching businesses</option>
+                            <option>Digital product sellers</option>
+                            <option>Content creators</option>
+                            <option>Design studios</option>
+                            <option>Dev agencies</option>
+                            <option>Lifestyle brands</option>
+                            <option>Online educators</option>
+                            <option>Wellness brands</option>
+                            <option>Mental health services</option>
+                            <option>Solopreneurs</option>
+                            <option>E-commerce shops</option>
+                            <option>Marketing agencies</option>
+                            <option>Community-led platforms</option>
+                            <option>Newsletters</option>
+                            <option>Bootstrapped businesses</option>
+                            <option>No-code app builders</option>
+                            <option>Local businesses</option>
+                            <option>Personal development brands</option>
+                            <option>Productivity toolmakers</option>
+                            <option>Crypto/Web3 projects</option>
+                            <option>AI tool builders</option>
+                            <option>Open source projects</option>
+                            <option>Boutique studios</option>
+                            <option>Subscription businesses</option>
+                            <option>Niche media companies</option>
+                        </select>
+
                         <label>
-                            Business Email
+                            How do you plan to use postly?
                         </label>
-                        <input type="email" class={joinClass("input input-bordered", emailExists() ? "border-red-500" : "")} placeholder="Email" onInput={(e: any) => setEmail(e.target.value)}
-                            value={email()} />
-                        
+                        <div>
+                            <label class="flex gap-2">
+                                <input type="radio" name="postlyUse" class="radio" value="Engage with a community" onInput={(e) => setPostlyUse(e.currentTarget.value)} />
+                                Engage with a community
+                            </label>
+                        </div>
+                        <div>
+                            <label class="flex gap-2">
+                                <input type="radio" name="postlyUse" class="radio" value="Build a brand presence" onInput={(e) => setPostlyUse(e.currentTarget.value)} />
+                                Build a brand presence
+                            </label>
+                        </div>
+                        <div>
+                            <label class="flex gap-2">
+                                <input type="radio" name="postlyUse" class="radio" value="Post personally under a founder or team voice" onInput={(e) => setPostlyUse(e.currentTarget.value)} />
+                                Post personally under a founder or team voice
+                            </label>
+                        </div>
+                        <div>
+                            <label class="flex gap-2">
+                                <input type="radio" name="postlyUse" class="radio" value="Still figuring it out" onInput={(e) => setPostlyUse(e.currentTarget.value)} />
+                                Still figuring it out
+                            </label>
+                        </div>
+
                         <button
-                            onClick={() => {
-                                if (emailExists()  || !email() || !username() || !dob() ||   userNameExists()) {
+                            onClick={async () => {
+                                if (!buisnessWebsite() || !postlyUse() || !niche()) {
                                     return;
                                 }
-                                setStages(2)
-                            }} 
-                            disabled={emailExists() || !email() || !username() || !dob() ||   userNameExists()}
-                            class="btn rounded-full btn-primary"
+                                await register()
+                                setStages(3)
+                            }}
+                            disabled={!buisnessWebsite() || !postlyUse() || !niche()}
+                            class="btn   rounded-xl btn-primary"
                         >
                             Next
                         </button>
- 
-                          <a href="/auth/login" class="text-blue-500">Already Have an Account? Login to continue</a> 
+
 
                     </div>
                 </Show>
-                
+                <Show when={stages() === 3 && isBuisnessAccount()}>
+                    <div class="flex flex-col p-5 mt-2 gap-5">
+                        <h1 class="font-bold text-2xl">Success!</h1>
+                        <p>Your business account is ready to go.</p>
+
+                        <button
+                            onClick={async () => {
+                                if (!buisnessWebsite() || !postlyUse() || !niche()) {
+                                    return;
+                                }
+
+                                try {
+                                    await api.authStore.login(email(), password());
+                                    navigate("/")
+                                    //@ts-ignore
+                                    document.getElementById("register").close();
+                                } catch (error) {
+                                    console.error("Login failed:", error);
+                                }
+                            }}
+                            disabled={!buisnessWebsite() || !postlyUse() || !niche()}
+                            class="btn btn-primary rounded-full"
+                        >
+                            Start
+                        </button>
+                    </div>
+                </Show>
+
                 <Show when={stages() === 2 && !isBuisnessAccount()}>
                     <div class="flex flex-col p-5 mt-2 gap-5">
                         <h1 class="flex  font-bold text-2xl  ">Create Your Account</h1>
@@ -227,19 +329,19 @@ export default function RegisterModal() {
                         </label>
                         <input type="password" class="input input-bordered" placeholder="Confirm Password" onInput={(e: any) => setConfirmPassword(e.target.value)} value={confirmPassword()} />
                         <button class="btn rounded-full  bg-blue-500 text-white"
-                        onClick={()=>{
-                            if(!password() || !confirmPassword() || password() !== confirmPassword() || password().length < 8){
-                                return;
-                            }
-                            register()
-                        }}
-                        disabled={!password() || !confirmPassword() || password() !== confirmPassword() || password().length < 8}
+                            onClick={() => {
+                                if (!password() || !confirmPassword() || password() !== confirmPassword() || password().length < 8) {
+                                    return;
+                                }
+                                register()
+                            }}
+                            disabled={!password() || !confirmPassword() || password() !== confirmPassword() || password().length < 8}
                         >Register</button>
                     </div>
 
                 </Show>
             </Modal.Content>
-           
+
         </Modal>
     )
 }
