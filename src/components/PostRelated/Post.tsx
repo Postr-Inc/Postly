@@ -255,23 +255,28 @@ export default function Post(props: Props) {
         </Switch>
 
 
-        <div class="flex gap-2">
-          <div class="flex">
+        <div class="flex gap-2 items-start mt-0 mb-5 pt-0">
+          <div class="flex hero items-center mt-0 pt-0">
             <CardTitle
-              class="cursor-pointer items-center gap-5 "
+              class="cursor-pointer flex items-center gap-1"
               onClick={() => props.navigate(StringJoin("/u/", props.expand.author.username))}
             >
               {props.expand.author.username}
             </CardTitle>
             <Show when={props.expand.author.validVerified}>
-              <div data-tip="Verified" class="tooltip">
-                <Verified class="w-5  h-5 mx-1 text-blue-500 fill-blue-500 stroke-white " />
+              <div data-tip="Verified" class="tooltip flex items-center">
+          <Verified class="w-5 h-5 mx-1 text-blue-500 fill-blue-500 stroke-white" />
+              </div>
+            </Show>
+            <Show when={props.expand.author.isEarlyUser}>
+              <div data-tip="Early Access Member" class="tooltip tooltip-top flex items-center">
+          <img src="/icons/legacy/postr.png" class="w-[13px] h-[13px]" />
               </div>
             </Show>
           </div>
-          <CardTitle class="text-sm opacity-50"> @{props.expand.author.username}</CardTitle>
-          <CardTitle class="text-sm opacity-50">·</CardTitle>
-          <CardTitle class="text-sm opacity-50">{created(props.created)}</CardTitle>
+          <CardTitle class="text-sm opacity-50 flex items-center"> @{props.expand.author.username}</CardTitle>
+          <CardTitle class="text-sm opacity-50 flex items-center">·</CardTitle>
+          <CardTitle class="text-sm opacity-50 flex items-center">{created(props.created)}</CardTitle>
         </div>
         <Show when={props.isSnippet}>
           <span class="badge bg-blue-500 p-3 text-white rounded-full">
