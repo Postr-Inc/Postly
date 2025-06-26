@@ -273,8 +273,7 @@ export default function Post(props: Props) {
           <img src="/icons/legacy/postr.png" class="w-[13px] h-[13px]" />
               </div>
             </Show>
-          </div>
-          <CardTitle class="text-sm opacity-50 flex items-center"> @{props.expand.author.username}</CardTitle>
+          </div> 
           <CardTitle class="text-sm opacity-50 flex items-center">·</CardTitle>
           <CardTitle class="text-sm opacity-50 flex items-center">{created(props.created)}</CardTitle>
         </div>
