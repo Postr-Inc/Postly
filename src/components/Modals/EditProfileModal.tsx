@@ -1,197 +1,287 @@
-import { api } from "@/src";
-import Modal from "../Modal";
-import useTheme from "@/src/Utils/Hooks/useTheme";
-import { joinClass } from "@/src/Utils/Joinclass";
-import ArrowLeft from "../Icons/ArrowLeft";
-import { createSignal, createEffect, Switch, Match, For } from "solid-js";
+ import { createSignal, Show, onMount, onCleanup } from "solid-js"
 
-export default function EditProfileModal(
+interface RequireSignupModalProps {
+  onSignup?: () => void
+  onClose?: () => void
+}
+
+export default function RequireSignupModal(props: RequireSignupModalProps = {}) {
+  const [visible, setVisible] = createSignal(false)
+  const [isAnimating, setIsAnimating] = createSignal(false)
+
+  // Globally accessible trigger
+  onMount(() => {
+    ;(window as any).requireSignup = () => {
+      setVisible(true)
+      //@ts-ignore
+      window.hideBottomNav() 
+      setIsAnimating(true)
+    }
+  })
+
+  onCleanup(() => {
+    delete (window as any).requireSignup
+  })
+
+  const handleSignup = () => {
+    if (props.onSignup) {
+      props.onSignup()
+    } else {
+      setVisible(false)
+       //@ts-ignore
+      document.getElementById("register").showModal()
+    }
+  }
+
+  const handleClose = () => {
+    setIsAnimating(false)
+    setTimeout(() => {
+      setVisible(false)
+      //@ts-ignore
+      window.showBottomNav()
+      props.onClose?.()
+    }, 300)
+  }
+
+  const handleBackdropClick = (e: MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      handleClose()
+    }
+  }
+
+  // Handle escape key
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (e.key === "Escape") {
+      handleClose()
+    }
+  }
+
+  onMount(() => {
+    document.addEventListener("keydown", handleKeyDown)
+  })
+
+  onCleanup(() => {
+    document.removeEventListener("keydown", handleKeyDown)
+  })
+
+  // SVG Icons
+  const StarIcon = (props: { class?: string }) => (
+    <svg class={props.class} fill="currentColor" viewBox="0 0 24 24">
+      <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z" />
+    </svg>
+  )
+
+  const UnlockIcon = (props: { class?: string }) => (
+    <svg class={props.class} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+      <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
+      <path d="M7 11V7a5 5 0 0 1 9.9-1" />
+    </svg>
+  )
+
+  const BarChartIcon = (props: { class?: string }) => (
+    <svg class={props.class} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+      <line x1="12" y1="20" x2="12" y2="10" />
+      <line x1="18" y1="20" x2="18" y2="4" />
+      <line x1="6" y1="20" x2="6" y2="16" />
+    </svg>
+  )
+
+  const BrainIcon = (props: { class?: string }) => (
+    <svg class={props.class} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+      <path d="M9.5 2A2.5 2.5 0 0 0 7 4.5v15A2.5 2.5 0 0 0 9.5 22h5a2.5 2.5 0 0 0 2.5-2.5v-15A2.5 2.5 0 0 0 14.5 2h-5z" />
+      <path d="M9 6h6" />
+      <path d="M9 10h6" />
+      <path d="M9 14h6" />
+      <path d="M9 18h6" />
+    </svg>
+  )
+
+  const GiftIcon = (props: { class?: string }) => (
+    <svg class={props.class} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+      <polyline points="20,12 20,22 4,22 4,12" />
+      <rect x="2" y="7" width="20" height="5" />
+      <line x1="12" y1="22" x2="12" y2="7" />
+      <path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z" />
+      <path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z" />
+    </svg>
+  )
+
+  const CloseIcon = (props: { class?: string }) => (
+    <svg class={props.class} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth="2">
+      <line x1="18" y1="6" x2="6" y2="18" />
+      <line x1="6" y1="6" x2="18" y2="18" />
+    </svg>
+  )
+
+  const benefits = [
     {
-        updateUser
-    }: {
-        updateUser: (data: any) => void
-    }
-) {
-    if(!api.authStore.model.id) return <div></div>
-    const { theme } = useTheme();
-    const [avatar, setAvatar] = createSignal(api.authStore.model.avatar);
-    const [avatarFile, setAvatarFile] = createSignal<File>();
-    const [bannerFile, setBannerFile] = createSignal<File>();
-    const [banner, setBanner] = createSignal(api.authStore.model.banner);
-    const [username, setUsername] = createSignal(api.authStore.model.username);
-    const [bio, setBio] = createSignal(api.authStore.model.bio);
-    const [location, setLocation] = createSignal(api.authStore.model.location);
-    const [social, setSocial] = createSignal(api.authStore.model.social); 
-    const [deactivated, setDeactivated] = createSignal(api.authStore.model.deactivated)
-    const [isSaving, setIsSaving] = createSignal(false);
-    let [socialLinks, setSocialLinks] = createSignal(api.authStore.model.account_links ? api.authStore.model.account_links : [])
-    let [addAccountLink, setAddAcountLinks] = createSignal(0) 
-    async function bufferFile(file: File) {
-        let reader = new FileReader();
-        reader.readAsArrayBuffer(file);
-        return new Promise((resolve, reject) => {
-            reader.onload = () => {
-                resolve({ data: Array.from(new Uint8Array(reader.result as ArrayBuffer)), name: file.name, isFile: true });
-            };
-        });
-    }
-    async function handleFile(file: File) {
-        if (file) {
-            return await bufferFile(file);
-        }
-    }
-    async function save() {
-        let data = {
-            ...(avatarFile() && { avatar: await handleFile(avatarFile()) }),
-            ...(bannerFile() && { banner: await handleFile(bannerFile()) }),
-            ...(username() !== api.authStore.model.username && { username: username() }),
-            ...(bio() !== api.authStore.model.bio && { bio: bio() }),
-            ...(location() !== api.authStore.model.location && { location: location() }),
-            ...(social() !== api.authStore.model.social && { social: social() }),
-            ...(deactivated() !== api.authStore.model.deactivated && {deactivated :  deactivated()}),
-            ...(api.authStore.model.account_links != socialLinks() && {account_links: socialLinks()})
-        } 
-        console.log(data)
-        if (Object.keys(data).length === 0) return;
-        setIsSaving(true);
-        try {
-            let data2 = await api.collection("users").update(api.authStore.model.id, data, {
-                invalidateCache:[`/u/user_${api.authStore.model.username}`]
-            });
-            console.log(data2)
-            setIsSaving(false);
-            document.getElementById("editProfileModal")?.close();
-            let oldUser = api.authStore.model;
-            let newUser = { ...oldUser, ...data2};
-            //@ts-ignore
-            api.authStore.model = newUser;
-            newUser.token = oldUser.token;
-            localStorage.setItem("postr_auth", JSON.stringify(newUser));
-        } catch (error) {
-            setIsSaving(false);
-        }
-        let copiedData = Object.assign({}, data);
-        if (copiedData.avatar) {
-            copiedData.avatar = URL.createObjectURL(avatarFile());
-        }
-        if (copiedData.banner) {
-            copiedData.banner = URL.createObjectURL(bannerFile());
-        }
-        updateUser({ ...api.authStore.model, ...copiedData });
-    }
-    return (
-        <dialog id="editProfileModal" class="modal xl:overflow-scroll   sm:h-screen sm:w-screen ">
-            <div class={joinClass("modal-content   sm:w-screen sm:h-screen     w-[27rem]  xl:rounded-xl", theme() === "dark" ? "bg-black" : "bg-white")}>
-                <div class="modal-header p-3 flex justify-between">
-                    <svg
-                        onClick={() => document.getElementById("editProfileModal")?.close()}
-                        xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 cursor-pointer   "><path fill-rule="evenodd" d="M7.72 12.53a.75.75 0 010-1.06l7.5-7.5a.75.75 0 111.06 1.06L9.31 12l6.97 6.97a.75.75 0 11-1.06 1.06l-7.5-7.5z" clip-rule="evenodd"></path></svg>
-                    <h2>Edit Profile</h2>
-                    <button
-                        onClick={save}
-                        disabled={isSaving()}
-                        class={
-                            joinClass("btn btn-sm rounded-full ", theme() === "dark" ? "bg-white text-black hover:bg-black" : "bg-black text-white")
-                        }>
-                        {
-                            isSaving() ? "Saving..." : "Save"
-                        }
-                    </button>
-                </div>
-                <div class="modal-body flex flex-col">
-                    <div class="flex flex-col relative">
-                      
-                            <Switch>
-                                <Match when={!api.authStore.model.banner && !bannerFile()}>
-                                    <div class="w-full h-[6rem] rounded-md bg-base-200"></div> 
-                                </Match>
-                                <Match when={api.authStore.model.banner || bannerFile()}>
-                                    
-                            <img src={
-                                bannerFile() ?  URL.createObjectURL(bannerFile()) :  api.cdn.getUrl("users", api.authStore.model.id,  api.authStore.model.banner )
-                            } alt="banner" class="w-full h-[6rem] object-cover rounded-md" />
-                                </Match>
-                            </Switch> 
-                            <div class="absolute btn btn-circle bg-[#030303] bg-opacity-25  inset-x-0 mx-auto translate-x-0   sm:left-[-4vw] text-white top-[30%]"><label for="change-banner"><button>
-                               <label for="change-banner"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6  "><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"></path></svg></label></button></label></div>
-                         
-                        <input type="file" 
-                        accept="image/*"
-                        id="change-avatar" class="hidden" onInput={(e) => setAvatarFile(e.currentTarget.files![0])} />
-                        <input type="file" 
-                        accept="image/*"
-                        id="change-banner" class="hidden" onChange={(e) => setBannerFile(e.currentTarget.files![0])} />
-                       
-                            <div class="absolute top-[40px] ">
-                                <div class="relative w-32 left-3 ">
-                                     <Switch>
-                                        <Match when={api.authStore.model.avatar && !avatarFile()}>
-                                            <img src={api.cdn.getUrl("users", api.authStore.model.id, api.authStore.model.avatar)} alt="" class={joinClass("w-20 h-20 object-cover avatar rounded   border-2", theme() === "dark" ? "border-black" : "border-white")} />
-                                        </Match>
-                                        <Match when={!api.authStore.model.avatar && !avatarFile()}>
-                                            <div class={joinClass("w-20 h-20 object-cover avatar rounded  bg-base-200  border-2", theme() === "dark" ? "border-black" : "border-white")}>{api.authStore.model.username[0]}</div>
-                                        </Match>
-                                        <Match when={avatarFile()}>
-                                            <img src={URL.createObjectURL(avatarFile())} alt="" class={joinClass("w-20 h-20 object-cover avatar rounded   border-2", theme() === "dark" ? "border-black" : "border-white")} />
-                                        </Match>
-                                     </Switch>
-                                </div>
-                                  <label for="change-avatar"> 
-                                <div class="absolute btn btn-circle bg-[#030303] bg-opacity-25  inset-x-0 mx-auto translate-x-0   left-[-2.2vw] sm:left-[-5.3vw] text-white top-[20%]"><label for="change-banner"><button>  <label for="change-avatar"> <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6  "><path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"></path></svg></label></button></label></div>
-                          </label>
-                            </div> 
+      icon: StarIcon,
+      text: "Early User Badge — visible on your profile",
+      color: "text-yellow-500",
+    },
+    {
+      icon: UnlockIcon,
+      text: "Priority access to beta & experimental features",
+      color: "text-blue-500",
+    },
+    {
+      icon: BarChartIcon,
+      text: "Advanced analytics and post insights",
+      color: "text-green-500",
+    },
+    {
+      icon: BrainIcon,
+      text: "Inside scoop on our product roadmap",
+      color: "text-purple-500",
+    },
+    {
+      icon: GiftIcon,
+      text: "Auto opt-in to Postly Plus when it rolls out",
+      color: "text-pink-500",
+    },
+  ]
 
-                    </div>
+  // Demo functionality
+  const [showDemoModal, setShowDemoModal] = createSignal(false)
 
+  const triggerGlobalModal = () => {
+    if ((window as any).requireSignup) {
+      ;(window as any).requireSignup()
+    }
+  }
+
+  return (
+    <> 
+      {/* Modal */}
+      <Show when={visible()}>
+        <div
+          class="fixed inset-0  sm:mb-32 z-[99999] flex items-center justify-center p-4"
+          onClick={handleBackdropClick}
+          style={{
+            "background-color": "rgba(0, 0, 0, 0.5)",
+            animation: isAnimating() ? "fadeIn 0.3s ease-out" : "fadeOut 0.3s ease-in",
+          }}
+        >
+          <div
+            class="relative bg-white dark:bg-gray-900 rounded-2xl sm:h-[675px] sm:mt-24 shadow-2xl border border-gray-200 dark:border-gray-700 overflow-hidden max-w-md w-full"
+            style={{
+              animation: isAnimating() ? "modalEnter 0.3s ease-out" : "modalExit 0.3s ease-in",
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header with gradient background */}
+            <div class="relative bg-gradient-to-r from-blue-600 to-purple-600 p-6 text-white">
+              <button
+                onClick={handleClose}
+                class="absolute top-4 right-4 p-1 rounded-full hover:bg-white/20 transition-colors"
+                aria-label="Close modal"
+              >
+                <CloseIcon class="w-5 h-5" />
+              </button>
+
+              <div class="text-center">
+                <div class="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4 transform transition-transform duration-300 hover:scale-110">
+                  <div class="text-2xl">🚀</div>
                 </div>
-                <div class="p-3">
-                    <div class="flex flex-col mt-5 gap-5 p-2">
-                        <label>
-                            Username
-                        </label>
-                        <input type="text" value={api.authStore.model.username} class={joinClass("input focus:outline-none", theme() === "dark" ? "border border-[#464646] rounded" : "border border-[#cac9c9] focus:border-[#cac9c9]")}
-                            onChange={(e) => setUsername(e.currentTarget.value)}
-                        />
-                    </div>
-                    <div class="flex flex-col mt-2 gap-5 p-2">
-                        <label>
-                            Bio
-                        </label>
-                        <textarea class={joinClass("input p-2 h-[4rem] focus:outline-none resize-none", theme() === "dark" ? "border border-[#464646] rounded backdrop:" : "border border-[#cac9c9] focus:border-[#cac9c9]")}
-                            value={api.authStore.model.bio}
-                            onChange={(e) => setBio(e.currentTarget.value)}
-                        ></textarea>
-                    </div>
-                    <div class="flex flex-col mt-2 gap-5 p-2">
-                        <label>
-                            Location
-                        </label>
-                        <input type="text"
-                            value={api.authStore.model.location}
-                            onChange={(e) => setLocation(e.currentTarget.value)}
-                            class={joinClass("input focus:outline-none", theme() === "dark" ? "border border-[#464646] rounded" : "border border-[#cac9c9] focus:border-[#cac9c9]")} />
-                    </div>
-                    <div class="flex flex-col mt-2 gap-5 p-2">
-                        <label>
-                            Socials
-                        </label> 
-                        <input type="text" class={joinClass("input focus:outline-none", theme() === "dark" ? "border border-[#464646] rounded" : "border border-[#cac9c9] focus:border-[#cac9c9]")}
-                            value={api.authStore.model.social}
-                            onChange={(e) => setSocial(e.currentTarget.value)}
-                        />
-                    </div>
-                    <div class="flex flex-col mt-2 gap-5 p-2">
-                        <label>
-                            Deactivate Account
-                        </label>
-                        <p>
-                            Hide account from others, dont worry your data is not going to be deleted
-                        </p>
-                        <input type="checkbox" checked={deactivated()}   onChange={()=> setDeactivated(!deactivated())} class="toggle rounded-xl mb-12" />
-                         
-                     </div>
-                </div>
+
+                <h2 class="text-xl font-bold mb-2">Unlock Full Access by Joining Early</h2>
+                 
+              </div>
             </div>
-        </dialog>
-    )
+
+            {/* Benefits list */}
+            <div class="p-6">
+              <h3 class="font-semibold text-gray-900 dark:text-white mb-4 text-center">
+                What you'll get as an early member:
+              </h3>
+
+              <div class="space-y-3 mb-6">
+                {benefits.map((benefit, index) => (
+                  <div
+                    key={index}
+                    class="flex items-start gap-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-all duration-200 hover:translate-x-1"
+                    style={{
+                      animation: `slideIn 0.3s ease-out ${index * 0.1}s both`,
+                    }}
+                  >
+                    <benefit.icon class={`w-5 h-5 mt-0.5 ${benefit.color} flex-shrink-0`} />
+                    <span class="text-sm text-gray-700 dark:text-gray-300 leading-relaxed">{benefit.text}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Action buttons */}
+              <div class="flex gap-3">
+                <button
+                  onClick={handleSignup}
+                  class="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium py-2.5 rounded-full transition-all duration-200 transform hover:scale-105 hover:shadow-lg"
+                >
+                  Sign Up Free
+                </button>
+                <button
+                  onClick={handleClose}
+                  class="px-6 py-2.5 rounded-full border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300 transition-colors"
+                >
+                  Not Now
+                </button>
+              </div>
+
+              {/* Trust indicators */}
+              <div class="mt-4 text-center">
+                <p class="text-xs text-gray-500 dark:text-gray-400">
+                  ✨ Free forever • No credit card required • Join 1,000+ early users
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Show>
+
+      {/* CSS Animations */}
+      <style>{`
+        @keyframes fadeIn {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @keyframes fadeOut {
+          from { opacity: 1; }
+          to { opacity: 0; }
+        }
+
+        @keyframes modalEnter {
+          from {
+            opacity: 0;
+            transform: scale(0.9) translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+        }
+
+        @keyframes modalExit {
+          from {
+            opacity: 1;
+            transform: scale(1) translateY(0);
+          }
+          to {
+            opacity: 0;
+            transform: scale(0.9) translateY(20px);
+          }
+        }
+
+        @keyframes slideIn {
+          from {
+            opacity: 0;
+            transform: translateX(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+      `}</style>
+    </>
+  )
 }
