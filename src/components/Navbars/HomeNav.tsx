@@ -1,134 +1,213 @@
-import useTheme from "@/src/Utils/Hooks/useTheme";
+import useTheme from "../../Utils/Hooks/useTheme";
+import { api } from "../..";
 import { joinClass } from "@/src/Utils/Joinclass";
+import { Accessor, onMount, Show } from "solid-js";
+import logo from "@/src/assets/icon_transparent.png"; 
+import { createSignal, createEffect } from "solid-js";
 import useScrollingDirection from "@/src/Utils/Hooks/useScrollingDirection";
-import Home from "../Icons/Home";
-import Search from "../Icons/search";
-import useNavigation from "@/src/Utils/Hooks/useNavigation";
-import Heart from "../Icons/heart";
-import Mail from "../Icons/Mail";
-import Scissors from "../Icons/Scissors";
-import { createEffect, createSignal, onMount, Show } from "solid-js";
-import { api } from "@/src";
 import useDevice from "@/src/Utils/Hooks/useDevice";
-
-export default function BottomNav() {
+import { Portal } from "solid-js/web";
+import Modal from "../Modal";
+import MobileSidebar from "../Modals/MobileSidebar";
+import Bookmark from "../Icons/Bookmark";
+import Settings from "../Icons/Settings";
+import LogoutModal from "@/src/Utils/Modals/LogoutModal";
+export default function HomeNav({
+  navigate,
+  page,
+  swapFeed,
+}: {
+  navigate: any;
+  page: Accessor<string>;
+  swapFeed: any;
+}) {
   const { theme } = useTheme();
-  const { route, navigate } = useNavigation();
-  const [ hide, setHide] = createSignal(false)
-  const { scrollingDirection } = useScrollingDirection()
-  const { mobile } = useDevice()
-  onMount(()=>{
-    //@ts-ignore
-    window.hideBottomNav = ()=>{
-           setHide(true)
-    } 
-    window.showBottomNav = ()=>{
-           setHide(false)
-    } 
-  })
+  let { scrollingDirection } = useScrollingDirection();
+  let { mobile } = useDevice();
+  const [hide, setHide] = createSignal(false)
+
+ 
   return (
     <div
       class={joinClass(
-        "fixed bottom-[-2px] sm:bottom-[0px]  z-[999999] w-full", 
-        "xl:hidden lg:hidden 2xl:hidden",
+        "flex flex-col sticky top-0 sm:p-0 md:p-4 z-[9999]",
+        
+        "backdrop-blur-sm",
         hide() && mobile() ? "hidden" : ""
       )}
     >
-         <Show when={!window.location.pathname.includes("/settings") && !window.location.pathname.includes("/snippets")}>
-         <div class={joinClass("btn btn-circle border-none btn-xl  fixed bottom-24 right-3", scrollingDirection() == "down" ? "bg-opacity-50" : 
-        scrollingDirection() == "up" ? "bg-opacity-100" : "bg-opacity-100", theme() == "dark" ? "bg-white text-black" : "bg-black text-white"
-        )}>
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class={joinClass(" size-6", theme() == "dark" ? "fill-black" : "fill-white" )} onClick={() =>{
-            //@ts-ignore   
-          if(api.authStore.model.id){
-            document.getElementById("createPostModal")?.showModal()
-           //@ts-ignore
-           window.resetCreatePost()
-           //@ts-ignore   
-           window.modal = "comments" 
-          }else{
-            requireSignup()
-          }
-            
-        }}>
-  <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
-</svg>
+      <div class="flex   w-full sm:p-3  z-[9999999] justify-between ">
+        <div class="flex gap-2 hero">
+          <div class="flex flex-col   w-full">
+            <div class="flex  justify-between gap-2 w-full">
+              <div class="flex flex-row  gap-2  ">
+                <div class="dropdown     ">
+                  <label tabIndex={0}
+                  >
+                    {typeof window != "undefined" ? (
+                      <>
+                        {api.authStore.model?.avatar ? (
+                          <img
+                            src={api.cdn.getUrl("users", api.authStore.model.id, api.authStore.model.avatar)}
+                            alt={api.authStore.model.username}
+                            class="rounded object-cover w-12 h-12 cursor-pointer"
+                          ></img>
+                        ) : (
+                           <img
+                            src={"/icons/usernotfound/image.png"}
+                            alt={api.authStore.model.username}
+                            class="rounded object-cover w-12 h-12 cursor-pointer"
+                          ></img>
+                        )}
+                      </>
+                    ) : (
+                      ""
+                    )}
+                  </label>
+                  <ul
+                    tabIndex={0}
+                    style={{
+                      border: theme() === 'dark' ? '1px solid #2d2d2d' : '1px solid #f9f9f9',
+                      "border-radius": '10px'
+                    }}
+                    class="dropdown-content  menu   w-[16rem] shadow bg-base-100  rounded "
+                  >
+                    {
+                      api.authStore.model.id && <li>
+                        <a
+                          onClick={() => {
+                            navigate("/u/" + api.authStore.model.username);
+                          }}
+                          class="rounded-full">
+                          View Profile
+                        </a>
+                      </li>
+                    }
+                    {typeof window != "undefined" &&
+                      api.authStore.model.postr_plus && api.authStore.model.id ? (
+                      <li>
+                        <a class="rounded-full">
+                          Your benefits
+                          <span class="badge badge-outline border-blue-500 text-blue-500">
+                            ++
+                          </span>
+                        </a>
+                      </li>
+                    ) : (
+                      ""
+                    )}
 
+                    <li>
+                      <a class="rounded-full"
+                        onClick={() => {
+                          //@ts-ignore
+                          if (!api.authStore.model.id) {
+                            //@ts-ignore 
+                            requireSignup()
+                          } else {
+                            //@ts-ignore
+                            document
+                              .getElementById("logout-modal")
+                              //@ts-ignore
+                              .showModal();
+                          }
+                        }}
+                      >
+                        {!api.authStore.model.id && "Join the Community!"}
+                        {api.authStore.model.id && <p>
+                          Logout
+                          <span class="font-bold">
+                            {" "}
+                            @{api.authStore.model.username}
+                          </span></p>}
+                      </a>
+                    </li>
+                  </ul>
+                </div>
+                {
+                  api.authStore.model.id && <div class="flex flex-col">
+                    <p class="font-bold ">
+                      {api.authStore.model.username}
+                    </p>
+                    <p class="text-lg">
+                      @ {api.authStore.model.username}
+                    </p>
+                  </div>
+                }
+              </div>
+
+              <div class="flex gap-4">
+                <Bookmark class="w-7 h-7" />
+                <Settings class="w-7 h-7  cursor-pointer" onClick={() => {
+                  if(!api.authStore.model.id) {
+                   requireSignup()
+                    return;
+                  }  
+                  navigate("/settings");
+                }} />
+              </div>
+            </div>
+
+          </div>
         </div>
+      </div>
+      <div class={joinClass("  sm:p-3  mt-3  text-sm    justify-between  flex  ",)}>
+        <div class="flex flex-col rounded">
+          <p
+            class={joinClass("cursor-pointer", page() !== "recommended" ? "text-gray-500" : "")}
+            onClick={() => {
+              swapFeed("recommended", 0);
+            }}
+          >
+            Recommended
+          </p>
+          {page() === "recommended" ? (
+            <div class="rounded-md   h-[2px] bg-blue-500"></div>
+          ) : (
+            ""
+          )}
+        </div>
+        <Show when={api.authStore.model.id}>
+          <div class="flex flex-col text-sm">
+            <p
+              class={joinClass("cursor-pointer", page() !== "following" ? "text-gray-500" : "")}
+              onClick={() => {
+                swapFeed("following", 0);
+              }}
+            >
+              Following
+            </p>
+            {page() === "following" ? (
+              <div class=" rounded-md    h-[2px] bg-blue-500"></div>
+            ) : (
+              ""
+            )}
+          </div>
         </Show>
-      <ul
-        class={joinClass(
-          " flex justify-between p-5   h-full bg[#121212]    border border-l-0 border-b-0 border-r-0",
-          theme() === "dark"
-            ? "text-white fill-white stroke-white bg-black border-t-[#53535322]"
-            : "bg-white border-t-[#e0e0e0]",
-            scrollingDirection() == "down" ? "bg-opacity-50" : 
-            scrollingDirection() == "up" ? "bg-opacity-100" : "bg-opacity-100", 
-        )}
-      >
-        <li class="flex mb-5 ">
-          <Home
-            class={joinClass(
-              "w-7 h-7",
-              route() == "/"
-                ? theme() == "dark"
-                  ? "fill-white"
-                  : "fill-black"
-                : "opacity-50"
-            )}
-            onClick={() => navigate("/")}
-          />
-        </li>
-        <li class="flex mb-5 ">
-          <Search
-            class={joinClass(
-              "w-7 h-7",
-              route() === "/explore"
-                ? theme() == "dark"
-                  ? "fill-white"
-                  : "fill-black"
-                : "opacity-50"
-            )}
-          />
-        </li>
-        <li class="flex mb-5 ">
-          <Mail
-            class={joinClass(
-              "w-7 h-7",
-              route() === "/messages"
-                ? theme() == "dark"
-                  ? "fill-white"
-                  : "fill-black"
-                : "opacity-50"
-            )}
-          />
-        </li>
-        <li class="flex mb-5 ">
-          <Heart
-            class={joinClass(
-              "w-7 h-7",
-              route() === "/notifications"
-                ? theme() == "dark"
-                  ? "fill-white"
-                  : "fill-black"
-                : "opacity-50"
-            )}
-          />
-        </li>
-        <li class="flex mb-5 ">
-          <Scissors
-            onClick={()=> navigate("/snippets")}
-            class={joinClass(
-              "w-7 h-7",
-              route() === "/create"
-                ? theme() == "dark"
-                  ? "fill-white"
-                  : "fill-black"
-                : "opacity-50"
-            )}
-          />
-        </li>
-      </ul>
+        <Show when={!api.authStore.model.id}>
+          <div></div>
+        </Show>
+        <div class="flex flex-col text-sm">
+          <p
+            class={joinClass("cursor-pointer", page() !== "following" ? "text-gray-500" : "")}
+            onClick={() => {
+              swapFeed("trending", 0);
+            }}
+          >
+            Trending
+          </p>
+          {page() === "trending" ? (
+            <div class=" rounded-md   h-[2px] bg-blue-500"></div>
+          ) : (
+            ""
+          )}
+        </div>
+
+
+      </div> 
+      <Portal >
+        <LogoutModal />
+      </Portal>
     </div>
   );
 }
