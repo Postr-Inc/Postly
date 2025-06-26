@@ -269,7 +269,7 @@ export default function Post(props: Props) {
               </div>
             </Show>
             <Show when={props.expand.author.isEarlyUser}>
-              <div data-tip="Early Access Member" class="tooltip tooltip-top flex items-center">
+              <div data-tip="Early Access Member" class="tooltip tooltip-top flex mx-2 items-center">
           <img src="/icons/legacy/postr.png" class="w-[13px] h-[13px]" />
               </div>
             </Show>
