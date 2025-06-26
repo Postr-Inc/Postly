@@ -510,7 +510,7 @@ export default function SnippetReels() {
                                 when={isLiked}
                                 fallback={<Icons.HeartOutline class="w-7 h-7 text-white" />}
                               >
-                                <Icons.Heart class={joinClass("w-7 h-7  ", currentPost() && currentPost().likes?.length ? "text-red-500" : "text-white" )} />
+                                <Icons.Heart class={joinClass("w-7 h-7  ", currentPost() && currentPost().likes?.includes(api.authStore.model.id) ? "text-red-500" : "text-white" )} />
                               </Show>
                             </div>
                             <span class="text-xs font-semibold">{currentPost() && currentPost().likes?.length || 0}</span>
