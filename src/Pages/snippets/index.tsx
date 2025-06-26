@@ -181,7 +181,8 @@ export default function SnippetReels() {
                       preload={index() < 3 ? "auto" : "metadata"}
                       controls={false}
                       onError={(e)=>{
-                        alert(e.message)
+                        console.log(e)
+                        alert(JSON.stringify(e))
                       }}
                       onCanPlay={() => handleVideoLoaded(index())}
                       onLoadedData={() => handleVideoLoaded(index())}
