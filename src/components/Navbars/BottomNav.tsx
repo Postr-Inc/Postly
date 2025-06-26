@@ -120,10 +120,10 @@ export default function BottomNav() {
             onClick={()=> navigate("/snippets")}
             class={joinClass(
               "w-7 h-7",
-              route() === "/create"
+              route() === "/snippets"
                 ? theme() == "dark"
                   ? "fill-white"
-                  : "fill-black"
+                  : "text-black"
                 : "opacity-50"
             )}
           />
