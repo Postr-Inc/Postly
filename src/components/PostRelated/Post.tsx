@@ -265,12 +265,12 @@ export default function Post(props: Props) {
             </CardTitle>
             <Show when={props.expand.author.validVerified}>
               <div data-tip="Verified" class="tooltip flex items-center">
-          <Verified class="w-5 h-5 mx-1 text-blue-500 fill-blue-500 stroke-white" />
+                 <Verified class="w-5 h-5 mx-1 text-blue-500 fill-blue-500 stroke-white" />
               </div>
             </Show>
             <Show when={props.expand.author.isEarlyUser}>
               <div data-tip="Early Access Member" class="tooltip tooltip-top mx-2 flex items-center">
-          <img src="/icons/legacy/postr.png" class="w-[13px] h-[13px]" />
+          <img src="/icons/legacy/postr.png" class="w-[15px] h-[15px]" />
               </div>
             </Show>
           </div> 
@@ -525,9 +525,14 @@ export default function Post(props: Props) {
           <Show when={!props.hidden || !props.hidden.includes("repostButton")}>
             <div class=" flex items-center gap-2 "
               onClick={() => {
-                //@ts-ignore
+                 if(api.authStore.model.id){
+                  //@ts-ignore
                 window.repost(props)
                 document.getElementById("createPostModal")?.showModal()
+                 }else{
+                  //@ts-ignore
+                  requireSignup()
+                 }
               }}
             ><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="   hover:rounded-full hover:bg-green-400 hover:bg-opacity-20   hover:text-green-600 cursor-pointer  w-6 h-6 size-6 "><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 0 0-3.7-3.7 48.678 48.678 0 0 0-7.324 0 4.006 4.006 0 0 0-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 0 0 3.7 3.7 48.656 48.656 0 0 0 7.324 0 4.006 4.006 0 0 0 3.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3-3 3"></path></svg></div>
           </Show>
@@ -548,7 +553,9 @@ export default function Post(props: Props) {
           </div>
 
           <div class="flex absolute right-5 gap-5">
-            <Bookmark class="w-6 h-6" />
+            <Bookmark class="w-6 h-6" onClick={()=>{
+
+            }} />
             <div class=" hover:cursor-pointer" onClick={() => {
               const shareData = {
                 title: `Postly - Post by ${props.expand.author.username}`,
