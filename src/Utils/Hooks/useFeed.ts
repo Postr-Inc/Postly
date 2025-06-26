@@ -1,4 +1,4 @@
-import { createSignal, onMount, onCleanup, createEffect } from "solid-js";
+ import { createSignal, onMount, onCleanup, createEffect } from "solid-js";
 import { api } from "@/src";
 import { HttpCodes } from "../SDK/opCodes";
 
@@ -6,7 +6,7 @@ async function list(
   collection: string,
   page: number,
   feed: () => string,
-  options: { filter?: string; sort?: string; limit?: number } = {}
+  options: { filter?: string; sort?: string; limit?: number; _for?: any } = {}
 ) {
   return api
     .collection(collection)
@@ -14,7 +14,7 @@ async function list(
       recommended: feed() === "recommended",
       order: options.sort || "-created",
       filter: options.filter && options.filter.length > 0 ? options.filter : "author.deactivated=false",
-      cacheKey: `${collection}_${feed()}_${page}_feed_${api.authStore.model.id || api.authStore.model.token.split(".")}`,
+      cacheKey: `${collection}_${feed()}_${page}_feed_${api.authStore.model.id || api.authStore.model.token?.split(".")[0]}_${options._for || "none"}`,
       expand: [
         "comments.likes",
         "comments",
@@ -72,7 +72,8 @@ export default function useFeed(
     setTotalItems(0);
   }
 
-  async function fetchNextPage(page: number) { 
+  async function fetchNextPage(page: number) {
+    setLoading(true);
     try {
       const data = await list(collection, page, feed, options);
       const existingIds = new Set(posts().map(p => p.id));
@@ -85,17 +86,19 @@ export default function useFeed(
       if (data.totalPages <= page) setHasMore(false);
     } catch (err) {
       setError(err as any);
-    }  
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function fetchPosts(fetchOptions: any = {}, resetFlag = false) {
+    if (resetFlag) setLoading(true);
+
     try {
-      if (resetFlag) {
-        setLoading(true);
-        reset(); // hard reset
-      }
+      if (resetFlag) reset();
 
       const page = resetFlag ? 1 : currentPage();
+
       const data = await list(collection, page, feed, fetchOptions);
 
       const existingIds = new Set(posts().map(p => p.id));
@@ -191,17 +194,19 @@ export default function useFeed(
 
   createEffect(() => {
     const selectedFeed = feed();
-    let filter = `author.id != "${api.authStore.model.id}"`;
+
+    // Use filter from options, else fallback to default
+    let filter = options.filter || `author.id != "${api.authStore.model.id}"`;
 
     if (selectedFeed === "following") {
       filter = `author.followers ~ "${api.authStore.model.id}"`;
     }
 
-    fetchPosts({ filter }, true);
+    fetchPosts({ ...options, filter }, true);
   });
 
   onMount(() => {
-    fetchPosts(options, true);
+    // Removed redundant fetchPosts call here to avoid double fetch
 
     window.addEventListener("popstate", () => {
       reset();
