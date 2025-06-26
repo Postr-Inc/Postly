@@ -172,15 +172,17 @@ export default function SnippetReels() {
                     <video
                       ref={(el) => (videoRefs[index()] = el!)}
                       class="h-full w-full object-cover z-0"
-                      src={videoUrl}
+                      
                       muted
-                      loop
-                      playsInline
+                      loop 
+                      playsinline
                       preload={index() < 3 ? "auto" : "metadata"}
                       controls={false}
                       onCanPlay={() => handleVideoLoaded(index())}
                       onLoadedData={() => handleVideoLoaded(index())}
-                    />
+                    >
+                      <source  src={videoUrl} type="video/mp4" ></source>
+                    </video>
 
                     {/* Overlay */}
                     <div class="absolute bottom-0 sm:bottom-[120px] left-0 w-full text-white p-4 pointer-events-none z-10">
