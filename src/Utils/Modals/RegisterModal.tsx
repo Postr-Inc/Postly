@@ -64,8 +64,8 @@ export default function RegisterModal() {
     }
 
     async function register() {
-        return new Promise((resolve, reject) => {
-            fetch(`${api.serverURL}/auth/register`, {
+        return new Promise(async (resolve, reject) => {
+            await fetch(`${api.serverURL}/auth/register`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
@@ -277,7 +277,7 @@ export default function RegisterModal() {
                                 if (!buisnessWebsite() || !postlyUse() || !niche()) {
                                     return;
                                 }
-                                await register()
+                                await register() 
                                 setStages(3)
                             }}
                             disabled={!buisnessWebsite() || !postlyUse() || !niche()}
@@ -329,11 +329,19 @@ export default function RegisterModal() {
                         </label>
                         <input type="password" class="input input-bordered" placeholder="Confirm Password" onInput={(e: any) => setConfirmPassword(e.target.value)} value={confirmPassword()} />
                         <button class="btn rounded-full  bg-blue-500 text-white"
-                            onClick={() => {
+                            onClick={async () => {
                                 if (!password() || !confirmPassword() || password() !== confirmPassword() || password().length < 8) {
                                     return;
                                 }
                                 register()
+                                try {
+                                    await api.authStore.login(email(), password());
+                                    navigate("/")
+                                    //@ts-ignore
+                                    document.getElementById("register").close();
+                                } catch (error) {
+                                    console.error("Login failed:", error);
+                                }
                             }}
                             disabled={!password() || !confirmPassword() || password() !== confirmPassword() || password().length < 8}
                         >Register</button>
