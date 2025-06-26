@@ -72,8 +72,7 @@ export default function useFeed(
     setTotalItems(0);
   }
 
-  async function fetchNextPage(page: number) {
-    setLoading(true);
+  async function fetchNextPage(page: number) { 
     try {
       const data = await list(collection, page, feed, options);
       const existingIds = new Set(posts().map(p => p.id));
@@ -86,9 +85,7 @@ export default function useFeed(
       if (data.totalPages <= page) setHasMore(false);
     } catch (err) {
       setError(err as any);
-    } finally {
-      setLoading(false);
-    }
+    }  
   }
 
   async function fetchPosts(fetchOptions: any = {}, resetFlag = false) {
