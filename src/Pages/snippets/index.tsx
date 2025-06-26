@@ -170,21 +170,23 @@ export default function SnippetReels() {
                     )}
                   >
                     <video
-  ref={(el) => (videoRefs[idx] = el!)}
-  src={videoUrl}
-  muted
-  autoplay
-  playsInline
-  loop
-  preload={index() < 3 ? "auto" : "metadata"}
-  controls={false}
-  onCanPlay={() => handleVideoLoaded(idx)}
-  onLoadedData={() => handleVideoLoaded(idx)}
-  onError={(e) => {
-    console.error("Video error", e);
-    alert("Video failed to load.");
-  }}
-/>
+                      ref={(el) => (videoRefs[index()] = el!)}
+                      class="h-full w-full object-cover z-0"
+                      
+                      muted
+                      loop 
+                      playsinline
+                      autoplay
+                      src={videoUrl}
+                      preload={index() < 3 ? "auto" : "metadata"}
+                      controls={false}
+                      onError={(e)=>{
+                        alert(e.message)
+                      }}
+                      onCanPlay={() => handleVideoLoaded(index())}
+                      onLoadedData={() => handleVideoLoaded(index())}
+                    > 
+                    </video>
 
                     {/* Overlay */}
                     <div class="absolute bottom-0 sm:bottom-[120px] left-0 w-full text-white p-4 pointer-events-none z-10">
