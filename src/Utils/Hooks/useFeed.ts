@@ -72,8 +72,7 @@ export default function useFeed(
     setTotalItems(0);
   }
 
-  async function fetchNextPage(page: number) {
-    setLoading(true);
+  async function fetchNextPage(page: number) { 
     try {
       const data = await list(collection, page, feed, options);
       const existingIds = new Set(posts().map(p => p.id));
