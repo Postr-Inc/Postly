@@ -14,7 +14,8 @@ import Settings from './Pages/settings';
 import profileSettings from './Pages/settings/profile-settings';
 import AccountManagement from './Pages/settings/account-management';
 import deviceManagement from './Pages/settings/device-management';
-import applicationUpdates from './Pages/settings/application-updates';
+import applicationUpdates from './Pages/settings/application-updates'; 
+import Snippets from './Pages/snippets';
 import Account from './Pages/settings/account-management/account';
 import Password from './Pages/settings/account-management/password';
 import myFeed from './Pages/settings/my-feed';
@@ -42,6 +43,7 @@ render(() =>  (
     <Route path={"/settings/account-management/password"}component={Password}/>
     <Route path={"/settings/device-management"} component={deviceManagement} />
     <Route path={"/settings/application-updates"} component={applicationUpdates} />
-    <Route path={"/settings/my-feed"} component={myFeed} />
+    <Route path={"/settings/my-feed"} component={myFeed} /> 
+    <Route path={"/snippets"} component={Snippets}/>
   </Router>
 ), root);
