@@ -57,7 +57,7 @@ export default class SDK {
           })
 
         } else {
-          console.log("Token expired, reauthenticating"); 
+          console.log("Token expired, reauthenticating");
         }
       }
     }, 3600000) // every hour
@@ -65,26 +65,26 @@ export default class SDK {
     //@ts-ignore
     this.isOnIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
-const clearCache = async () => {
-  console.log("Clearing app cache");
-  const keys = await caches.keys();
-  for (const key of keys) {
-    await caches.delete(key);
-  }
-};
+    const clearCache = async () => {
+      console.log("Clearing app cache");
+      const keys = await caches.keys();
+      for (const key of keys) {
+        await caches.delete(key);
+      }
+    };
 
-if (this.isOnIos) {
-  // Both events to maximize the chance it runs
-  window.addEventListener("pagehide", clearCache);
-  document.addEventListener("visibilitychange", () => {
-    if (document.visibilityState === "hidden") {
+    if (this.isOnIos) {
+      // Both events to maximize the chance it runs
+      window.addEventListener("pagehide", clearCache);
+      document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "hidden") {
+          clearCache();
+        }
+      });
+    } else {
+      // Non-iOS can clear immediately or on unload
       clearCache();
     }
-  });
-} else {
-  // Non-iOS can clear immediately or on unload
-  clearCache();
-}
 
     // check if logged in and check if ws is closed periodically
     setInterval(() => {
@@ -99,9 +99,9 @@ if (this.isOnIos) {
       cb(event);
     });
   };
- 
+
   // Existing methods like collection(), authStore, etc...
-  
+
   async send<T = any>(
     endpoint: string,
     options: {
@@ -147,84 +147,113 @@ if (this.isOnIos) {
     };
   }
 
-  updateCache = async (collection: string, id: string, data: any) => {
-    const { set, get, remove, clear } = useCache();
-    const keys = await caches.keys();
-    for (let key of keys) {
-      const cacheData = await (await caches.open(key)).keys();
-      switch (collection) {
-        case "posts":
-        case "comments":
-          for (let cache of cacheData) {
-            const cacheDataJSON = await (await caches.open(key)).match(cache).then((res) => res?.json());
-            // If value is array
-            if (Array.isArray(cacheDataJSON?.value)) {
-              const payload = cacheDataJSON.value;
-              const item = payload.find((e: any) => e.id === id);
-              if (item) {
-                const index = payload.indexOf(item);
-                payload[index] = { ...item, ...data };
-                cacheDataJSON.value = payload;
-                set(cache.url, cacheDataJSON, new Date().getTime() + 3600);
-              }
-            }
-            // If value is object but payload is array
-            else if (Array.isArray(cacheDataJSON?.value?.payload)) {
-              const payload = cacheDataJSON.value.payload;
-              const item = payload.find((e: any) => e.id === id);
-              if (item) {
-                const index = payload.indexOf(item);
-                payload[index] = { ...item, ...data };
-                cacheDataJSON.value.payload = payload;
-                set(cache.url, cacheDataJSON.value, new Date().getTime() + 3600);
-              }
-            }
-            // If value is object and payload is object
-            else if (cacheDataJSON?.value?.payload && cacheDataJSON.value.payload.id === id) {
-              cacheDataJSON.value.payload = { ...cacheDataJSON.value.payload, ...data };
-              set(cache.url, cacheDataJSON.value, new Date().getTime() + 3600);
-            }
-            // If value is object and id matches
-            else if (cacheDataJSON?.value && cacheDataJSON.value.id === id) {
-              cacheDataJSON.value = { ...cacheDataJSON.value, ...data };
-              set(cache.url, cacheDataJSON.value, new Date().getTime() + 3600);
-            }
-          }
-          break;
-        case "users":
-          for (let cache of cacheData) {
-            if (cache.url.includes(id)) {
-              var cacheDataJSON = await (await caches.open(key)).match(cache).then((res) => res?.json());
-              if (Array.isArray(cacheDataJSON?.value)) {
-                cacheDataJSON.value = cacheDataJSON.value.map((e: any) => e.id === id ? { ...e, ...data } : e);
-              } else {
-                // if update data is a buffer convert to base64
-                if (data.avatar && (data.avatar instanceof ArrayBuffer || data.avatar instanceof Blob)) {
-                  const reader = new FileReader();
-                  reader.onloadend = () => {
-                    data.avatar = reader.result; // This will be a Data URL (base64 encoded)
-                    // Now you can proceed with set(cache.url, cacheDataJSON.value, new Date().getTime() + 3600);
-                  };
-                  reader.readAsDataURL(data.avatar);
-                } else if (data.banner && (data.banner instanceof ArrayBuffer || data.banner instanceof Blob)) {
-                  const reader = new FileReader();
-                  reader.onloadend = () => {
-                    data.banner = reader.result;
-                  };
-                  reader.readAsDataURL(data.banner);
-                } else {
-                  cacheDataJSON.value = { ...cacheDataJSON.value, ...data };
-                }
-              }
-              set(cache.url, cacheDataJSON.value, new Date().getTime() + 3600);
-            }
-          }
-          break;
-      }
-    }
+  convertToBase64(file: Blob): Promise<string> {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(reader.result as string);
+      reader.readAsDataURL(file);
+    });
   }
 
- 
+  updateCache = async (collection: string, id: string, data: any) => {
+    const { set } = useCache();
+    const keys = await caches.keys();
+
+    for (let key of keys) {
+      const cache = await caches.open(key);
+      const requests = await cache.keys();
+
+      for (let request of requests) {
+        const response = await cache.match(request);
+        const json = await response?.json();
+        const value = json?.value
+
+        console.log(value)
+
+        if (!value) continue;
+
+        switch (collection) {
+          case "posts":
+          case "comments": {
+            let updated = false;
+
+            if (Array.isArray(value)) {
+              const index = value.findIndex((e: any) => e.id === id);
+              if (index !== -1) {
+                value[index] = { ...value[index], ...data };
+                updated = true;
+              }
+            } else if (Array.isArray(value.payload)) {
+              const index = value.payload.findIndex((e: any) => e.id === id);
+              if (index !== -1) {
+                value.payload[index] = { ...value.payload[index], ...data };
+                updated = true;
+              }
+            } else if (value.payload?.id === id) {
+              value.payload = { ...value.payload, ...data };
+              updated = true;
+            } else if (value.id === id) {
+              json.value = { ...value, ...data };
+              updated = true;
+            }
+
+            if (updated) {
+              set(request.url, json.value ?? value, Date.now() + 3600);
+            }
+
+            break;
+          }
+
+          case "users": {
+            let updated = false;
+
+            if (data.avatar && data.avatar instanceof Blob) {
+              data.avatar = await convertToBase64(data.avatar);
+            }
+            if (data.banner && data.banner instanceof Blob) {
+              data.banner = await convertToBase64(data.banner);
+            }
+
+            // Case: value.payload is an array of users
+            if (Array.isArray(value.payload)) {
+              const index = value.payload.findIndex((e: any) => e.username === id);
+              if (index !== -1) {
+                value.payload[index] = { ...value.payload[index], ...data };
+                updated = true;
+              }
+            }
+
+            // Case: value is an array of users
+            else if (Array.isArray(value)) {
+              const index = value.findIndex((e: any) => e.username === id);
+              if (index !== -1) {
+                value[index] = { ...value[index], ...data };
+                updated = true;
+              }
+            }
+
+            // Case: single user object
+            else if (value?.username === id) {
+              json.value = { ...value, ...data };
+              updated = true;
+            }
+
+            if (updated) {
+              set(request.url, json.value ?? value, Date.now() + 3600);
+            }
+
+            break;
+          }
+
+
+          default:
+            break;
+        }
+      }
+    }
+  };
+
+
 
   checkAuth = async () => {
 
@@ -235,7 +264,7 @@ if (this.isOnIos) {
         },
       });
       this.hasChecked = true;
-      if (res.status !== 200) { 
+      if (res.status !== 200) {
         this.authStore.model = {}
         localStorage.removeItem("postr_auth")
         return;
@@ -270,8 +299,8 @@ if (this.isOnIos) {
 
   authStore: authStore = {
     model: JSON.parse(localStorage.getItem("postr_auth") || "{}"),
-    deleteAccount: ()=> {
-      return new Promise(async( resolve,reject) =>{
+    deleteAccount: () => {
+      return new Promise(async (resolve, reject) => {
         const res = await fetch(`${this.serverURL}/auth/delete`, {
           method: "DELETE",
           headers: {
@@ -281,23 +310,23 @@ if (this.isOnIos) {
       })
     },
     getBasicAuthToken: () => {
-       return new Promise(async (resolve, reject)=> {
-            const response = await fetch(`${this.serverURL}/auth/get-basic-auth-token`, {
-              method: "POST",
-              headers:{
-                "Content-Type": "application/json"
-              }
-            })
+      return new Promise(async (resolve, reject) => {
+        const response = await fetch(`${this.serverURL}/auth/get-basic-auth-token`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          }
+        })
 
-            const { status, token, message } = await response.json(); 
-            if(status !== 200) { 
-              return reject(message)
-            }
-            else{ 
-             localStorage.setItem("postr_auth", JSON.stringify({token}))
-             this.authStore.model.token = token
-             resolve(true)
-            }
+        const { status, token, message } = await response.json();
+        if (status !== 200) {
+          return reject(message)
+        }
+        else {
+          localStorage.setItem("postr_auth", JSON.stringify({ token }))
+          this.authStore.model.token = token
+          resolve(true)
+        }
       })
     },
     isValid: () => {
@@ -337,12 +366,12 @@ if (this.isOnIos) {
         return resolve();
       });
     },
-    logout: () => {  
-      if (window.location.pathname !== "/auth/login") { 
-         localStorage.removeItem("postr_auth");
-         window.location.href = "/auth/login";
-      } 
-      
+    logout: () => {
+      if (window.location.pathname !== "/auth/login") {
+        localStorage.removeItem("postr_auth");
+        window.location.href = "/auth/login";
+      }
+
     },
     login: async (emailOrUsername: string, password: string) => {
       return new Promise(async (resolve, reject) => {
@@ -350,27 +379,27 @@ if (this.isOnIos) {
           reject("Invalid email or password")
           return;
         }
-       try {
+        try {
           const response = await fetch(`${this.serverURL}/auth/login`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            emailOrUsername,
-            password,
-            deviceInfo: navigator.userAgent,
-          }),
-        });
-        const { data, status, message } = await response.json();
-        if (status !== 200) return reject(message);
-        this.authStore.model = data;
-        this.connectToWS();
-        localStorage.setItem("postr_auth", JSON.stringify(data));
-        return resolve(data);
-       } catch (error) {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              emailOrUsername,
+              password,
+              deviceInfo: navigator.userAgent,
+            }),
+          });
+          const { data, status, message } = await response.json();
+          if (status !== 200) return reject(message);
+          this.authStore.model = data;
+          this.connectToWS();
+          localStorage.setItem("postr_auth", JSON.stringify(data));
+          return resolve(data);
+        } catch (error) {
           resolve(error)
-       } 
+        }
 
       })
     },
@@ -399,115 +428,115 @@ if (this.isOnIos) {
     }
   };
 
-    resetCache = () =>{
-      const { set, get, remove, clear } = useCache();
-      clear()
-      }
+  resetCache = () => {
+    const { set, get, remove, clear } = useCache();
+    clear()
+  }
 
 
 
   sendMsg = async (msg: any, type: any) => {
-  if (!this.ws && msg.byWebsocket) {
-    this.wsReconnect();
-  }
-
-  if (msg.byWebsocket && this.ws) {
-    if (this.ws.readyState !== WebSocket.OPEN) {
-      return {
-        opCode: HttpCodes.INTERNAL_SERVER_ERROR,
-        message: "WebSocket is not open",
-      };
+    if (!this.ws && msg.byWebsocket) {
+      this.wsReconnect();
     }
 
-    this.waitUntilSocketIsOpen(() => {
-      let cid = this.callback((data: any) => {
-        console.log("Received data from WebSocket", data);
-        if (data.type === GeneralTypes.AUTH_ROLL_TOKEN) {
-          const newToken = data.token;
-          let authData = JSON.parse(localStorage.getItem("postr_auth") || "{}");
-          authData.token = newToken;
-          localStorage.setItem("postr_auth", JSON.stringify(authData));
-          this.authStore.model = authData;
-          window.dispatchEvent(this.changeEvent);
-        }
-      });
-
-      msg.callback = cid;
-      this.ws?.send(JSON.stringify(msg));
-    });
-
-    return;
-  }
-
-  // HTTP Path
-  try {
-    // Validate token
-    if (!msg.security || !msg.security.token || isTokenExpired(msg.security.token)) {
-      if (!this.authStore.isValid()) {
+    if (msg.byWebsocket && this.ws) {
+      if (this.ws.readyState !== WebSocket.OPEN) {
         return {
-          opCode: ErrorCodes.INVALID_OR_MISSING_TOKEN,
-          message: "You are not authorized to perform this action",
+          opCode: HttpCodes.INTERNAL_SERVER_ERROR,
+          message: "WebSocket is not open",
         };
       }
+
+      this.waitUntilSocketIsOpen(() => {
+        let cid = this.callback((data: any) => {
+          console.log("Received data from WebSocket", data);
+          if (data.type === GeneralTypes.AUTH_ROLL_TOKEN) {
+            const newToken = data.token;
+            let authData = JSON.parse(localStorage.getItem("postr_auth") || "{}");
+            authData.token = newToken;
+            localStorage.setItem("postr_auth", JSON.stringify(authData));
+            this.authStore.model = authData;
+            window.dispatchEvent(this.changeEvent);
+          }
+        });
+
+        msg.callback = cid;
+        this.ws?.send(JSON.stringify(msg));
+      });
+
+      return;
     }
 
-    const token = JSON.parse(localStorage.getItem("postr_auth") || "{}").token;
-    const body = JSON.stringify(msg);
-    const headers = {
-      "Content-Type": "application/json",
-      Authorization: token,
-    };
-
-    const endpoint =
-      type === "search"
-        ? `${this.serverURL}/deepsearch`
-        : `${this.serverURL}/collection/${msg.payload.collection}`;
-
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers,
-      body,
-    });
-
-    const remaining = parseInt(response.headers.get("Ratelimit-Remaining") || "0");
-    const retryAfter = parseInt(response.headers.get("Retry-After") || "0");
-
-    if (!response.ok) {
-      if (remaining === 0 && retryAfter > 0) {
-        dispatchAlert({
-          type: "error",
-          message: `You've been rate-limited. Try again in ${retryAfter} seconds.`,
-        });
+    // HTTP Path
+    try {
+      // Validate token
+      if (!msg.security || !msg.security.token || isTokenExpired(msg.security.token)) {
+        if (!this.authStore.isValid()) {
+          return {
+            opCode: ErrorCodes.INVALID_OR_MISSING_TOKEN,
+            message: "You are not authorized to perform this action",
+          };
+        }
       }
 
-      // Try to parse server response, but fallback to default message
-      let errorMessage = "An error occurred";
-      try {
-        const errorData = await response.json();
-        errorMessage = errorData.message || errorMessage;
-      } catch (_) {
-        // ignore bad JSON
+      const token = JSON.parse(localStorage.getItem("postr_auth") || "{}").token;
+      const body = JSON.stringify(msg);
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: token,
+      };
+
+      const endpoint =
+        type === "search"
+          ? `${this.serverURL}/deepsearch`
+          : `${this.serverURL}/collection/${msg.payload.collection}`;
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers,
+        body,
+      });
+
+      const remaining = parseInt(response.headers.get("Ratelimit-Remaining") || "0");
+      const retryAfter = parseInt(response.headers.get("Retry-After") || "0");
+
+      if (!response.ok) {
+        if (remaining === 0 && retryAfter > 0) {
+          dispatchAlert({
+            type: "error",
+            message: `You've been rate-limited. Try again in ${retryAfter} seconds.`,
+          });
+        }
+
+        // Try to parse server response, but fallback to default message
+        let errorMessage = "An error occurred";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (_) {
+          // ignore bad JSON
+        }
+
+        return {
+          opCode: response.status,
+          message: errorMessage,
+        };
       }
+
+      return await response.json();
+    } catch (err) {
+      dispatchAlert({
+        type: "error",
+        message: "Something went wrong while sending your request.",
+      });
 
       return {
-        opCode: response.status,
-        message: errorMessage,
+        opCode: ErrorCodes.SYSTEM_ERROR,
+        message: "Network or unexpected error occurred",
       };
     }
-
-    return await response.json();
-  } catch (err) { 
-    dispatchAlert({
-      type: "error",
-      message: "Something went wrong while sending your request.", 
-    });
-
-    return {
-      opCode: ErrorCodes.SYSTEM_ERROR,
-      message: "Network or unexpected error occurred",
-    };
-  }
-};
+  };
 
 
 
