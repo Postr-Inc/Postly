@@ -66,7 +66,9 @@ export function SideBarLeft(props: {
               </a>
             </li>
             <li>
-              <a class="text-lg  rounded-full flex hero">
+              <a     class={joinClass("text-lg  rounded-full ",   route() === "/snippets" ? "fill-blue-500 stroke-blue-500 text-blue-500 font-bold" : 
+                theme() === "dark" ? "fill-white stroke-white text-white" : "  stroke-black"
+                )} onClick={()=> navigate("/snippets")}>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
