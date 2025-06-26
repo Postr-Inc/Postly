@@ -178,6 +178,9 @@ export default function SnippetReels() {
                       playsinline
                       preload={index() < 3 ? "auto" : "metadata"}
                       controls={false}
+                      onError={(e)=>{
+                        alert(e.message)
+                      }}
                       onCanPlay={() => handleVideoLoaded(index())}
                       onLoadedData={() => handleVideoLoaded(index())}
                     >
