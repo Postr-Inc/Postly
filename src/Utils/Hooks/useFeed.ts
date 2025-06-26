@@ -72,7 +72,8 @@ export default function useFeed(
     setTotalItems(0);
   }
 
-  async function fetchNextPage(page: number) { 
+  async function fetchNextPage(page: number) {
+    setLoading(true);
     try {
       const data = await list(collection, page, feed, options);
       const existingIds = new Set(posts().map(p => p.id));
@@ -117,16 +118,17 @@ export default function useFeed(
       for (const item of data.items) {
         const followers = item?.expand?.author?.expand?.followers ?? [];
         for (const follower of followers) {
+          if (relevantPeople.length >= 5) break;
           if (
             follower.id !== api.authStore.model.id &&
             !follower.followers.includes(api.authStore.model.id) &&
             !follower.deactivated &&
             !relevantPeople.find(p => p.id === follower.id)
-          ) {
-            relevantPeople.push(follower);
-            if (relevantPeople.length >= 5) break;
+          ) {  
+            relevantPeople.push(follower); 
           }
         }
+          if (relevantPeople.length >= 5) break;
       }
 
       // @ts-ignore
