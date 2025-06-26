@@ -34,7 +34,7 @@ export default function BottomNav() {
         hide() && mobile() ? "hidden" : ""
       )}
     >
-         <Show when={!window.location.pathname.includes("/settings")}>
+         <Show when={!window.location.pathname.includes("/settings") && !window.location.pathname.includes("/snippets")}>
          <div class={joinClass("btn btn-circle border-none btn-xl  fixed bottom-24 right-3", scrollingDirection() == "down" ? "bg-opacity-50" : 
         scrollingDirection() == "up" ? "bg-opacity-100" : "bg-opacity-100", theme() == "dark" ? "bg-white text-black" : "bg-black text-white"
         )}>
@@ -58,7 +58,7 @@ export default function BottomNav() {
         </Show>
       <ul
         class={joinClass(
-          " flex justify-between p-5   h-full bg[#121212] rounded-xl  border border-l-0 border-b-0 border-r-0",
+          " flex justify-between p-5   h-full bg[#121212]    border border-l-0 border-b-0 border-r-0",
           theme() === "dark"
             ? "text-white fill-white stroke-white bg-black border-t-[#53535322]"
             : "bg-white border-t-[#e0e0e0]",
@@ -117,6 +117,7 @@ export default function BottomNav() {
         </li>
         <li class="flex mb-5 ">
           <Scissors
+            onClick={()=> navigate("/snippets")}
             class={joinClass(
               "w-7 h-7",
               route() === "/create"
