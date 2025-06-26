@@ -256,7 +256,7 @@ export default function Post(props: Props) {
 
 
         <div class="flex gap-2 items-start mt-0 mb-5 pt-0">
-          <div class="flex hero items-center mt-0 pt-0">
+          <div class="flex hero items-center mt-0   pt-0">
             <CardTitle
               class="cursor-pointer flex items-center gap-1"
               onClick={() => props.navigate(StringJoin("/u/", props.expand.author.username))}
@@ -269,19 +269,14 @@ export default function Post(props: Props) {
               </div>
             </Show>
             <Show when={props.expand.author.isEarlyUser}>
-              <div data-tip="Early Access Member" class="tooltip tooltip-top flex mx-2 items-center">
+              <div data-tip="Early Access Member" class="tooltip tooltip-top mx-2 flex items-center">
           <img src="/icons/legacy/postr.png" class="w-[13px] h-[13px]" />
               </div>
             </Show>
           </div> 
           <CardTitle class="text-sm opacity-50 flex items-center">·</CardTitle>
           <CardTitle class="text-sm opacity-50 flex items-center">{created(props.created)}</CardTitle>
-        </div>
-        <Show when={props.isSnippet}>
-          <span class="badge bg-blue-500 p-3 text-white rounded-full">
-            ✨ Snippet
-          </span>
-        </Show>
+        </div> 
 
 
         <Show when={!props.isComment && !window.location.pathname.includes("/view") || props.isComment && window.location.pathname.includes("/view")}>
