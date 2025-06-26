@@ -256,6 +256,7 @@ export default function SnippetReels() {
             console.log('Setting active index to:', bestMatch.index);
             setActiveIndex(bestMatch.index);
             setIsPlaying(true);
+            setCurrentPost(posts()[activeIndex()])
           }
         }, 100);
       },
@@ -305,6 +306,7 @@ export default function SnippetReels() {
     console.log('Active index changed to:', currentIndex);
 
     if (!loaded[currentIndex]) return;
+    setCurrentPost(posts()[currentIndex])
 
     videoRefs.forEach((video, i) => {
       if (!video || !loaded[i]) return;
@@ -331,13 +333,48 @@ export default function SnippetReels() {
     }
   });
 
-  const handleLike = (post: any) => {
-    if (!api.authStore.model.id) {
-      // Handle signup requirement
-      return;
+  async function handleLike(post: any) {
+  const userId = api.authStore.model?.id;
+  //@ts-ignore
+  if (!userId) return requireSignup();
+
+  const hasLiked = post.likes.includes(userId);
+  const updatedLikes = hasLiked
+    ? post.likes.filter((id: string) => id !== userId)
+    : [...post.likes, userId];
+
+  // Optimistically update post object
+  post.likes = updatedLikes;
+
+  // Update the local signal state if this is the current post
+  if (post.id === currentPost()?.id) {
+    setCurrentPost({ ...post });
+  }
+
+  // Update the global cache
+  api.updateCache("posts", post.id, { likes: updatedLikes });
+
+  try {
+    await api.send(`/actions/posts/${hasLiked ? "unlike" : "like"}`, {
+      body: { targetId: post.id },
+    });
+  } catch (err) {
+    console.error("Like/unlike request failed:", err);
+
+    // Optionally rollback like state on failure
+    const rollbackLikes = hasLiked
+      ? [...post.likes, userId]
+      : post.likes.filter((id: string) => id !== userId);
+
+    post.likes = rollbackLikes;
+
+    if (post.id === currentPost()?.id) {
+      setCurrentPost({ ...post });
     }
-    // Handle like logic here
-  };
+
+    api.updateCache("posts", post.id, { likes: rollbackLikes });
+  }
+}
 
   const handleShare = (post: any) => {
     if (navigator.share) {
@@ -360,8 +397,7 @@ export default function SnippetReels() {
         <Show when={!loading() && posts()?.length > 0}>
           <For each={posts()}>
             {(post, index) => {
-              const author = post.expand?.author;
-              setCurrentPost(post);
+              const author = post.expand?.author; 
               const videoUrl = post.files?.[0] ? api.cdn.getUrl("posts", post.id, post.files[0]) : null;
               const isLiked = post.likes?.includes(api.authStore.model?.id);
 
@@ -474,10 +510,10 @@ export default function SnippetReels() {
                                 when={isLiked}
                                 fallback={<Icons.HeartOutline class="w-7 h-7 text-white" />}
                               >
-                                <Icons.Heart class="w-7 h-7 text-red-500" />
+                                <Icons.Heart class={joinClass("w-7 h-7  ", currentPost() && currentPost().likes?.length ? "text-red-500" : "text-white" )} />
                               </Show>
                             </div>
-                            <span class="text-xs font-semibold">{post.likes?.length || 0}</span>
+                            <span class="text-xs font-semibold">{currentPost() && currentPost().likes?.length || 0}</span>
                           </div>
 
                           {/* Comment button */}
