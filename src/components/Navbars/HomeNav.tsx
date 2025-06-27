@@ -137,7 +137,7 @@ export default function HomeNav({
               </div>
 
               <div class="flex gap-4">
-                <Bookmark class="w-7 h-7" onClick={()=>{
+                <Bookmark class="w-7 cursor-pointer h-7" onClick={()=>{
                   if(!api.authStore.model.id) {
                    requireSignup()
                     return;
