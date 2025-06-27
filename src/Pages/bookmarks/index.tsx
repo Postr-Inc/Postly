@@ -26,8 +26,8 @@ export default function () {
                     <span class="loading flex mx-auto justify-center mt-12 loading-spinner loading-xl"></span>
                 </Match>
                 <Match when={posts() && posts().length < 1 && !loading() }>
-                    <div class="flex justify-center mx-auto">
-                    <h1>When you start book marking posts they will appear here!</h1>
+                    <div class="flex justify-center mx-auto text-center p-5">
+                    <h1 >When you start book marking posts they will appear here!</h1>
                 </div>
                 </Match>
                 <Match when={posts()  && posts().length >= 1  && !loading() }>
