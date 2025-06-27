@@ -131,6 +131,10 @@ export default function Post(props: Props) {
     const hasLiked = currentLikes.includes(userId);
     const action = hasLiked ? "unlike" : "like";
     const collection = isComment ? "comments" : "posts";
+    if(!api.authStore.model.id){
+      haptic.error()
+      return;
+    }
     if(action === "like"){
       setLikes([...likes(), userId]); 
       haptic()  
@@ -216,6 +220,10 @@ export default function Post(props: Props) {
 
 
   async function bookMarkPost(){
+    if(!api.authStore.model.id){
+      haptic.error()
+      return;
+    }
     if(bookmarks().includes(api.authStore.model.id)){
       dispatchAlert({
         type:"success",
