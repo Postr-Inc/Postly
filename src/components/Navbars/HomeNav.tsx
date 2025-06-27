@@ -36,7 +36,7 @@ export default function HomeNav({
         hide() && mobile() ? "hidden" : ""
       )}
     >
-      <div class="flex   w-full sm:p-3  z-[9999999] justify-between ">
+      <div class="flex   w-full sm:p-3    justify-between ">
         <div class="flex gap-2 hero">
           <div class="flex flex-col   w-full">
             <div class="flex  justify-between gap-2 w-full">
@@ -73,7 +73,7 @@ export default function HomeNav({
                     class="dropdown-content  menu   w-[16rem] shadow bg-base-100  rounded "
                   >
                     {
-                      api.authStore.model.id && <li>
+                      api.authStore.model.username && <li>
                         <a
                           onClick={() => {
                             navigate("/u/" + api.authStore.model.username);
@@ -84,7 +84,7 @@ export default function HomeNav({
                       </li>
                     }
                     {typeof window != "undefined" &&
-                      api.authStore.model.postr_plus && api.authStore.model.id ? (
+                      api.authStore.model.postr_plus && api.authStore.model.username ? (
                       <li>
                         <a class="rounded-full">
                           Your benefits
@@ -125,7 +125,7 @@ export default function HomeNav({
                   </ul>
                 </div>
                 {
-                  api.authStore.model.id && <div class="flex flex-col">
+                  api.authStore.model.username && <div class="flex flex-col">
                     <p class="font-bold ">
                       {api.authStore.model.username}
                     </p>
@@ -138,14 +138,14 @@ export default function HomeNav({
 
               <div class="flex gap-4">
                 <Bookmark class="w-7 cursor-pointer h-7" onClick={()=>{
-                  if(!api.authStore.model.id) {
+                  if(!api.authStore.model.username) {
                    requireSignup()
                     return;
                   } 
                   navigate("/bookmarks")
                 }}/>
                 <Settings class="w-7 h-7  cursor-pointer" onClick={() => {
-                  if(!api.authStore.model.id) {
+                  if(!api.authStore.model.username) {
                    requireSignup()
                     return;
                   }  
@@ -173,7 +173,7 @@ export default function HomeNav({
             ""
           )}
         </div>
-        <Show when={api.authStore.model.id}>
+        <Show when={api.authStore.model.username}>
           <div class="flex flex-col text-sm">
             <p
               class={joinClass("cursor-pointer", page() !== "following" ? "text-gray-500" : "")}
@@ -190,7 +190,7 @@ export default function HomeNav({
             )}
           </div>
         </Show>
-        <Show when={!api.authStore.model.id}>
+        <Show when={!api.authStore.model.username}>
           <div></div>
         </Show>
         <div class="flex flex-col text-sm">
