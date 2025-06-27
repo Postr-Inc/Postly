@@ -12,7 +12,7 @@ export default function EditProfileModal(
         updateUser: (data: any) => void
     }
 ) {
-    if(!api.authStore.model.id) return <div></div>
+    if(!api.authStore.model.username) return <div></div>
     const { theme } = useTheme();
     const [avatar, setAvatar] = createSignal(api.authStore.model.avatar);
     const [avatarFile, setAvatarFile] = createSignal<File>();
