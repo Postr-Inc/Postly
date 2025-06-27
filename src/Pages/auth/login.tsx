@@ -12,6 +12,8 @@ import useDevice from "@/src/Utils/Hooks/useDevice";
 import Modal from "@/src/components/Modal";
 import RegisterModal from "@/src/Utils/Modals/RegisterModal";
 import { Portal } from "solid-js/web";
+import { dispatchAlert, haptic } from "@/src/Utils/SDK";
+import Alert from  "@/src/Utils/Alerts/Alert"
 export default function Login() { 
   const { navigate } = useNavigation()
     const [isAuthenticated, setIsAuthenticated] = createSignal(
@@ -28,10 +30,15 @@ export default function Login() {
           setIsAuthenticated(true);
           setIsLoading(false);
           navigate("/")
+          haptic.confirm()
           resolve(true)
-        } catch (error: any) {
+        } catch (error: any) { 
           setIsLoading(false);
-          setError(error.message);
+          dispatchAlert({
+           type:"error",
+           message: "Invalid Email Or Password"
+          })
+          haptic.error()
           reject(error)
         }
       })
@@ -47,9 +54,7 @@ export default function Login() {
    
   createEffect(() => {  
     if (isAuthenticated()) { 
-    } else if (error()) {
-      console.log("Error", error());
-    }
+    }  
 
     let typingTimeout: any;
 
@@ -84,7 +89,9 @@ export default function Login() {
     window.addEventListener("click", handleClick);
   });
   return (
-    <div  style={{"background-image": `url(${LandingPage})`, "background-size": "cover", "background-position": "center"}} class="w-full h-screen flex justify-center items-center">
+     <>
+     <Alert />
+     <div  style={{"background-image": `url(${LandingPage})`, "background-size": "cover", "background-position": "center"}} class="w-full h-screen flex justify-center items-center">
        <div
 
               
@@ -160,5 +167,6 @@ export default function Login() {
         <RegisterModal />
      </Portal>
     </div>
+    </>
   );
 }
