@@ -10,6 +10,7 @@ import Scissors from "../Icons/Scissors";
 import { createEffect, createSignal, onMount, Show } from "solid-js";
 import { api } from "@/src";
 import useDevice from "@/src/Utils/Hooks/useDevice";
+import { haptic } from "@/src/Utils/SDK";
 
 export default function BottomNav() {
   const { theme } = useTheme();
@@ -76,7 +77,10 @@ export default function BottomNav() {
                   : "fill-black"
                 : "opacity-50"
             )}
-            onClick={() => navigate("/")}
+            onClick={() => {
+              navigate("/")
+              haptic()
+            }}
           />
         </li>
         <li class="flex mb-5 ">
@@ -117,7 +121,10 @@ export default function BottomNav() {
         </li>
         <li class="flex mb-5 ">
           <Scissors
-            onClick={()=> navigate("/snippets")}
+            onClick={()=> {
+              navigate("/snippets")
+              haptic()
+            }}
             class={joinClass(
               "w-7 h-7",
               route() === "/snippets"
