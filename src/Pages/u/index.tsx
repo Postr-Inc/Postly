@@ -291,6 +291,13 @@ export default function User() {
 
 
   async function follow(type: "follow" | "unfollow") {
+    var followers = user().followers || [];
+    if (type === "follow") {
+      followers.push(api.authStore.model.id);
+    } else {
+      followers = followers.filter(id => id !== api.authStore.model.id);
+    }
+    setUser({ ...user(), followers });
     try {
       const targetUserId = user().id;
 
@@ -304,8 +311,11 @@ export default function User() {
 
       // Optionally update local UI (after server confirms)
       // Fetch fresh state or update safely
-      const updated = await api.collection("users").get(targetUserId, { expand: ["followers"] })
+      const updated = await api.collection("users").get(targetUserId, { expand: ["followers"], cacheKey: `/u/user_${u.id}` })
       setUser(updated)
+      api.updateCache("users", u.id, {
+        followers: updated.followers
+      })
     } catch (err) {
       console.error("Follow error", err)
     } finally {
@@ -473,7 +483,7 @@ export default function User() {
               <div>
 
                 {
-                  user() ? user().isEarlyUser ?  <div data-tip="Early Access Member" class="tooltip tooltip-top"> <img src="/icons/legacy/postr.png" class="w-5 h-5" ></img></div> : <span></span> : ""
+                  user() ? user().isEarlyUser ? <div data-tip="Early Access Member" class="tooltip tooltip-top"> <img src="/icons/legacy/postr.png" class="w-5 h-5" ></img></div> : <span></span> : ""
                 }
               </div>
             </h1>
