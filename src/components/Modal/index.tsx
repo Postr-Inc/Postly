@@ -2,7 +2,7 @@ import useTheme from "@/src/Utils/Hooks/useTheme";
 import { joinClass } from "@/src/Utils/Joinclass";
 import { createEffect } from "solid-js";
 
-export default function Modal( { children , id , className, bottom , autoClose}: { children: any, bottom?: boolean,  id: string, className?: string , autoClose?: boolean}) {
+export default function Modal( { children , id , className,  open}: { children: any, bottom?: boolean,  id: string, className?: string , open?: boolean}) {
     const { theme } = useTheme();
     createEffect(() => {
         window.addEventListener("keydown", (e) => {
@@ -10,15 +10,10 @@ export default function Modal( { children , id , className, bottom , autoClose}:
                 document.getElementById(id)?.close();
             }
         });
-        window.addEventListener("click", (e) => {
-            if (e.target === document.getElementById(id) && autoClose == true) {
-                alert("closing");
-                document.getElementById(id)?.close();
-            }
-        });
+       
     });
     return (
-        <dialog class={joinClass("modal   focus:outline-none",className, theme() == "light"  ? "bg-white" : "bg-[#121212]")} id={id}>
+        <dialog class={joinClass("modal   focus:outline-none",className, theme() == "light"  ? "bg-white" : "bg-[#121212]",)} id={id}>
       
             {children}
         </dialog>

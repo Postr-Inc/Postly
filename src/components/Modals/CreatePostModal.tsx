@@ -214,8 +214,7 @@ export default function CreatePostModal() {
     setMainPost(data)
   }
 
-  function closeAndReset(){
-    console.log("yesss")
+  function closeAndReset(){ 
     setCanCommentOnPost(true)
     setReplyRule("public")
     setCollection(window.location.pathname.split("/")[2] === "posts" ? "comments" : "posts");

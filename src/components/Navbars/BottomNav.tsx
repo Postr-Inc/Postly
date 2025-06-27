@@ -35,7 +35,7 @@ export default function BottomNav() {
         hide() && mobile() ? "hidden" : ""
       )}
     >
-         <Show when={!window.location.pathname.includes("/settings") && !window.location.pathname.includes("/snippets")}>
+         <Show when={!window.location.pathname.includes("/settings") && !window.location.pathname.includes("/snippets")  && !window.location.pathname.includes("/bookmarks")}>
          <div class={joinClass("btn btn-circle border-none btn-xl  fixed bottom-24 right-3", scrollingDirection() == "down" ? "bg-opacity-50" : 
         scrollingDirection() == "up" ? "bg-opacity-100" : "bg-opacity-100", theme() == "dark" ? "bg-white text-black" : "bg-black text-white"
         )}>

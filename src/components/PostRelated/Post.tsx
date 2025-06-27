@@ -225,19 +225,30 @@ export default function Post(props: Props) {
       return;
     }
     if(bookmarks().includes(api.authStore.model.id)){
+      //@ts-ignore
+      if(window.removeFromBookMarks){
+         //@ts-ignore
+                window.removeFromBookMarks(props.id)
+          }
       dispatchAlert({
         type:"success",
         message:"Post removed from Bookmarks"
       })
       haptic()
       setBookmarks(bookmarks().filter((c)=> c != api.authStore.model.id))
+      api.updateCache("posts", props.id, {
+        bookmarked: bookmarks()
+      })
     }else{
       setBookmarks([...bookmarks(), api.authStore.model.id])
       dispatchAlert({
-        type:"success",
-        message:"Successfully Added Post To Bookmarks"
+        type:"info",
+        message:"Added Post To Bookmarks"
       })
       haptic()  
+       api.updateCache("posts", props.id, {
+        bookmarked: bookmarks()
+      })
     }
      try {
       const { res } = await api.send("/actions/posts/bookmark", {
@@ -608,7 +619,8 @@ export default function Post(props: Props) {
 
           <div class="flex absolute right-5 gap-5">
             <Bookmark class={
-              joinClass("w-6 h-6", bookmarks().includes(api.authStore.model.id) && "fill-blue-500 stroke-blue-500")
+              joinClass("w-6 cursor-pointer h-6", bookmarks().includes(api.authStore.model.id) && "fill-blue-500 stroke-blue-500")
+               
             } onClick={()=> bookMarkPost()}/>
             <div class=" hover:cursor-pointer" onClick={() => {
               const shareData = {

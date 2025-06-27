@@ -7,6 +7,8 @@ export default function DeleteAccountModal() {
 
     function deleteAccount(){
         api.authStore.deleteAccount()
+        window.location.href = "/"
+        localStorage.removeItem("postr_auth")
     }
     return (
         <dialog id="deleteModalConfirm" class="modal overflow-scroll  flex flex-col gap-12 ">
@@ -14,10 +16,10 @@ export default function DeleteAccountModal() {
             <div class="flex flex-col gap-12"> 
                  <p> Are you sure you want to delete your account? <br></br > <br></br>We recommend deactivating your account via your profile, it is a better alternative to hiding your account from everyone!
                 Going forward and deleting your account is irreversable and can not be altered.</p>
-                 <div classs="flex "> 
+                 <div class="flex "> 
                  <button class="btn bg-blue-500 text-white" onClick={()=> document.getElementById("deleteModalConfirm").close()}>Cancel</button>
                  
-                    <button class="btn bg-red-500 text-white">Confirm Deletion</button>
+                    <button class="btn bg-red-500 text-white"onClick={deleteAccount}>Confirm Deletion</button>
                  </div>
             </div>
             

@@ -67,6 +67,7 @@ export function CarouselItem(props: any) {
   return (
     <div
       id={props.id}
+      onClick={props?.onClick}
       class="carousel-item w-full" 
       style={{ transform: `translateX(-${currentIndex() * 100}%)` , transition: "transform 0.5s" }}
     >
