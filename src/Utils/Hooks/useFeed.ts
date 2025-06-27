@@ -1,4 +1,4 @@
- import { createSignal, onMount, onCleanup, createEffect } from "solid-js";
+import { createSignal, onMount, onCleanup, createEffect } from "solid-js";
 import { api } from "@/src";
 import { HttpCodes } from "../SDK/opCodes";
 
@@ -8,6 +8,12 @@ async function list(
   feed: () => string,
   options: { filter?: string; sort?: string; limit?: number; _for?: any } = {}
 ) {
+
+  console.log( {
+    recommended: feed() === "recommended",
+      order: options.sort || "-created",
+      filter: options.filter && options.filter.length > 0 ? options.filter : "author.deactivated=false",
+  })
   return api
     .collection(collection)
     .list(page, options.limit || 10, {
@@ -36,99 +42,76 @@ async function list(
     });
 }
 
+
+ 
+ 
+
 export default function useFeed(
   collection: string,
   options: { _for?: string; filter?: string; sort?: string; limit?: number } = {},
-  onLoadNextPage?: (nextPage: number) => void
 ) {
   const initialFeed = options._for === "home"
     ? "recommended"
     : options._for === "snippets"
     ? "snippets"
     : options._for || "all";
-
   const [feed, setFeed] = createSignal(initialFeed);
   const [currentPage, setCurrentPage] = createSignal(1);
   const [posts, setPosts] = createSignal<any[]>([]);
   const [loading, setLoading] = createSignal(false);
   const [error, setError] = createSignal(null);
   const [hasMore, setHasMore] = createSignal(true);
-  const [totalPages, setTotalPages] = createSignal(0);
-  const [totalItems, setTotalItems] = createSignal(0);
   const [refresh, setRefresh] = createSignal(false);
-
-  let touchStartY = 0;
-  let isSwipingUp = false;
-  let swipeCount = 0;
-
-  const SWIPE_UP_THRESHOLD = 50;
-  const SWIPES_TO_LOAD_NEXT = 1;
+  const [totalPages, setTotalPages] = createSignal(0);
 
   function reset() {
     setPosts([]);
     setCurrentPage(1);
     setHasMore(true);
-    setTotalPages(0);
-    setTotalItems(0);
-  }
-
-  async function fetchNextPage(page: number) {
-    setLoading(true);
-    try {
-      const data = await list(collection, page, feed, options);
-      const existingIds = new Set(posts().map(p => p.id));
-      const newItems = data.items.filter((item: any) => !existingIds.has(item.id));
-
-      setPosts([...posts(), ...newItems]);
-      setCurrentPage(page);
-      setTotalPages(data.totalPages || totalPages());
-      setTotalItems(data.totalItems || totalItems());
-      if (data.totalPages <= page) setHasMore(false);
-    } catch (err) {
-      setError(err as any);
-    } finally {
-      setLoading(false);
-    }
   }
 
   async function fetchPosts(fetchOptions: any = {}, resetFlag = false) {
-    if (resetFlag) setLoading(true);
-
     try {
-      if (resetFlag) reset();
+      if (resetFlag) {
+        setLoading(true);
+        setCurrentPage(1);
+        reset();
+      }
 
       const page = resetFlag ? 1 : currentPage();
-
       const data = await list(collection, page, feed, fetchOptions);
 
-      const existingIds = new Set(posts().map(p => p.id));
+      // Deduplicate posts by ID
+      const existingIds = new Set(posts().map(post => post.id));
       const newItems = data.items.filter((item: any) => !existingIds.has(item.id));
 
-      setPosts(resetFlag ? data.items : [...posts(), ...newItems]);
+      setPosts(resetFlag ? data.items : [...posts(), ...newItems]); 
       setTotalPages(data.totalPages || 0);
-      setTotalItems(data.totalItems || 0);
-      if (data.totalPages <= page) setHasMore(false);
 
+      if (data.totalPages <= page) {
+        setHasMore(false);
+      }
+
+      // Subscribe to new post updates
       data.items.forEach((item: any) => {
         api.collection("posts").subscribe(item.id, { cb() {} });
       });
 
-      // Relevant people discovery
+      // Relevant people logic
       const relevantPeople: any[] = [];
       for (const item of data.items) {
         const followers = item?.expand?.author?.expand?.followers ?? [];
         for (const follower of followers) {
-          if (relevantPeople.length >= 5) break;
           if (
             follower.id !== api.authStore.model.id &&
             !follower.followers.includes(api.authStore.model.id) &&
             !follower.deactivated &&
             !relevantPeople.find(p => p.id === follower.id)
-          ) {  
-            relevantPeople.push(follower); 
+          ) {
+            relevantPeople.push(follower);
+            if (relevantPeople.length >= 5) break;
           }
         }
-          if (relevantPeople.length >= 5) break;
       }
 
       // @ts-ignore
@@ -141,119 +124,114 @@ export default function useFeed(
     }
   }
 
-  // --- Swipe-to-load ---
-  function onTouchStart(e: TouchEvent) {
-    touchStartY = e.touches[0].clientY;
-    isSwipingUp = false;
-  }
-
-  function onTouchMove(e: TouchEvent) {
-    const deltaY = e.touches[0].clientY - touchStartY;
-    if (
-      deltaY < -SWIPE_UP_THRESHOLD &&
-      window.innerHeight + window.scrollY >= document.body.offsetHeight - 100
-    ) {
-      isSwipingUp = true;
-    }
-  }
-
-  function onTouchEnd() {
-    if (
-      isSwipingUp &&
-      hasMore() &&
-      !loading() &&
-      currentPage() < totalPages()
-    ) {
-      swipeCount++;
-      if (swipeCount >= SWIPES_TO_LOAD_NEXT) {
-        swipeCount = 0;
-        const nextPage = currentPage() + 1;
-        if (typeof onLoadNextPage === "function") {
-          onLoadNextPage(nextPage);
-        } else {
-          fetchNextPage(nextPage);
-        }
-      }
-    } else {
-      swipeCount = 0;
-    }
-    isSwipingUp = false;
-  }
-
-  let scrollTimeout: any = null;
-  function handleScroll() {
-    if (scrollTimeout || loading() || refresh()) return;
-    scrollTimeout = setTimeout(async () => {
-      scrollTimeout = null;
-      if (window.innerHeight + window.scrollY < document.body.offsetHeight - 350) return;
-      if (hasMore() && totalPages() > currentPage()) {
-        const nextPage = currentPage() + 1;
-        await fetchNextPage(nextPage);
-      }
-    }, 300);
-  }
-
+onMount(() => {
   createEffect(() => {
-    const selectedFeed = feed();
+    // Back navigation listener
+    const popHandler = () => {
+      reset();
+      fetchPosts(
+        {
+          filter:
+            feed() === "following"
+              ? `author.followers ~ "${api.authStore.model.id}"`
+              : `author.id != "${api.authStore.model.id}"`,
+        },
+        true
+      );
+    };
+    window.addEventListener("popstate", popHandler);
 
-    // Use filter from options, else fallback to default
-    let filter = options.filter || `author.id != "${api.authStore.model.id}"`;
+    // Infinite scroll for touch & scroll
+    let scrollTimeout: any = null;
 
-    if (selectedFeed === "following") {
-      filter = `author.followers ~ "${api.authStore.model.id}"`;
+    async function checkLoadMore() {
+      if (scrollTimeout || loading() || refresh()) return;
+
+      scrollTimeout = setTimeout(async () => {
+        scrollTimeout = null;
+
+        const nearBottom =
+          window.innerHeight + window.scrollY >=
+          document.body.offsetHeight - 350;
+
+          console.log(nearBottom, totalPages())
+        if (nearBottom && hasMore() && totalPages() > currentPage()) {
+          const nextPage = currentPage() + 1;
+          const data = await list(collection, nextPage, feed, options);
+
+          const existingIds = new Set(posts().map((post) => post.id));
+          const newItems = data.items.filter(
+            (item: any) => !existingIds.has(item.id)
+          );
+
+          setPosts([...posts(), ...newItems]);
+          setCurrentPage(nextPage);
+          setTotalPages(data.totalPages || totalPages());
+
+          if (data.totalPages <= nextPage) {
+            setHasMore(false);
+          }
+        }
+      }, 200);
     }
 
-    fetchPosts({ ...options, filter }, true);
+    window.addEventListener("scroll", checkLoadMore);
+
+    // Also check on touchmove for mobile
+    window.addEventListener("touchmove", checkLoadMore);
+
+    // Pull-to-refresh: detect downward swipe from top
+    let startY = 0;
+
+    const touchStart = (e: TouchEvent) => {
+      if (window.scrollY === 0) {
+        startY = e.touches[0].clientY;
+      }
+    };
+
+    const touchEnd = (e: TouchEvent) => {
+      const endY = e.changedTouches[0].clientY;
+      const deltaY = endY - startY;
+
+      if (deltaY > 50 && window.scrollY === 0) {
+        // Pulled down from top
+        reset();
+        fetchPosts({ ...options }, true);
+      }
+    };
+
+    window.addEventListener("touchstart", touchStart);
+    window.addEventListener("touchend", touchEnd);
+
+    // Initial fetch
+    fetchPosts({ ...options }, true);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener("popstate", popHandler);
+      window.removeEventListener("scroll", checkLoadMore);
+      window.removeEventListener("touchmove", checkLoadMore);
+      window.removeEventListener("touchstart", touchStart);
+      window.removeEventListener("touchend", touchEnd);
+    };
   });
 
-  onMount(() => {
-    // Removed redundant fetchPosts call here to avoid double fetch
+  // Safe redundant fetch
+  reset();
+  fetchPosts(options, false);
+});
 
-    window.addEventListener("popstate", () => {
-      reset();
-      fetchPosts({
-        filter:
-          feed() === "following"
-            ? `author.followers ~ "${api.authStore.model.id}"`
-            : `author.id != "${api.authStore.model.id}"`,
-      }, true);
-    });
-
-    window.addEventListener("touchstart", onTouchStart);
-    window.addEventListener("touchmove", onTouchMove);
-    window.addEventListener("touchend", onTouchEnd);
-    window.addEventListener("scroll", handleScroll);
-    window.addEventListener("touchstart", (e) => {
-      if (e.touches[0].clientY < 50) setRefresh(true);
-    });
-    window.addEventListener("touchend", () => setRefresh(false));
-
-    onCleanup(() => {
-      window.removeEventListener("touchstart", onTouchStart);
-      window.removeEventListener("touchmove", onTouchMove);
-      window.removeEventListener("touchend", onTouchEnd);
-      window.removeEventListener("scroll", handleScroll);
-    });
-  });
-
-  function changeFeed(type: string) {
-    setFeed(type);
-  }
 
   return {
     feed,
-    setFeed,
-    changeFeed,
     currentPage,
     posts,
-    setPosts,
     loading,
     error,
     hasMore,
-    refresh,
+    setFeed,
     reset,
-    fetchPosts,
-    totalPages,
-    totalItems,
+    setPosts,
   };
 }
+ 
