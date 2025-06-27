@@ -19,6 +19,7 @@ import { A } from "@solidjs/router";
 import Verified from "../Icons/Verified";
 import Bookmark from "../Icons/Bookmark";
 import Share from "../Icons/Share";
+import { dispatchAlert, haptic } from "@/src/Utils/SDK";
 const created = (created: any) => {
   let date = new Date(created);
   let now = new Date();
@@ -90,6 +91,7 @@ function getFileType(file: string) {
 export default function Post(props: Props) {
   let { theme } = useTheme();
   let [likes, setLikes] = createSignal<any[]>(props.likes || []);
+  let [bookmarks, setBookmarks] = createSignal(props.bookmarked || [])
   let [comments, setComments] = createSignal<any[]>([]);
   let [commentLength, setCommentLength] = createSignal(
     props?.comments?.length || 0
@@ -130,12 +132,15 @@ export default function Post(props: Props) {
     const action = hasLiked ? "unlike" : "like";
     const collection = isComment ? "comments" : "posts";
     if(action === "like"){
-      setLikes([...likes(), userId]);
+      setLikes([...likes(), userId]); 
+      haptic()  
     }else{
       setLikes(hasLiked
           ? currentLikes.filter(id => id !== userId)
           : [...currentLikes, userId]
         );
+        
+      haptic()  
     }
 
     try {
@@ -161,7 +166,10 @@ export default function Post(props: Props) {
       }
 
     } catch (error) {
-      console.error("Failed to update likes:", error);
+      dispatchAlert({
+         type: "error",
+         message: error instanceof Error ? error.message : String(error)
+       })
     }
   }
 
@@ -204,6 +212,44 @@ export default function Post(props: Props) {
 
   async function updatePoll() {
 
+  }
+
+
+  async function bookMarkPost(){
+    if(bookmarks().includes(api.authStore.model.id)){
+      dispatchAlert({
+        type:"success",
+        message:"Post removed from Bookmarks"
+      })
+      haptic()
+      setBookmarks(bookmarks().filter((c)=> c != api.authStore.model.id))
+    }else{
+      setBookmarks([...bookmarks(), api.authStore.model.id])
+      dispatchAlert({
+        type:"success",
+        message:"Successfully Added Post To Bookmarks"
+      })
+      haptic()  
+    }
+     try {
+      const { res } = await api.send("/actions/posts/bookmark", {
+        body: {targetId: props.id}
+      })
+
+
+      if(res && res.bookmarked){
+         setBookmarks(res.bookmarked)
+      }
+
+      api.updateCache("posts", props.id, {
+        bookmarked: bookmarks()
+      })
+     } catch (error) {
+       dispatchAlert({
+         type: "error",
+         message: error instanceof Error ? error.message : String(error)
+       })
+     }
   }
 
 
@@ -553,9 +599,9 @@ export default function Post(props: Props) {
           </div>
 
           <div class="flex absolute right-5 gap-5">
-            <Bookmark class="w-6 h-6" onClick={()=>{
-
-            }} />
+            <Bookmark class={
+              joinClass("w-6 h-6", bookmarks().includes(api.authStore.model.id) && "fill-blue-500 stroke-blue-500")
+            } onClick={()=> bookMarkPost()}/>
             <div class=" hover:cursor-pointer" onClick={() => {
               const shareData = {
                 title: `Postly - Post by ${props.expand.author.username}`,
