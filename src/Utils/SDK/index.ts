@@ -2,7 +2,8 @@ import useCache from "../Hooks/useCache";
 import isTokenExpired from "./jwt";
 import { ErrorCodes, HttpCodes } from "./opCodes";
 import { authStore } from "./Types/AuthStore";
-import { GeneralTypes } from "./Types/GeneralTypes"; 
+import { GeneralTypes } from "./Types/GeneralTypes";
+import { Buffer } from "buffer/";
 const ip = null;
 
 export type AlertPayload = {
@@ -159,7 +160,8 @@ export default class SDK {
       ...options.headers,
     };
 
-    const token = this.authStore.model.token; 
+    const token = this.authStore.model.token;
+    console.log(token)
     if (token) {
       headers["Authorization"] = `${token}`;
     }
@@ -196,102 +198,107 @@ export default class SDK {
     });
   }
 
-  updateCache = async (collection: string, id: string, data: any) => {
-    const { set } = useCache();
-    const keys = await caches.keys();
+  updateCache = async (collection: string, id: string, data: any, fullPost?: any, action: "add" | "remove" = "add") => {
+  const { set } = useCache();
+  const keys = await caches.keys();
 
-    for (let key of keys) {
-      const cache = await caches.open(key);
-      const requests = await cache.keys();
+  for (let key of keys) {
+    const cache = await caches.open(key);
+    const requests = await cache.keys();
 
-      for (let request of requests) {
-        const response = await cache.match(request);
-        const json = await response?.json();
-        const value = json?.value
- 
+    for (let request of requests) {
+      const response = await cache.match(request);
+      const json = await response?.json();
+      const value = json?.value;
 
-        if (!value) continue;
+      if (!value) continue;
 
-        switch (collection) {
-          case "posts":
-          case "comments": {
-            let updated = false;
+      let updated = false;
 
-            if (Array.isArray(value)) {
-              const index = value.findIndex((e: any) => e.id === id);
-              if (index !== -1) {
-                value[index] = { ...value[index], ...data };
-                updated = true;
-              }
-            } else if (Array.isArray(value.payload)) {
-              const index = value.payload.findIndex((e: any) => e.id === id);
-              if (index !== -1) {
-                value.payload[index] = { ...value.payload[index], ...data };
-                updated = true;
-              }
-            } else if (value.payload?.id === id) {
-              value.payload = { ...value.payload, ...data };
-              updated = true;
-            } else if (value.id === id) {
-              json.value = { ...value, ...data };
+      switch (collection) {
+        case "posts":
+        case "comments": {
+          if (Array.isArray(value)) {
+            const index = value.findIndex((e: any) => e.id === id);
+            if (index !== -1) {
+              value[index] = { ...value[index], ...data };
               updated = true;
             }
-
-            if (updated) {
-              set(request.url, json.value ?? value, Date.now() + 3600);
+          } else if (Array.isArray(value.payload)) {
+            const index = value.payload.findIndex((e: any) => e.id === id);
+            if (index !== -1) {
+              value.payload[index] = { ...value.payload[index], ...data };
+              updated = true;
             }
-
-            break;
+          } else if (value.payload?.id === id) {
+            value.payload = { ...value.payload, ...data };
+            updated = true;
+          } else if (value.id === id) {
+            json.value = { ...value, ...data };
+            updated = true;
           }
 
-          case "users": {
-            let updated = false;
+          break;
+        }
 
-            if (data.avatar && data.avatar instanceof Blob) {
-              data.avatar = await convertToBase64(data.avatar);
-            }
-            if (data.banner && data.banner instanceof Blob) {
-              data.banner = await convertToBase64(data.banner);
-            }
-
-            // Case: value.payload is an array of users
-            if (Array.isArray(value.payload)) {
-              const index = value.payload.findIndex((e: any) => e.username === id);
-              if (index !== -1) {
-                value.payload[index] = { ...value.payload[index], ...data };
-                updated = true;
-              }
-            }
-
-            // Case: value is an array of users
-            else if (Array.isArray(value)) {
-              const index = value.findIndex((e: any) => e.username === id);
-              if (index !== -1) {
-                value[index] = { ...value[index], ...data };
-                updated = true;
-              }
-            }
-
-            // Case: single user object
-            else if (value?.username === id) {
-              json.value = { ...value, ...data };
-              updated = true;
-            }
-
-            if (updated) {
-              set(request.url, json.value ?? value, Date.now() + 3600);
-            }
-
-            break;
+        case "users": {
+          if (data.avatar && data.avatar instanceof Blob) {
+            data.avatar = await convertToBase64(data.avatar);
+          }
+          if (data.banner && data.banner instanceof Blob) {
+            data.banner = await convertToBase64(data.banner);
           }
 
+          if (Array.isArray(value.payload)) {
+            const index = value.payload.findIndex((e: any) => e.username === id);
+            if (index !== -1) {
+              value.payload[index] = { ...value.payload[index], ...data };
+              updated = true;
+            }
+          } else if (Array.isArray(value)) {
+            const index = value.findIndex((e: any) => e.username === id);
+            if (index !== -1) {
+              value[index] = { ...value[index], ...data };
+              updated = true;
+            }
+          } else if (value?.username === id) {
+            json.value = { ...value, ...data };
+            updated = true;
+          }
 
-          default:
-            break;
+          break;
+        }
+
+        default:
+          break;
+      }
+
+      // ✅ ✅ ✅ SPECIAL CASE: Bookmarks pages
+      // If the key matches your bookmarks feed pattern:
+      const requestUrl = request.url.toLowerCase();
+      if (requestUrl.includes("bookmarks_bookmarks_") && fullPost) {
+        if (Array.isArray(value)) {
+          const exists = value.find((e: any) => e.id === id);
+
+          if (action === "add" && !exists) {
+            value.unshift(fullPost); // Add to front
+            updated = true;
+          } else if (action === "remove" && exists) {
+            const newValue = value.filter((e: any) => e.id !== id);
+            json.value = newValue;
+            updated = true;
+          }
         }
       }
+
+      // 📝 ✅ Only write if we did something
+      if (updated) {
+        set(request.url, json.value ?? value, Date.now() + 3600);
+      }
     }
-  };
+  }
+};
+
 
 
 
@@ -326,9 +333,11 @@ export default class SDK {
   }
 
   handleMessages = (data: any) => {
-    let _data = JSON.parse(data) 
+    let _data = JSON.parse(data)
+    console.log("Received data from WebSocket", _data);
     if (_data.data && _data.data.callback && this.callbacks.has(_data.data.callback)) {
-      this.callbacks.get(_data.data.callback)?.(_data.data); 
+      this.callbacks.get(_data.data.callback)?.(_data.data);
+      console.log("Callback executed for", _data.data.callback);
       this.callbacks.delete(_data.data.callback);
       return;
     }
@@ -465,11 +474,43 @@ export default class SDK {
       return this.serverURL + `/api/files/${collection}/${id}/${file}`;
     }
   };
-
-  resetCache = () => {
-    const { set, get, remove, clear } = useCache();
-    clear()
+   stripPagePart(key: string) {
+  const parts = key.split("_");
+  if (parts.length >= 4 && Number.isInteger(Number(parts[2]))) {
+    // Remove page number
+    parts.splice(2, 1);
   }
+  return parts.join("_");
+}
+
+resetCache = async (key?: string) => {
+  const { remove, clear } = useCache();
+
+  if (!key) {
+    await clear();
+    return;
+  }
+
+  const cache = await caches.open("device-periscope-cache");
+  const requests = await cache.keys();
+
+  const normalizedTarget = this.stripPagePart(key.toLowerCase().trim());
+
+  for (const request of requests) {
+    const parts = request.url.split("/");
+    const requestKey = parts[parts.length - 1];
+    const normalizedRequestKey = this.stripPagePart(requestKey);
+
+    console.log("Normalized CacheKey:", normalizedRequestKey, "Target:", normalizedTarget);
+
+    if (normalizedRequestKey.includes(normalizedTarget)) {
+      await remove(requestKey);
+    }
+  }
+};
+
+
+
 
 
 
