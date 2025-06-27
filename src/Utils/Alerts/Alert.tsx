@@ -1,5 +1,3 @@
-"use client"
-
 import { createSignal, onMount, Show } from "solid-js"
 
 interface AlertPayload {
@@ -121,7 +119,7 @@ export default function CustomAlertDialog() {
     <Show when={_alert()}>
       <div
         class={`
-          fixed top-4 left-1/2 w-[25rem] transform -translate-x-1/2 z-[999999] transition-all duration-300 ease-out
+          fixed top-4 left-1/2 sm:w-[20rem] xsm:w-[25rem] w-[20rem] transform -translate-x-1/2 z-[999999] transition-all duration-300 ease-out
           ${
             isExiting()
               ? "-translate-y-full opacity-0"
