@@ -22,6 +22,7 @@ import Share from "../Icons/Share";
 import { dispatchAlert, haptic } from "@/src/Utils/SDK";
 import { O } from "@kobalte/core/dist/index-766ec211";
 import useCache from "@/src/Utils/Hooks/useCache";
+import BlockUserModal from "../Modals/BlockedModal";
 const created = (created: any) => {
   let date = new Date(created);
   let now = new Date();
@@ -107,17 +108,17 @@ export default function Post(props: Props) {
   const [loadedMeta, setLoadedMeta] = createSignal(false)
   const [_preview_meta, set_preview_meta] = createSignal(null)
 
-   createEffect(() => { 
+  createEffect(() => {
     const url = props.embedded_link;
-  
+
     // Avoid refetching if the link hasn't changed
     if (!url) return;
-  
-    
-  
+
+
+
     fetch(`${api.serverURL}/opengraph/embed?url=${encodeURIComponent(url)}`)
       .then((res) => res.json())
-      .then((meta) => { 
+      .then((meta) => {
         console.log(meta)
         set_preview_meta(meta)
         setLoadedMeta(true)
@@ -127,8 +128,8 @@ export default function Post(props: Props) {
         setLoadedMeta(false)
       });
   });
-  
-   
+
+
 
 
 
@@ -170,25 +171,25 @@ export default function Post(props: Props) {
   async function updatePoll() {
 
   }
-async function updateLikes(userId: string, isComment: boolean = false) {
+  async function updateLikes(userId: string, isComment: boolean = false) {
     const currentLikes = likes();
     const hasLiked = currentLikes.includes(userId);
     const action = hasLiked ? "unlike" : "like";
     const collection = isComment ? "comments" : "posts";
-    if(!api.authStore.model.id){
+    if (!api.authStore.model.id) {
       haptic.error()
       return;
     }
-    if(action === "like"){
-      setLikes([...likes(), userId]); 
-      haptic()  
-    }else{
+    if (action === "like") {
+      setLikes([...likes(), userId]);
+      haptic()
+    } else {
       setLikes(hasLiked
-          ? currentLikes.filter(id => id !== userId)
-          : [...currentLikes, userId]
-        );
-        
-      haptic()  
+        ? currentLikes.filter(id => id !== userId)
+        : [...currentLikes, userId]
+      );
+
+      haptic()
     }
 
     try {
@@ -215,85 +216,85 @@ async function updateLikes(userId: string, isComment: boolean = false) {
 
     } catch (error) {
       dispatchAlert({
-         type: "error",
-         message: error instanceof Error ? error.message : String(error)
-       })
+        type: "error",
+        message: error instanceof Error ? error.message : String(error)
+      })
     }
   }
- 
 
 
-async function bookMarkPost() {
-  if (!api.authStore.model.id) {
-    haptic.error();
-    return;
-  }
 
-  const userId = api.authStore.model.id;
+  async function bookMarkPost() {
+    if (!api.authStore.model.id) {
+      haptic.error();
+      return;
+    }
 
-  if (bookmarks().includes(userId)) {
-    //@ts-ignore
-    if (window.removeFromBookMarks) {
+    const userId = api.authStore.model.id;
+
+    if (bookmarks().includes(userId)) {
       //@ts-ignore
-      window.removeFromBookMarks(props.id);
+      if (window.removeFromBookMarks) {
+        //@ts-ignore
+        window.removeFromBookMarks(props.id);
+      }
+      dispatchAlert({
+        type: "success",
+        message: "Post removed from Bookmarks"
+      });
+      haptic();
+
+      const newBookmarks = bookmarks().filter((c) => c !== userId);
+      setBookmarks(newBookmarks);
+
+      api.resetCache(`posts_bookmarks_feed_${api.authStore.model.id}`)
+
+
+    } else {
+      const newBookmarks = [...bookmarks(), userId];
+      setBookmarks(newBookmarks);
+      dispatchAlert({
+        type: "info",
+        message: "Added Post To Bookmarks"
+      });
+
+      api.resetCache(`posts_bookmarks_feed_${api.authStore.model.id}`)
+
+
+      haptic();
     }
-    dispatchAlert({
-      type: "success",
-      message: "Post removed from Bookmarks"
-    });
-    haptic();
 
-    const newBookmarks = bookmarks().filter((c) => c !== userId);
-    setBookmarks(newBookmarks);
-    
-   api.resetCache(`posts_bookmarks_feed_${api.authStore.model.id}`)
-     
+    try {
+      const { res } = await api.send("/actions/posts/bookmark", {
+        body: { targetId: props.id }
+      });
 
-  } else {
-    const newBookmarks = [...bookmarks(), userId];
-    setBookmarks(newBookmarks); 
-    dispatchAlert({
-      type: "info",
-      message: "Added Post To Bookmarks"
-    });
+      if (res && res.bookmarked) {
+        setBookmarks(res.bookmarked);
+        api.updateCache("posts", props.id, {
+          bookmarked: res.bookmarked
+        });
+      }
 
-    api.resetCache(`posts_bookmarks_feed_${api.authStore.model.id}`)
-     
-
-    haptic();
-  }
-
-  try {
-    const { res } = await api.send("/actions/posts/bookmark", {
-      body: { targetId: props.id }
-    });
-
-    if (res && res.bookmarked) {
-      setBookmarks(res.bookmarked);
-      api.updateCache("posts", props.id, {
-        bookmarked: res.bookmarked
+    } catch (error) {
+      dispatchAlert({
+        type: "error",
+        message: error instanceof Error ? error.message : String(error)
       });
     }
-
-  } catch (error) {
-    dispatchAlert({
-      type: "error",
-      message: error instanceof Error ? error.message : String(error)
-    });
-  } 
-}
+  }
 
 
 
   return (
     <Card
-      class={joinClass( 
-        
+      class={joinClass(
+
         props.wasReposted ? "border border-slate-200 rounded-xl" : "",
         theme() === "dark" && !props.page ? "hover:bg-[#121212]" : theme() === "light" && !props.page ? "hover:bg-[#faf9f9]" : "",
-        "z-10  relative h-fit",
+        " h-fit z-10",
         "p-2 text-md shadow-none ",
-        
+
         props.disabled
           ? "rounded "
           : `   rounded-none shadow-none${theme() === "dark" && !props.page ? "hover:bg-[#121212]" : theme() === "light" && !props.page ? "hover:bg-[#faf9f9]" : ""
@@ -333,7 +334,7 @@ async function bookMarkPost() {
         </Switch>
 
 
-        <div class="flex gap-2 items-start mt-0 mb-5 pt-0">
+        <div class="flex gap-2   items-start mt-0 mb-5 pt-0">
           <div class="flex hero items-center mt-0   pt-0">
             <CardTitle
               class="cursor-pointer flex items-center gap-1"
@@ -343,31 +344,31 @@ async function bookMarkPost() {
             </CardTitle>
             <Show when={props.expand.author.validVerified}>
               <div data-tip="Verified" class="tooltip flex items-center">
-                 <Verified class="w-5 h-5 mx-1 text-blue-500 fill-blue-500 " />
+                <Verified class="w-5 h-5 mx-1 text-blue-500 fill-blue-500 " />
               </div>
             </Show>
             <Show when={props.expand.author.isEarlyUser}>
               <div data-tip="Early Access Member" class="tooltip tooltip-top mx-2 flex items-center">
-          <img src="/icons/legacy/postr.png" class="w-[15px] h-[15px]" />
+                <img src="/icons/legacy/postr.png" class="w-[15px] h-[15px]" />
               </div>
             </Show>
-          </div> 
+          </div>
           <CardTitle class="text-sm opacity-50 flex items-center">·</CardTitle>
           <CardTitle class="text-sm opacity-50 flex items-center">{created(props.created)}</CardTitle>
-        </div> 
+        </div>
 
 
         <Show when={!props.isComment && !window.location.pathname.includes("/view") || props.isComment && window.location.pathname.includes("/view")}>
-          <CardTitle class="absolute right-5">
-            <Dropdown direction="left" point="start">
-              <DropdownHeader>
+          <CardTitle class="absolute  z-[9999]  right-0">
+            <div class="dropdown dropdown-left    ">
+              <div tabindex="0" role="button" class="btn btn-ghost btn-sm m-1">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
                   stroke-width="1.5"
                   stroke="currentColor"
-                  class="size-6 "
+                  class="size-6"
                 >
                   <path
                     stroke-linecap="round"
@@ -375,74 +376,95 @@ async function bookMarkPost() {
                     d="M6.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM12.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0ZM18.75 12a.75.75 0 1 1-1.5 0 .75.75 0 0 1 1.5 0Z"
                   />
                 </svg>
-              </DropdownHeader>
+              </div>
+              <ul
+                tabindex="0"
+                class="dropdown-content menu bg-base-100 rounded-box w-52 p-2 shadow z-[99999]"
+              >
+                <li>
+                  <a>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke-width="1.5"
+                      stroke="currentColor"
+                      class="w-4 h-4"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5"
+                      />
+                    </svg>
+                    Embed Post
+                  </a>
+                </li>
+                <li>
+                  <a>
+                    <svg
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                      class="w-4 h-4"
+                    >
+                      <g>
+                        <path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"></path>
+                      </g>
+                    </svg>
+                    View Post Engagement
+                  </a>
+                </li>
+                <Show when={props.expand.author.id !== api.authStore.model.id}>
+                  <li >
+                    <a>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="1.5"
+                        stroke="currentColor"
+                        class="w-4 h-4"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5"
+                        />
+                      </svg>
+                      Report @{props.expand.author.username}
+                    </a>
+                  </li>
+                  <li onClick={() => {
+                    window.dispatchEvent(new CustomEvent("block-user", { detail:  {
+                      user: props.expand.author,
+                      setPosts: props.setPosts
+                    }}))
+                  }}>
+                    <a
 
-              <DropdownItem>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width="1.5"
-                  stroke="currentColor"
-                  class="w-4 h-4"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M17.25 6.75 22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3-4.5 16.5"
-                  />
-                </svg>
-
-                <p class="font-bold"> Embed Post</p>
-              </DropdownItem>
-              <DropdownItem>
-                <svg
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                  class={joinClass(
-                    "cursor-pointer hover:rounded-full hover:bg-sky-500 hover:bg-opacity-20  size-6 hover:p-2 hover:text-sky-500 ",
-                    theme() === "dark" ? "fill-white" : "fill-black"
-                  )}
-                >
-                  <g>
-                    <path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"></path>
-                  </g>
-                </svg>
-                <p class="font-bold w-full"> View Post Engagement </p>
-              </DropdownItem>
-              <Show when={props.expand.author.id !== api.authStore.model.id}>
-                <DropdownItem>
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width={1.5} stroke="currentColor" class="size-6">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 3v1.5M3 21v-6m0 0 2.77-.693a9 9 0 0 1 6.208.682l.108.054a9 9 0 0 0 6.086.71l3.114-.732a48.524 48.524 0 0 1-.005-10.499l-3.11.732a9 9 0 0 1-6.085-.711l-.108-.054a9 9 0 0 0-6.208-.682L3 4.5M3 15V4.5" />
-                  </svg>
-
-
-                  <p class="font-bold"> Report @{props.expand.author.username}</p>
-                </DropdownItem>
-              </Show>
-              <Show when={props.expand.author.id !== api.authStore.model.id}>
-                <DropdownItem>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke-width="1.5"
-                    stroke="currentColor"
-                    class="w-4 h-4"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636"
-                    />
-                  </svg>
-
-                  <p class="font-bold"> Block @{props.expand.author.username}</p>
-                </DropdownItem>
-              </Show>
-
-            </Dropdown>
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="1.5"
+                        stroke="currentColor"
+                        class="w-4 h-4"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636"
+                        />
+                      </svg>
+                      Block @{props.expand.author.username}
+                    </a>
+                  </li>
+                </Show>
+              </ul>
+            </div>
           </CardTitle>
+
         </Show>
       </CardHeader>
       <CardContent class="p-1 cursor-pointer">
@@ -453,32 +475,32 @@ async function bookMarkPost() {
         </a>
       </CardContent>
 
-       <Switch>
+      <Switch>
         <Match when={props.embedded_link && !loadedMeta()}>
-          
-       <span className="loading loading-spinner loading-2xl flex mx-auto justify-center text-blue-500 mb-5"></span>
+
+          <span className="loading loading-spinner loading-2xl flex mx-auto justify-center text-blue-500 mb-5"></span>
         </Match>
         <Match when={props.embedded_link && loadedMeta()}>
-          <Show when={ _preview_meta().image}>
+          <Show when={_preview_meta().image}>
 
-        <a
-          href={props.embedded_link}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="block w-full h-[20rem] mt-5 relative rounded-xl overflow-hidden border"
-        >
-          <img
-            src={_preview_meta().image || '/placeholder.png'}
-            class="w-full h-full object-cover"
-            alt="Link preview"
-          />
-          <div class="absolute bottom-0 bg-black bg-opacity-60 text-white p-2 text-sm w-full">
-            {_preview_meta().title || "Untitled"}
-          </div>
-        </a>
-      </Show>
+            <a
+              href={props.embedded_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              class="block w-full h-[20rem] mt-5 relative rounded-xl overflow-hidden border"
+            >
+              <img
+                src={_preview_meta().image || '/placeholder.png'}
+                class="w-full h-full object-cover"
+                alt="Link preview"
+              />
+              <div class="absolute bottom-0 bg-black bg-opacity-60 text-white p-2 text-sm w-full">
+                {_preview_meta().title || "Untitled"}
+              </div>
+            </a>
+          </Show>
         </Match>
-       </Switch>
+      </Switch>
       <Show when={props.files && props.files.length > 0}>
 
         <CardContent class="p-1   h-[300px]">
@@ -538,7 +560,7 @@ async function bookMarkPost() {
             expand={props.expand.repost.expand}
             comments={props.expand.repost.comments}
             files={props.expand.repost.files}
-            isLast={false} 
+            isLast={false}
             wasReposted={true}
             navigate={props.navigate}
           />
@@ -547,7 +569,7 @@ async function bookMarkPost() {
 
       {/**
        * @search - footer section
-       */} 
+       */}
       <Show when={!props.disabled}>
         <CardFooter class="p-1 flex gap-3 relative items-start">
           <div class="flex items-center gap-2">
@@ -603,14 +625,14 @@ async function bookMarkPost() {
           <Show when={!props.hidden || !props.hidden.includes("repostButton")}>
             <div class=" flex items-center gap-2 "
               onClick={() => {
-                 if(api.authStore.model.id){
+                if (api.authStore.model.id) {
                   //@ts-ignore
-                window.repost(props)
-                document.getElementById("createPostModal")?.showModal()
-                 }else{
+                  window.repost(props)
+                  document.getElementById("createPostModal")?.showModal()
+                } else {
                   //@ts-ignore
                   requireSignup()
-                 }
+                }
               }}
             ><svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="   hover:rounded-full hover:bg-green-400 hover:bg-opacity-20   hover:text-green-600 cursor-pointer  w-6 h-6 size-6 "><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 12c0-1.232-.046-2.453-.138-3.662a4.006 4.006 0 0 0-3.7-3.7 48.678 48.678 0 0 0-7.324 0 4.006 4.006 0 0 0-3.7 3.7c-.017.22-.032.441-.046.662M19.5 12l3-3m-3 3-3-3m-12 3c0 1.232.046 2.453.138 3.662a4.006 4.006 0 0 0 3.7 3.7 48.656 48.656 0 0 0 7.324 0 4.006 4.006 0 0 0 3.7-3.7c.017-.22.032-.441.046-.662M4.5 12l3 3m-3-3-3 3"></path></svg></div>
           </Show>
@@ -633,8 +655,8 @@ async function bookMarkPost() {
           <div class="flex absolute right-5 gap-5">
             <Bookmark class={
               joinClass("w-6 cursor-pointer h-6", bookmarks().includes(api.authStore.model.id) && "fill-blue-500 stroke-blue-500")
-               
-            } onClick={()=> bookMarkPost()}/>
+
+            } onClick={() => bookMarkPost()} />
             <div class=" hover:cursor-pointer" onClick={() => {
               const shareData = {
                 title: `Postly - Post by ${props.expand.author.username}`,
