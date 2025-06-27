@@ -21,6 +21,7 @@ import Bookmark from "../Icons/Bookmark";
 import Share from "../Icons/Share";
 import { dispatchAlert, haptic } from "@/src/Utils/SDK";
 import { O } from "@kobalte/core/dist/index-766ec211";
+import useCache from "@/src/Utils/Hooks/useCache";
 const created = (created: any) => {
   let date = new Date(created);
   let now = new Date();
@@ -127,7 +128,49 @@ export default function Post(props: Props) {
       });
   });
   
-  async function updateLikes(userId: string, isComment: boolean = false) {
+   
+
+
+
+  function calculatePollEnds(ends: Date) {
+    const date = new Date(ends);
+    const now = new Date();
+    const diff = date.getTime() - now.getTime();
+
+    if (diff <= 0) {
+      return "Ended";
+    }
+
+
+    const seconds = Math.floor(diff / 1000);
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const days = Math.floor(hours / 24);
+    const weeks = Math.floor(days / 7);
+    const months = Math.floor(days / 30.44); // Average days in a month
+    const years = Math.floor(days / 365.25); // Average days in a year
+
+    if (seconds < 60) {
+      return `${seconds}s`;
+    } else if (minutes < 60) {
+      return `${minutes}m`;
+    } else if (hours < 24) {
+      return `${hours}h`;
+    } else if (days < 7) {
+      return `${days}d`;
+    } else if (weeks < 4) {
+      return `${weeks}w`;
+    } else if (months < 12) {
+      return `${months}mo`;
+    } else {
+      return `${years}y`;
+    }
+  }
+
+  async function updatePoll() {
+
+  }
+async function updateLikes(userId: string, isComment: boolean = false) {
     const currentLikes = likes();
     const hasLiked = currentLikes.includes(userId);
     const action = hasLiked ? "unlike" : "like";
@@ -177,102 +220,69 @@ export default function Post(props: Props) {
        })
     }
   }
+ 
 
 
-
-  function calculatePollEnds(ends: Date) {
-    const date = new Date(ends);
-    const now = new Date();
-    const diff = date.getTime() - now.getTime();
-
-    if (diff <= 0) {
-      return "Ended";
-    }
-
-
-    const seconds = Math.floor(diff / 1000);
-    const minutes = Math.floor(seconds / 60);
-    const hours = Math.floor(minutes / 60);
-    const days = Math.floor(hours / 24);
-    const weeks = Math.floor(days / 7);
-    const months = Math.floor(days / 30.44); // Average days in a month
-    const years = Math.floor(days / 365.25); // Average days in a year
-
-    if (seconds < 60) {
-      return `${seconds}s`;
-    } else if (minutes < 60) {
-      return `${minutes}m`;
-    } else if (hours < 24) {
-      return `${hours}h`;
-    } else if (days < 7) {
-      return `${days}d`;
-    } else if (weeks < 4) {
-      return `${weeks}w`;
-    } else if (months < 12) {
-      return `${months}mo`;
-    } else {
-      return `${years}y`;
-    }
+async function bookMarkPost() {
+  if (!api.authStore.model.id) {
+    haptic.error();
+    return;
   }
 
-  async function updatePoll() {
+  const userId = api.authStore.model.id;
 
-  }
-
-
-  async function bookMarkPost(){
-    if(!api.authStore.model.id){
-      haptic.error()
-      return;
-    }
-    if(bookmarks().includes(api.authStore.model.id)){
+  if (bookmarks().includes(userId)) {
+    //@ts-ignore
+    if (window.removeFromBookMarks) {
       //@ts-ignore
-      if(window.removeFromBookMarks){
-         //@ts-ignore
-                window.removeFromBookMarks(props.id)
-          }
-      dispatchAlert({
-        type:"success",
-        message:"Post removed from Bookmarks"
-      })
-      haptic()
-      setBookmarks(bookmarks().filter((c)=> c != api.authStore.model.id))
-      api.updateCache("posts", props.id, {
-        bookmarked: bookmarks()
-      })
-    }else{
-      setBookmarks([...bookmarks(), api.authStore.model.id])
-      dispatchAlert({
-        type:"info",
-        message:"Added Post To Bookmarks"
-      })
-
-      api.updateCache("posts", props.id, {
-        bookmarked: bookmarks()
-      })
-      haptic()  
-      
+      window.removeFromBookMarks(props.id);
     }
-     try {
-      const { res } = await api.send("/actions/posts/bookmark", {
-        body: {targetId: props.id}
-      })
+    dispatchAlert({
+      type: "success",
+      message: "Post removed from Bookmarks"
+    });
+    haptic();
 
+    const newBookmarks = bookmarks().filter((c) => c !== userId);
+    setBookmarks(newBookmarks);
+    
+   api.resetCache(`posts_bookmarks_feed_${api.authStore.model.id}`)
+     
 
-      if(res && res.bookmarked){
-         setBookmarks(res.bookmarked)
-      }
+  } else {
+    const newBookmarks = [...bookmarks(), userId];
+    setBookmarks(newBookmarks); 
+    dispatchAlert({
+      type: "info",
+      message: "Added Post To Bookmarks"
+    });
 
-      api.updateCache("posts", props.id, {
-        bookmarked: bookmarks()
-      })
-     } catch (error) {
-       dispatchAlert({
-         type: "error",
-         message: error instanceof Error ? error.message : String(error)
-       })
-     }
+    api.resetCache(`posts_bookmarks_feed_${api.authStore.model.id}`)
+     
+
+    haptic();
   }
+
+  try {
+    const { res } = await api.send("/actions/posts/bookmark", {
+      body: { targetId: props.id }
+    });
+
+    if (res && res.bookmarked) {
+      setBookmarks(res.bookmarked);
+      api.updateCache("posts", props.id, {
+        bookmarked: res.bookmarked
+      });
+    }
+
+  } catch (error) {
+    dispatchAlert({
+      type: "error",
+      message: error instanceof Error ? error.message : String(error)
+    });
+  } 
+}
+
 
 
   return (
