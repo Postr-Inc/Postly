@@ -248,12 +248,12 @@ export default class SDK {
           if (data.banner && data.banner instanceof Blob) {
             data.banner = await convertToBase64(data.banner);
           }
-
+ 
           if (Array.isArray(value.payload)) {
-            const index = value.payload.findIndex((e: any) => e.username === id);
+            const index = value.payload.findIndex((e: any) => e.username === id); 
             if (index !== -1) {
               value.payload[index] = { ...value.payload[index], ...data };
-              updated = true;
+              updated = true; 
             }
           } else if (Array.isArray(value)) {
             const index = value.findIndex((e: any) => e.username === id);
@@ -261,7 +261,8 @@ export default class SDK {
               value[index] = { ...value[index], ...data };
               updated = true;
             }
-          } else if (value?.username === id) {
+          } else if (value.payload?.username === id || value?.username === id) {
+            console.log({...value, ...data})
             json.value = { ...value, ...data };
             updated = true;
           }
@@ -294,6 +295,8 @@ export default class SDK {
       // 📝 ✅ Only write if we did something
       if (updated) {
         set(request.url, json.value ?? value, Date.now() + 3600);
+      }else{
+        console.log(false)
       }
     }
   }
@@ -474,13 +477,9 @@ export default class SDK {
       return this.serverURL + `/api/files/${collection}/${id}/${file}`;
     }
   };
-   stripPagePart(key: string) {
-  const parts = key.split("_");
-  if (parts.length >= 4 && Number.isInteger(Number(parts[2]))) {
-    // Remove page number
-    parts.splice(2, 1);
-  }
-  return parts.join("_");
+stripPagePart(key: string) {
+  // Replace any _<number>_ in the middle of underscores
+  return key.replace(/_(\d+)_/g, "_");
 }
 
 resetCache = async (key?: string) => {
