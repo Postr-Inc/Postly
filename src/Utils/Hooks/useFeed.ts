@@ -19,7 +19,7 @@ async function list(
     .list(page, options.limit || 10, {
       recommended: feed() === "recommended",
       order: options.sort || "-created",
-      filter: options.filter && options.filter.length > 0 ? options.filter : "author.deactivated=false",
+      filter: options.filter && options.filter.length > 0 ? options.filter.replaceAll("\\", '') : "author.deactivated=false",
       cacheKey: `${collection}_${feed()}_${page}_feed_${api.authStore.model.id || api.authStore.model.token?.split(".")[0]}_${options._for || "none"}`,
       expand: [
         "comments.likes",
@@ -64,7 +64,8 @@ export default function useFeed(
   const [refresh, setRefresh] = createSignal(false);
   const [totalPages, setTotalPages] = createSignal(0);
 
-  function reset() {
+  function reset() { 
+    setLoading(true)
     setPosts([]);
     setCurrentPage(1);
     setHasMore(true);
