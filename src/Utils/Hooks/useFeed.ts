@@ -19,8 +19,8 @@ async function list(
     .list(page, options.limit || 10, {
       recommended: feed() === "recommended",
       order: options.sort || "-created",
-      filter: options.filter && options.filter.length > 0 ? options.filter.replaceAll("\\", '') : "author.deactivated=false",
-      cacheKey: `${collection}_${feed()}_${page}_feed_${api.authStore.model.id || api.authStore.model.token?.split(".")[0]}_${options._for || "none"}`,
+      filter: options.filter && options.filter.length > 0 ? options.filter : "author.deactivated=false",
+      cacheKey: `${collection}_${feed()}_${page}_feed_${api.authStore.model.id || api.authStore.model.token?.split(".")[0]}_${options._for || ''}`,
       expand: [
         "comments.likes",
         "comments",
@@ -65,7 +65,6 @@ export default function useFeed(
   const [totalPages, setTotalPages] = createSignal(0);
 
   function reset() { 
-    setLoading(true)
     setPosts([]);
     setCurrentPage(1);
     setHasMore(true);
@@ -73,7 +72,7 @@ export default function useFeed(
 
   async function fetchPosts(fetchOptions: any = {}, resetFlag = false) {
     try {
-      if (resetFlag) {
+      if (resetFlag) { 
         setLoading(true);
         setCurrentPage(1);
         reset();
@@ -136,6 +135,7 @@ onMount(() => {
             feed() === "following"
               ? `author.followers ~ "${api.authStore.model.id}"`
               : `author.id != "${api.authStore.model.id}"`,
+              ...options
         },
         true
       );
