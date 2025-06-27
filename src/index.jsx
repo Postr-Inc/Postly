@@ -17,7 +17,8 @@ import deviceManagement from './Pages/settings/device-management';
 import applicationUpdates from './Pages/settings/application-updates'; 
 import Snippets from './Pages/snippets';
 import Account from './Pages/settings/account-management/account';
-import Password from './Pages/settings/account-management/password';
+import Password from './Pages/settings/account-management/password'; 
+import bookmarks from './Pages/bookmarks';
 import myFeed from './Pages/settings/my-feed';
 const root = document.getElementById('root');
 export const api = new SDK({serverURL:'https://api.postlyapp.com'});  
@@ -44,6 +45,7 @@ render(() =>  (
     <Route path={"/settings/device-management"} component={deviceManagement} />
     <Route path={"/settings/application-updates"} component={applicationUpdates} />
     <Route path={"/settings/my-feed"} component={myFeed} /> 
-    <Route path={"/snippets"} component={Snippets}/>
+    <Route path={"/snippets"} component={Snippets}/> 
+    <Route path="/bookmarks" component={bookmarks} />
   </Router>
 ), root);
