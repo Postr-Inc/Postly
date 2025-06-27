@@ -20,6 +20,7 @@ import Verified from "../Icons/Verified";
 import Bookmark from "../Icons/Bookmark";
 import Share from "../Icons/Share";
 import { dispatchAlert, haptic } from "@/src/Utils/SDK";
+import { O } from "@kobalte/core/dist/index-766ec211";
 const created = (created: any) => {
   let date = new Date(created);
   let now = new Date();
@@ -245,10 +246,12 @@ export default function Post(props: Props) {
         type:"info",
         message:"Added Post To Bookmarks"
       })
-      haptic()  
-       api.updateCache("posts", props.id, {
+
+      api.updateCache("posts", props.id, {
         bookmarked: bookmarks()
       })
+      haptic()  
+      
     }
      try {
       const { res } = await api.send("/actions/posts/bookmark", {
