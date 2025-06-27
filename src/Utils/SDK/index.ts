@@ -368,13 +368,14 @@ export default class SDK {
           }
         })
 
-        const { status, token, message , id} = await response.json();
+        const { status, token, message } = await response.json();
         if (status !== 200) {
           return reject(message)
         }
         else {
           localStorage.setItem("postr_auth", JSON.stringify({ token }))
           this.authStore.model.token = token
+          
           this.authStore.model.id = token.split(".")
           resolve(true)
         }
