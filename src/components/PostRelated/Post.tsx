@@ -265,7 +265,7 @@ export default function Post(props: Props) {
             </CardTitle>
             <Show when={props.expand.author.validVerified}>
               <div data-tip="Verified" class="tooltip flex items-center">
-                 <Verified class="w-5 h-5 mx-1 text-blue-500 fill-blue-500 stroke-white" />
+                 <Verified class="w-5 h-5 mx-1 text-blue-500 fill-blue-500 " />
               </div>
             </Show>
             <Show when={props.expand.author.isEarlyUser}>
