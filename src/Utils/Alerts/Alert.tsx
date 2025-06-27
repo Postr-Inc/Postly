@@ -33,6 +33,10 @@ export default function CustomAlertDialog() {
         timeoutId = setTimeout(() => {
           dismissAlert()
         }, 4000)
+      }else{
+        timeoutId = setTimeout(() => {
+          dismissAlert()
+        }, 6000)
       }
     }
 
@@ -81,26 +85,18 @@ export default function CustomAlertDialog() {
         )
       case "info":
         return (
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            ></path>
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+  <path stroke-linecap="round" stroke-linejoin="round" d="m11.25 11.25.041-.02a.75.75 0 0 1 1.063.852l-.708 2.836a.75.75 0 0 0 1.063.853l.041-.021M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9-3.75h.008v.008H12V8.25Z" />
+</svg>
+
         )
       case "error":
       default:
         return (
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth="2"
-              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-            ></path>
-          </svg>
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 3.75h.008v.008H12v-.008Z" />
+</svg>
+
         )
     }
   }
@@ -125,7 +121,7 @@ export default function CustomAlertDialog() {
     <Show when={_alert()}>
       <div
         class={`
-          fixed top-4 left-1/2 w-[20rem] transform -translate-x-1/2 z-[999999] transition-all duration-300 ease-out
+          fixed top-4 left-1/2 w-[25rem] transform -translate-x-1/2 z-[999999] transition-all duration-300 ease-out
           ${
             isExiting()
               ? "-translate-y-full opacity-0"
