@@ -18,6 +18,49 @@ export function dispatchAlert(payload: AlertPayload) {
   window.dispatchEvent(event);
 }
 
+/**
+ * @credit https://github.com/tijnjh/ios-haptics/tree/main
+ * @description IOS Haptic Feedback
+ */
+
+const haptic = () => {
+  try {
+    const label = document.createElement("label");
+    label.ariaHidden = "true";
+    label.style.display = "none";
+
+    const input = document.createElement("input");
+    input.type = "checkbox";
+    input.setAttribute("switch", "");
+    label.appendChild(input);
+
+    document.head.appendChild(label);
+    label.click();
+    document.head.removeChild(label);
+  } catch {
+    // do nothing
+  }
+};
+
+/**
+ * Two rapid haptics (good for confirmation)
+ */
+haptic.confirm = () => {
+  haptic();
+  setTimeout(() => haptic(), 120);
+};
+
+/**
+ * Three rapid haptics (useful for errors)
+ */
+haptic.error = () => {
+  haptic();
+  setTimeout(() => haptic(), 120);
+  setTimeout(() => haptic(), 240);
+};
+
+export { haptic };
+
 export default class SDK {
   serverURL: string;
   hasChecked = false;
@@ -117,8 +160,7 @@ export default class SDK {
       ...options.headers,
     };
 
-    const token = this.authStore.model.token;
-    console.log(token)
+    const token = this.authStore.model.token; 
     if (token) {
       headers["Authorization"] = `${token}`;
     }
@@ -167,8 +209,7 @@ export default class SDK {
         const response = await cache.match(request);
         const json = await response?.json();
         const value = json?.value
-
-        console.log(value)
+ 
 
         if (!value) continue;
 
@@ -286,11 +327,9 @@ export default class SDK {
   }
 
   handleMessages = (data: any) => {
-    let _data = JSON.parse(data)
-    console.log("Received data from WebSocket", _data);
+    let _data = JSON.parse(data) 
     if (_data.data && _data.data.callback && this.callbacks.has(_data.data.callback)) {
-      this.callbacks.get(_data.data.callback)?.(_data.data);
-      console.log("Callback executed for", _data.data.callback);
+      this.callbacks.get(_data.data.callback)?.(_data.data); 
       this.callbacks.delete(_data.data.callback);
       return;
     }
