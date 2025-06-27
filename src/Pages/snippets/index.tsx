@@ -18,7 +18,7 @@ const Icons = {
       <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" />
     </svg>
   ),
-  
+
   HeartOutline: (props: any) => (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -38,8 +38,8 @@ const Icons = {
 
   Chat: (props: any) => (
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"  {...props}>
-  <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z" />
-</svg>
+      <path stroke-linecap="round" stroke-linejoin="round" d="M12 20.25c4.97 0 9-3.694 9-8.25s-4.03-8.25-9-8.25S3 7.444 3 12c0 2.104.859 4.023 2.273 5.48.432.447.74 1.04.586 1.641a4.483 4.483 0 0 1-.923 1.785A5.969 5.969 0 0 0 6 21c1.282 0 2.47-.402 3.445-1.087.81.22 1.668.337 2.555.337Z" />
+    </svg>
 
   ),
 
@@ -192,7 +192,25 @@ export default function SnippetReels() {
   let videoRefs: HTMLVideoElement[] = [];
   let containerRef: HTMLDivElement | undefined;
   let observer: IntersectionObserver | null = null;
+  function handleVideoError(index: number) {
+    console.warn(`Video ${index} failed to load. Attempting reload...`);
+    const video = videoRefs[index];
+    if (!video) return;
 
+    const originalSrc = video.src;
+    // Optional: force browser to re-request by adding a cache-busting query param
+    const reloadSrc = originalSrc.includes("?")
+      ? `${originalSrc}&retry=${Date.now()}`
+      : `${originalSrc}?retry=${Date.now()}`;
+
+    video.src = reloadSrc;
+    video.load();
+
+    // Attempt to auto-play again
+    video.play().catch((err) => {
+      console.warn(`Retry play failed:`, err);
+    });
+  }
   createEffect(() => {
     const currentPosts = posts();
     if (currentPosts && currentPosts.length > 0) {
@@ -238,20 +256,20 @@ export default function SnippetReels() {
     observer = new IntersectionObserver(
       (entries) => {
         console.log('Observer triggered with entries:', entries.length);
-        
+
         if (debounceTimer) clearTimeout(debounceTimer);
         debounceTimer = setTimeout(() => {
           let bestMatch = { index: -1, ratio: 0 };
           entries.forEach(entry => {
             const index = Number(entry.target.getAttribute("data-index"));
             console.log(`Entry ${index}: intersecting=${entry.isIntersecting}, ratio=${entry.intersectionRatio}`);
-            
+
             if (entry.isIntersecting && !isNaN(index)) {
               const ratio = entry.intersectionRatio;
               if (ratio > bestMatch.ratio) bestMatch = { index, ratio };
             }
           });
-          
+
           if (bestMatch.index !== -1 && bestMatch.ratio > 0.5 && bestMatch.index !== activeIndex()) {
             console.log('Setting active index to:', bestMatch.index);
             setActiveIndex(bestMatch.index);
@@ -273,7 +291,7 @@ export default function SnippetReels() {
 
     const containers = containerRef.querySelectorAll("[data-index]");
     console.log('Found elements to observe:', containers.length);
-    
+
     containers.forEach((element, idx) => {
       const dataIndex = element.getAttribute("data-index");
       console.log(`Observing element ${idx} with data-index: ${dataIndex}`);
@@ -289,10 +307,10 @@ export default function SnippetReels() {
   createEffect(() => {
     const currentPosts = posts();
     const isLoading = loading();
-    
+
     if (!isLoading && currentPosts && currentPosts.length > 0 && containerRef) {
       console.log('Posts loaded, setting up observation...');
-      
+
       setTimeout(() => {
         observeElements();
       }, 200);
@@ -315,7 +333,7 @@ export default function SnippetReels() {
         if (isPlaying()) {
           video.play().catch(err => {
             video.muted = true;
-            video.play().catch(() => {});
+            video.play().catch(() => { });
           });
         }
       } else {
@@ -334,47 +352,47 @@ export default function SnippetReels() {
   });
 
   async function handleLike(post: any) {
-  const userId = api.authStore.model?.id;
-  //@ts-ignore
-  if (!userId) return requireSignup();
+    const userId = api.authStore.model?.id;
+    //@ts-ignore
+    if (!userId) return requireSignup();
 
-  const hasLiked = post.likes.includes(userId);
-  const updatedLikes = hasLiked
-    ? post.likes.filter((id: string) => id !== userId)
-    : [...post.likes, userId];
+    const hasLiked = post.likes.includes(userId);
+    const updatedLikes = hasLiked
+      ? post.likes.filter((id: string) => id !== userId)
+      : [...post.likes, userId];
 
-  // Optimistically update post object
-  post.likes = updatedLikes;
+    // Optimistically update post object
+    post.likes = updatedLikes;
 
-  // Update the local signal state if this is the current post
-  if (post.id === currentPost()?.id) {
-    setCurrentPost({ ...post });
-  }
-
-  // Update the global cache
-  api.updateCache("posts", post.id, { likes: updatedLikes });
-
-  try {
-    await api.send(`/actions/posts/${hasLiked ? "unlike" : "like"}`, {
-      body: { targetId: post.id },
-    });
-  } catch (err) {
-    console.error("Like/unlike request failed:", err);
-
-    // Optionally rollback like state on failure
-    const rollbackLikes = hasLiked
-      ? [...post.likes, userId]
-      : post.likes.filter((id: string) => id !== userId);
-
-    post.likes = rollbackLikes;
-
+    // Update the local signal state if this is the current post
     if (post.id === currentPost()?.id) {
       setCurrentPost({ ...post });
     }
 
-    api.updateCache("posts", post.id, { likes: rollbackLikes });
+    // Update the global cache
+    api.updateCache("posts", post.id, { likes: updatedLikes });
+
+    try {
+      await api.send(`/actions/posts/${hasLiked ? "unlike" : "like"}`, {
+        body: { targetId: post.id },
+      });
+    } catch (err) {
+      console.error("Like/unlike request failed:", err);
+
+      // Optionally rollback like state on failure
+      const rollbackLikes = hasLiked
+        ? [...post.likes, userId]
+        : post.likes.filter((id: string) => id !== userId);
+
+      post.likes = rollbackLikes;
+
+      if (post.id === currentPost()?.id) {
+        setCurrentPost({ ...post });
+      }
+
+      api.updateCache("posts", post.id, { likes: rollbackLikes });
+    }
   }
-}
 
   const handleShare = (post: any) => {
     if (navigator.share) {
@@ -397,7 +415,7 @@ export default function SnippetReels() {
         <Show when={!loading() && posts()?.length > 0}>
           <For each={posts()}>
             {(post, index) => {
-              const author = post.expand?.author; 
+              const author = post.expand?.author;
               const videoUrl = post.files?.[0] ? api.cdn.getUrl("posts", post.id, post.files[0]) : null;
               const isLiked = post.likes?.includes(api.authStore.model?.id);
 
@@ -414,17 +432,15 @@ export default function SnippetReels() {
                       ref={(el) => (videoRefs[index()] = el!)}
                       class="h-full w-full object-cover z-0"
                       muted
-                      loop 
+                      loop
                       playsinline
                       autoplay
                       src={videoUrl}
                       preload={index() < 3 ? "auto" : "metadata"}
                       controls={false}
-                      onError={(e) => {
-                        alert(e.message);
-                      }}
                       onCanPlay={() => handleVideoLoaded(index())}
                       onLoadedData={() => handleVideoLoaded(index())}
+                      onError={(e) => handleVideoError(index())}
                     />
 
                     {/* Header */}
@@ -432,7 +448,7 @@ export default function SnippetReels() {
                       <div class="bg-black/50 px-3 py-1 rounded-full">
                         <h1 class="font-bold text-xl text-white">Snippets</h1>
                       </div>
-                      
+
                       <div class="flex gap-2">
                         <Show when={activeIndex() === index() && !userInteracted()}>
                           <div class="bg-black/50 px-3 py-1 rounded-full text-white text-sm flex items-center gap-2">
@@ -440,7 +456,7 @@ export default function SnippetReels() {
                             Tap to unmute
                           </div>
                         </Show>
-                        
+
                         <div class="bg-black/50 p-2 rounded-full">
                           <Icons.DotsVertical class="w-5 h-5 text-white cursor-pointer" />
                         </div>
@@ -449,7 +465,7 @@ export default function SnippetReels() {
 
                     {/* Play/Pause overlay */}
                     <Show when={activeIndex() === index() && !isPlaying()}>
-                      <div 
+                      <div
                         class="absolute inset-0 flex items-center justify-center z-10 cursor-pointer"
                         onClick={togglePlayPause}
                       >
@@ -464,12 +480,12 @@ export default function SnippetReels() {
                       <div class="flex justify-between items-end">
                         {/* Left side - User info and content */}
                         <div class="flex-1 mr-4">
-                          <div 
-                            class="flex items-center gap-3 mb-3 cursor-pointer pointer-events-auto" 
+                          <div
+                            class="flex items-center gap-3 mb-3 cursor-pointer pointer-events-auto"
                             onClick={() => navigate(`/u/${author.username}`)}
                           >
-                            <Show 
-                              when={author?.avatar} 
+                            <Show
+                              when={author?.avatar}
                               fallback={
                                 <div class="h-10 w-10 rounded-full bg-gray-600 flex items-center justify-center">
                                   <Icons.User class="w-6 h-6 text-gray-300" />
@@ -490,7 +506,7 @@ export default function SnippetReels() {
                               </div>
                             </div>
                           </div>
-                          
+
                           <Show when={post.content}>
                             <p class="text-sm leading-tight font-medium break-words max-w-full mb-2">
                               {post.content}
@@ -502,15 +518,15 @@ export default function SnippetReels() {
                         <div class="flex flex-col items-center gap-6 pointer-events-auto">
                           {/* Like button */}
                           <div class="flex flex-col items-center gap-1">
-                            <div 
+                            <div
                               class="bg-black/30 p-3 rounded-full cursor-pointer hover:bg-black/50 transition-colors"
                               onClick={() => handleLike(post)}
                             >
-                              <Show 
+                              <Show
                                 when={isLiked}
                                 fallback={<Icons.HeartOutline class="w-7 h-7 text-white" />}
                               >
-                                <Icons.Heart class={joinClass("w-7 h-7  ", currentPost() && currentPost().likes?.includes(api.authStore.model.id) ? "text-red-500" : "text-white" )} />
+                                <Icons.Heart class={joinClass("w-7 h-7  ", currentPost() && currentPost().likes?.includes(api.authStore.model.id) ? "text-red-500" : "text-white")} />
                               </Show>
                             </div>
                             <span class="text-xs font-semibold">{currentPost() && currentPost().likes?.length || 0}</span>
@@ -518,7 +534,7 @@ export default function SnippetReels() {
 
                           {/* Comment button */}
                           <div class="flex flex-col items-center gap-1">
-                            <div 
+                            <div
                               class="bg-black/30 p-3 rounded-full cursor-pointer hover:bg-black/50 transition-colors"
                               onClick={() => navigate(StringJoin("/view/", "posts/", post.id))}
                             >
@@ -529,7 +545,7 @@ export default function SnippetReels() {
 
                           {/* Share button */}
                           <div class="flex flex-col items-center gap-1">
-                            <div 
+                            <div
                               class="bg-black/30 p-3 rounded-full cursor-pointer hover:bg-black/50 transition-colors"
                               onClick={() => handleShare(post)}
                             >
