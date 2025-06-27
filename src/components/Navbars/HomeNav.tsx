@@ -138,6 +138,10 @@ export default function HomeNav({
 
               <div class="flex gap-4">
                 <Bookmark class="w-7 h-7" onClick={()=>{
+                  if(!api.authStore.model.id) {
+                   requireSignup()
+                    return;
+                  } 
                   navigate("/bookmarks")
                 }}/>
                 <Settings class="w-7 h-7  cursor-pointer" onClick={() => {
