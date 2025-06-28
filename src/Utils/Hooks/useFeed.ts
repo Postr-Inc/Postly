@@ -127,22 +127,7 @@ export default function useFeed(
   }
 
 onMount(() => {
-  createEffect(() => {
-    // Back navigation listener
-    const popHandler = () => {
-      reset();
-      fetchPosts(
-        {
-          filter:
-            feed() === "following"
-              ? `author.followers ~ "${api.authStore.model.id}"`
-              : `author.id != "${api.authStore.model.id}"`,
-              ...options
-        },
-        true
-      );
-    };
-    window.addEventListener("popstate", popHandler);
+  createEffect(() => { 
 
     // Infinite scroll for touch & scroll
     let scrollTimeout: any = null;
@@ -221,9 +206,7 @@ onMount(() => {
     };
   });
 
-  // Safe redundant fetch
-  reset();
-  fetchPosts(options, false);
+  // Safe redundant fetch 
 });
 
 
