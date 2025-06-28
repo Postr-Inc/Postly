@@ -361,7 +361,7 @@ export default function Post(props: Props) {
         <Show when={!props.isComment && !window.location.pathname.includes("/view") || props.isComment && window.location.pathname.includes("/view")}>
           <CardTitle class="absolute   right-0">
             <div class="dropdown dropdown-left    ">
-              <div tabindex="0" role="button" class="btn btn-ghost btn-sm m-1"  onClick={()=>{
+              <div tabindex="0" role="button" class="btn z-[10] btn-ghost btn-sm m-1"  onClick={()=>{
                 if(!api.authStore.model.username){
                   requireSignup()
                   return;
