@@ -49,6 +49,8 @@ async function list(
 export default function useFeed(
   collection: string,
   options: { _for?: string; filter?: string; sort?: string; limit?: number } = {},
+    activeIndexSignal?: () => number,
+    pauseAllVideos?: () => void
 ) {
   const initialFeed = options._for === "home"
     ? "recommended"
@@ -185,8 +187,9 @@ onMount(() => {
     let startY = 0;
 
     const touchStart = (e: TouchEvent) => {
-      if (window.scrollY === 0) {
+      if (window.scrollY === 0 &&  activeIndexSignal?.() === 0) {
         startY = e.touches[0].clientY;
+        pauseAllVideos()
       }
     };
 
@@ -194,10 +197,11 @@ onMount(() => {
       const endY = e.changedTouches[0].clientY;
       const deltaY = endY - startY;
 
-      if (deltaY > 50 && window.scrollY === 0) {
+      if (deltaY > 50 && window.scrollY === 0  && activeIndexSignal?.() === 0) {
         // Pulled down from top
         reset();
         fetchPosts({ ...options }, true);
+        pauseAllVideos()
       }
     };
 
