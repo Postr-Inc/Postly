@@ -2,7 +2,7 @@ import useTheme from "../../Utils/Hooks/useTheme";
 import { api } from "../..";
 import { joinClass } from "@/src/Utils/Joinclass";
 import { Accessor, onMount, Show } from "solid-js";
-import logo from "@/src/assets/icon_transparent.png"; 
+import logo from "@/src/assets/icon_transparent.png";
 import { createSignal, createEffect } from "solid-js";
 import useScrollingDirection from "@/src/Utils/Hooks/useScrollingDirection";
 import useDevice from "@/src/Utils/Hooks/useDevice";
@@ -12,6 +12,7 @@ import MobileSidebar from "../Modals/MobileSidebar";
 import Bookmark from "../Icons/Bookmark";
 import Settings from "../Icons/Settings";
 import LogoutModal from "@/src/Utils/Modals/LogoutModal";
+
 export default function HomeNav({
   navigate,
   page,
@@ -24,40 +25,45 @@ export default function HomeNav({
   const { theme } = useTheme();
   let { scrollingDirection } = useScrollingDirection();
   let { mobile } = useDevice();
-  const [hide, setHide] = createSignal(false)
+  const [hide, setHide] = createSignal(false);
 
- 
+  // Helper to get inactive tab text color
+  const inactiveTabColor = () =>
+    theme() === "dark" ? "text-gray-400" : "text-gray-700";
+
   return (
     <div
       class={joinClass(
-        "flex flex-col sticky top-0 sm:p-0 md:p-4 z-[9999]",
-        
+        "flex flex-col sticky top-0 sm:p-0 md:p-4 z-[99999]",
         "backdrop-blur-sm",
         hide() && mobile() ? "hidden" : ""
       )}
     >
-      <div class="flex   w-full sm:p-3    justify-between ">
+      <div class="flex w-full sm:p-3 justify-between">
         <div class="flex gap-2 hero">
-          <div class="flex flex-col   w-full">
-            <div class="flex  justify-between gap-2 w-full">
-              <div class="flex flex-row  gap-2  ">
-                <div class="dropdown     ">
-                  <label tabIndex={0}
-                  >
+          <div class="flex flex-col w-full">
+            <div class="flex justify-between gap-2 w-full">
+              <div class="flex flex-row gap-2">
+                <div class="dropdown">
+                  <label tabIndex={0}>
                     {typeof window != "undefined" ? (
                       <>
                         {api.authStore.model?.avatar ? (
                           <img
-                            src={api.cdn.getUrl("users", api.authStore.model.id, api.authStore.model.avatar)}
+                            src={api.cdn.getUrl(
+                              "users",
+                              api.authStore.model.id,
+                              api.authStore.model.avatar
+                            )}
                             alt={api.authStore.model.username}
                             class="rounded object-cover w-12 h-12 cursor-pointer"
-                          ></img>
+                          />
                         ) : (
-                           <img
+                          <img
                             src={"/icons/usernotfound/image.png"}
                             alt={api.authStore.model.username}
                             class="rounded object-cover w-12 h-12 cursor-pointer"
-                          ></img>
+                          />
                         )}
                       </>
                     ) : (
@@ -67,24 +73,29 @@ export default function HomeNav({
                   <ul
                     tabIndex={0}
                     style={{
-                      border: theme() === 'dark' ? '1px solid #2d2d2d' : '1px solid #f9f9f9',
-                      "border-radius": '10px'
+                      border:
+                        theme() === "dark"
+                          ? "1px solid #2d2d2d"
+                          : "1px solid #f9f9f9",
+                      "border-radius": "10px",
                     }}
-                    class="dropdown-content  menu   w-[16rem] shadow bg-base-100  rounded "
+                    class="dropdown-content menu w-[16rem] shadow bg-base-100 rounded"
                   >
-                    {
-                      api.authStore.model.username && <li>
+                    {api.authStore.model.username && (
+                      <li>
                         <a
                           onClick={() => {
                             navigate("/u/" + api.authStore.model.username);
                           }}
-                          class="rounded-full">
+                          class="rounded-full"
+                        >
                           View Profile
                         </a>
                       </li>
-                    }
+                    )}
                     {typeof window != "undefined" &&
-                      api.authStore.model.postr_plus && api.authStore.model.username ? (
+                    api.authStore.model.postr_plus &&
+                    api.authStore.model.username ? (
                       <li>
                         <a class="rounded-full">
                           Your benefits
@@ -98,120 +109,130 @@ export default function HomeNav({
                     )}
 
                     <li>
-                      <a class="rounded-full"
+                      <a
+                        class="rounded-full"
                         onClick={() => {
                           //@ts-ignore
                           if (!api.authStore.model.username) {
-                            //@ts-ignore 
-                            requireSignup()
+                            //@ts-ignore
+                            requireSignup();
                           } else {
                             //@ts-ignore
-                            document
-                              .getElementById("logout-modal")
-                              //@ts-ignore
-                              .showModal();
+                            document.getElementById("logout-modal").showModal();
                           }
                         }}
                       >
                         {!api.authStore.model.username && "Join the Community!"}
-                        {api.authStore.model.username && <p>
-                          Logout
-                          <span class="font-bold">
-                            {" "}
-                            @{api.authStore.model.username}
-                          </span></p>}
+                        {api.authStore.model.username && (
+                          <p>
+                            Logout
+                            <span class="font-bold">
+                              {" "}
+                              @{api.authStore.model.username}
+                            </span>
+                          </p>
+                        )}
                       </a>
                     </li>
                   </ul>
                 </div>
-                {
-                  api.authStore.model.username && <div class="flex flex-col">
-                    <p class="font-bold ">
-                      {api.authStore.model.username}
-                    </p>
-                    <p class="text-lg">
-                      @ {api.authStore.model.username}
-                    </p>
+                {api.authStore.model.username && (
+                  <div class="flex flex-col">
+                    <p class="font-bold ">{api.authStore.model.username}</p>
+                    <p class="text-lg">@ {api.authStore.model.username}</p>
                   </div>
-                }
+                )}
               </div>
 
               <div class="flex gap-4">
-                <Bookmark class="w-7 cursor-pointer h-7" onClick={()=>{
-                  if(!api.authStore.model.username) {
-                   requireSignup()
-                    return;
-                  } 
-                  navigate("/bookmarks")
-                }}/>
-                <Settings class="w-7 h-7  cursor-pointer" onClick={() => {
-                  if(!api.authStore.model.username) {
-                   requireSignup()
-                    return;
-                  }  
-                  navigate("/settings");
-                }} />
+                <Bookmark
+                  class="w-7 cursor-pointer h-7"
+                  onClick={() => {
+                    if (!api.authStore.model.username) {
+                      requireSignup();
+                      return;
+                    }
+                    navigate("/bookmarks");
+                  }}
+                />
+                <Settings
+                  class="w-7 h-7 cursor-pointer"
+                  onClick={() => {
+                    if (!api.authStore.model.username) {
+                      requireSignup();
+                      return;
+                    }
+                    navigate("/settings");
+                  }}
+                />
               </div>
             </div>
-
           </div>
         </div>
       </div>
-      <div class={joinClass("  sm:p-3  mt-3  text-sm    justify-between  flex  ",)}>
+
+      <div class="sm:p-3 mt-3 text-sm justify-between flex">
+        {/* Recommended */}
         <div class="flex flex-col rounded">
           <p
-            class={joinClass("cursor-pointer", page() !== "recommended" ? "text-gray-500" : "")}
+            class={joinClass(
+              "cursor-pointer transition-colors",
+              page() !== "recommended" ? inactiveTabColor() : ""
+            )}
             onClick={() => {
               swapFeed("recommended", 0);
             }}
           >
             Recommended
           </p>
-          {page() === "recommended" ? (
-            <div class="rounded-md   h-[2px] bg-blue-500"></div>
-          ) : (
-            ""
+          {page() === "recommended" && (
+            <div class="rounded-md h-[2px] bg-blue-500"></div>
           )}
         </div>
+
+        {/* Following */}
         <Show when={api.authStore.model.username}>
           <div class="flex flex-col text-sm">
             <p
-              class={joinClass("cursor-pointer", page() !== "following" ? "text-gray-500" : "")}
+              class={joinClass(
+                "cursor-pointer transition-colors",
+                page() !== "following" ? inactiveTabColor() : ""
+              )}
               onClick={() => {
                 swapFeed("following", 0);
               }}
             >
               Following
             </p>
-            {page() === "following" ? (
-              <div class=" rounded-md    h-[2px] bg-blue-500"></div>
-            ) : (
-              ""
+            {page() === "following" && (
+              <div class="rounded-md h-[2px] bg-blue-500"></div>
             )}
           </div>
         </Show>
         <Show when={!api.authStore.model.username}>
           <div></div>
         </Show>
+
+        {/* Trending */}
         <div class="flex flex-col text-sm">
           <p
-            class={joinClass("cursor-pointer", page() !== "following" ? "text-gray-500" : "")}
+            class={joinClass(
+              "cursor-pointer transition-colors",
+              page() !== "trending" ? inactiveTabColor() : ""
+            )}
             onClick={() => {
               swapFeed("trending", 0);
             }}
           >
             Trending
           </p>
-          {page() === "trending" ? (
-            <div class=" rounded-md   h-[2px] bg-blue-500"></div>
-          ) : (
-            ""
+          {page() === "trending" && (
+            <div class="rounded-md h-[2px] bg-blue-500"></div>
           )}
         </div>
+      </div>
 
-
-      </div> 
-      <Portal >
+      <Portal>
         <LogoutModal />
       </Portal>
     </div>
