@@ -13,6 +13,7 @@ import Registration from './Pages/auth/Registration';
 import Settings from './Pages/settings';
 import profileSettings from './Pages/settings/profile-settings';
 import AccountManagement from './Pages/settings/account-management';
+import Notifications from './Pages/settings/notification';
 import deviceManagement from './Pages/settings/device-management';
 import applicationUpdates from './Pages/settings/application-updates'; 
 import Snippets from './Pages/snippets';
@@ -45,6 +46,7 @@ render(() =>  (
     <Route path={"/settings/device-management"} component={deviceManagement} />
     <Route path={"/settings/application-updates"} component={applicationUpdates} />
     <Route path={"/settings/my-feed"} component={myFeed} /> 
+    <Route path={"/settings/notifications"} component={Notifications} />
     <Route path={"/snippets"} component={Snippets}/> 
     <Route path="/bookmarks" component={bookmarks} />
   </Router>
