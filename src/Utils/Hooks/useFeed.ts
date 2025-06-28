@@ -49,8 +49,7 @@ async function list(
 export default function useFeed(
   collection: string,
   options: { _for?: string; filter?: string; sort?: string; limit?: number } = {},
-  activeIndexSignal?: () => number,
-  pauseAllVideos?: () => void
+  activeIndexSignal?: () => number, 
 ) {
   const initialFeed = options._for === "home"
     ? "recommended"
@@ -174,8 +173,7 @@ export default function useFeed(
 
     const touchStart = (e: TouchEvent) => {
       if (window.scrollY === 0 && activeIndexSignal?.() === 0) {
-        startY = e.touches[0].clientY;
-        pauseAllVideos()
+        startY = e.touches[0].clientY; 
       }
     };
 
