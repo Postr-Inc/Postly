@@ -101,7 +101,7 @@ export default function HomeNav({
                       <a class="rounded-full"
                         onClick={() => {
                           //@ts-ignore
-                          if (!api.authStore.model.id) {
+                          if (!api.authStore.model.username) {
                             //@ts-ignore 
                             requireSignup()
                           } else {
@@ -113,8 +113,8 @@ export default function HomeNav({
                           }
                         }}
                       >
-                        {!api.authStore.model.id && "Join the Community!"}
-                        {api.authStore.model.id && <p>
+                        {!api.authStore.model.username && "Join the Community!"}
+                        {api.authStore.model.username && <p>
                           Logout
                           <span class="font-bold">
                             {" "}
