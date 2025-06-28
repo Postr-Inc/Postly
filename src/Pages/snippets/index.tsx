@@ -193,7 +193,7 @@ export default function SnippetReels() {
     _for: "snippets",
     limit: 10,
 
-  }, activeIndex, pauseAllVideos);
+  }, activeIndex);
   const [userInteracted, setUserInteracted] = createSignal(false);
   const [videoLoaded, setVideoLoaded] = createSignal<boolean[]>([]);
   const [currentPost, setCurrentPost] = createSignal(null);
