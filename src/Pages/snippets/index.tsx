@@ -177,14 +177,23 @@ const Icons = {
   let videoRefs: HTMLVideoElement[] = [];
 export default function SnippetReels() {
   const { params, route, navigate } = useNavigation("/snippets");
-  const { posts, loading } = useFeed("posts", {
+ function pauseAllVideos() {
+  videoRefs.forEach((video) => {
+    if (!video) return;
+    video.pause();
+    video.currentTime = 0;
+    video.muted = true;
+  });
+}
+
+  const [activeIndex, setActiveIndex] = createSignal(0);
+    const { posts, loading } = useFeed("posts", {
     filter: "isSnippet=true",
     sort: "-created",
     _for: "snippets",
     limit: 10,
-  });
-
-  const [activeIndex, setActiveIndex] = createSignal(0);
+    
+  }, activeIndex, pauseAllVideos);
   const [userInteracted, setUserInteracted] = createSignal(false);
   const [videoLoaded, setVideoLoaded] = createSignal<boolean[]>([]);
   const [currentPost, setCurrentPost] = createSignal(null);
@@ -301,30 +310,34 @@ createEffect(() => {
   });
 
   createEffect(() => {
-    const currentIndex = activeIndex();
-    const loaded = videoLoaded();
+  const currentIndex = activeIndex();
+  const loaded = videoLoaded();
 
-    console.log('Active index changed to:', currentIndex);
+  if (!loaded[currentIndex]) return;
 
-    if (!loaded[currentIndex]) return;
-    setCurrentPost(posts()[currentIndex])
+  setCurrentPost(posts()[currentIndex]);
 
-    videoRefs.forEach((video, i) => {
-      if (!video || !loaded[i]) return;
-      if (i === currentIndex) {
-        video.muted = !userInteracted();
-        if (isPlaying()) {
-          video.play().catch(err => {
-            video.muted = true;
-            video.play().catch(() => {});
-          });
-        }
-      } else {
-        video.pause();
-        video.currentTime = 0;
+  videoRefs.forEach((video, i) => {
+    console.log(video)
+    if (!video || !loaded[i]) return;
+
+    if (i === currentIndex) {
+      video.muted = !userInteracted();
+      if (isPlaying()) {
+        video.play().catch(err => {
+          video.muted = true;
+          video.play().catch(() => {});
+        });
       }
-    });
+    } else {
+      // Pause and mute all other videos
+      video.pause();
+      video.currentTime = 0;
+      video.muted = true;   // <- Add this line to mute old videos
+    }
   });
+});
+
 
   onCleanup(() => {
     console.log('Cleaning up observer');
