@@ -1,7 +1,7 @@
 import { createSignal, onMount, onCleanup, createEffect } from "solid-js";
 import { api } from "@/src";
 import { HttpCodes } from "../SDK/opCodes";
-
+let isFetchingMore = false;
 async function list(
   collection: string,
   page: number,
@@ -9,10 +9,10 @@ async function list(
   options: { filter?: string; sort?: string; limit?: number; _for?: any } = {}
 ) {
 
-  console.log( {
+  console.log({
     recommended: feed() === "recommended",
-      order: options.sort || "-created",
-      filter: options.filter && options.filter.length > 0 ? options.filter : "author.deactivated=false",
+    order: options.sort || "-created",
+    filter: options.filter && options.filter.length > 0 ? options.filter : "author.deactivated=false",
   })
   return api
     .collection(collection)
@@ -43,20 +43,20 @@ async function list(
 }
 
 
- 
- 
+
+
 
 export default function useFeed(
   collection: string,
   options: { _for?: string; filter?: string; sort?: string; limit?: number } = {},
-    activeIndexSignal?: () => number,
-    pauseAllVideos?: () => void
+  activeIndexSignal?: () => number,
+  pauseAllVideos?: () => void
 ) {
   const initialFeed = options._for === "home"
     ? "recommended"
     : options._for === "snippets"
-    ? "snippets"
-    : options._for || "all";
+      ? "snippets"
+      : options._for || "all";
   const [feed, setFeed] = createSignal(initialFeed);
   const [currentPage, setCurrentPage] = createSignal(1);
   const [posts, setPosts] = createSignal<any[]>([]);
@@ -65,8 +65,9 @@ export default function useFeed(
   const [hasMore, setHasMore] = createSignal(true);
   const [refresh, setRefresh] = createSignal(false);
   const [totalPages, setTotalPages] = createSignal(0);
+  const [LoadingMore, setLoadingMore] = createSignal(false)
 
-  function reset() { 
+  function reset() {
     setPosts([]);
     setCurrentPage(1);
     setHasMore(true);
@@ -74,30 +75,36 @@ export default function useFeed(
 
   async function fetchPosts(fetchOptions: any = {}, resetFlag = false) {
     try {
-      if (resetFlag) { 
+      if (resetFlag) {
+        // Initial load or pull-to-refresh
         setLoading(true);
         setCurrentPage(1);
         reset();
+      } else {
+        // Scroll load-more
+        setLoadingMore(true);
       }
 
       const page = resetFlag ? 1 : currentPage();
       const data = await list(collection, page, feed, fetchOptions);
 
-      // Deduplicate posts by ID
+      // Deduplicate by ID
       const existingIds = new Set(posts().map(post => post.id));
       const newItems = data.items.filter((item: any) => !existingIds.has(item.id));
 
-      setPosts(resetFlag ? data.items : [...posts(), ...newItems]); 
+      if (resetFlag) {
+        setPosts(data.items);
+      } else {
+        setPosts([...posts(), ...newItems]);
+      }
+
       setTotalPages(data.totalPages || 0);
 
       if (data.totalPages <= page) {
         setHasMore(false);
       }
 
-      // Subscribe to new post updates
-      data.items.forEach((item: any) => {
-        api.collection("posts").subscribe(item.id, { cb() {} });
-      });
+
 
       // Relevant people logic
       const relevantPeople: any[] = [];
@@ -118,47 +125,41 @@ export default function useFeed(
 
       // @ts-ignore
       window.setRelevantPeople?.(relevantPeople);
+
     } catch (err) {
       setError(err as any);
     } finally {
-      setLoading(false);
+      if (resetFlag) {
+        setLoading(false);
+      } else {
+        setLoadingMore(false);
+      }
       setRefresh(false);
     }
   }
 
-onMount(() => {
-  createEffect(() => { 
+
+  onMount(() => {
 
     // Infinite scroll for touch & scroll
     let scrollTimeout: any = null;
-
     async function checkLoadMore() {
-      if (scrollTimeout || loading() || refresh()) return;
+      if (scrollTimeout || isFetchingMore || loading() || refresh()) return;
 
       scrollTimeout = setTimeout(async () => {
         scrollTimeout = null;
 
         const nearBottom =
-          window.innerHeight + window.scrollY >=
-          document.body.offsetHeight - 350;
+          window.innerHeight + window.scrollY >= document.body.offsetHeight - 3000;
 
-          console.log(nearBottom, totalPages())
         if (nearBottom && hasMore() && totalPages() > currentPage()) {
+          isFetchingMore = true;
+
           const nextPage = currentPage() + 1;
-          const data = await list(collection, nextPage, feed, options);
-
-          const existingIds = new Set(posts().map((post) => post.id));
-          const newItems = data.items.filter(
-            (item: any) => !existingIds.has(item.id)
-          );
-
-          setPosts([...posts(), ...newItems]);
           setCurrentPage(nextPage);
-          setTotalPages(data.totalPages || totalPages());
+          await fetchPosts({ ...options }, false);
 
-          if (data.totalPages <= nextPage) {
-            setHasMore(false);
-          }
+          isFetchingMore = false;
         }
       }, 200);
     }
@@ -172,7 +173,7 @@ onMount(() => {
     let startY = 0;
 
     const touchStart = (e: TouchEvent) => {
-      if (window.scrollY === 0 &&  activeIndexSignal?.() === 0) {
+      if (window.scrollY === 0 && activeIndexSignal?.() === 0) {
         startY = e.touches[0].clientY;
         pauseAllVideos()
       }
@@ -182,7 +183,7 @@ onMount(() => {
       const endY = e.changedTouches[0].clientY;
       const deltaY = endY - startY;
 
-      if (deltaY > 50 && window.scrollY === 0  && activeIndexSignal?.() === 0) {
+      if (deltaY > 50 && window.scrollY === 0 && activeIndexSignal?.() === 0) {
         // Pulled down from top
         reset();
         fetchPosts({ ...options }, true);
@@ -193,21 +194,25 @@ onMount(() => {
     window.addEventListener("touchstart", touchStart);
     window.addEventListener("touchend", touchEnd);
 
-    // Initial fetch
-    fetchPosts({ ...options }, true);
+    createEffect(() => {
 
-    // Cleanup
-    return () => {
-      window.removeEventListener("popstate", popHandler);
-      window.removeEventListener("scroll", checkLoadMore);
-      window.removeEventListener("touchmove", checkLoadMore);
-      window.removeEventListener("touchstart", touchStart);
-      window.removeEventListener("touchend", touchEnd);
-    };
+
+
+      // Initial fetch
+      fetchPosts({ ...options }, true);
+
+      // Cleanup
+      return () => {
+        window.removeEventListener("popstate", popHandler);
+        window.removeEventListener("scroll", checkLoadMore);
+        window.removeEventListener("touchmove", checkLoadMore);
+        window.removeEventListener("touchstart", touchStart);
+        window.removeEventListener("touchend", touchEnd);
+      };
+    });
+
+    // Safe redundant fetch 
   });
-
-  // Safe redundant fetch 
-});
 
 
   return {
@@ -222,4 +227,4 @@ onMount(() => {
     setPosts,
   };
 }
- 
+
