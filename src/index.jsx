@@ -14,6 +14,8 @@ import Settings from './Pages/settings';
 import profileSettings from './Pages/settings/profile-settings';
 import AccountManagement from './Pages/settings/account-management';
 import Notifications from './Pages/settings/notification';
+import Privacy from './Pages/settings/privacy';
+import PrivacyPolicy from './Pages/settings/privacy/privacy-policy';
 import deviceManagement from './Pages/settings/device-management';
 import applicationUpdates from './Pages/settings/application-updates'; 
 import Snippets from './Pages/snippets';
@@ -47,6 +49,8 @@ render(() =>  (
     <Route path={"/settings/application-updates"} component={applicationUpdates} />
     <Route path={"/settings/my-feed"} component={myFeed} /> 
     <Route path={"/settings/notifications"} component={Notifications} />
+    <Route path={"/settings/privacy"} component={Privacy} />
+    <Route path={"/settings/privacy/privacy-policy"} component={PrivacyPolicy} />
     <Route path={"/snippets"} component={Snippets}/> 
     <Route path="/bookmarks" component={bookmarks} />
   </Router>
