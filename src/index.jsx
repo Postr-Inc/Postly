@@ -13,6 +13,24 @@ import Registration from './Pages/auth/Registration';
 import Settings from './Pages/settings';
 import profileSettings from './Pages/settings/profile-settings';
 import AccountManagement from './Pages/settings/account-management';
+
+import Notifications from './Pages/settings/notification';
+
+import Privacy from './Pages/settings/privacy';
+import PrivacyPolicy from './Pages/settings/privacy/privacy-policy';
+import RequestData from './Pages/settings/privacy/request-data';
+
+import Premium from './Pages/settings/premium';
+import Subscription from './Pages/settings/premium/subscription';
+import Credits from './Pages/settings/premium/credits';
+import Billing from './Pages/settings/premium/billing';
+import PremiumFeatures from './Pages/settings/premium/features';
+
+import AccountSecurity from './Pages/settings/account-security';
+import Monetization from './Pages/settings/monetization';
+import MonetizationMetrics from './Pages/settings/monetization/metrics';
+import MonetizationCashout from './Pages/settings/monetization/cashout';
+
 import deviceManagement from './Pages/settings/device-management';
 import applicationUpdates from './Pages/settings/application-updates'; 
 import Snippets from './Pages/snippets';
@@ -45,6 +63,19 @@ render(() =>  (
     <Route path={"/settings/device-management"} component={deviceManagement} />
     <Route path={"/settings/application-updates"} component={applicationUpdates} />
     <Route path={"/settings/my-feed"} component={myFeed} /> 
+    <Route path={"/settings/notifications"} component={Notifications} />
+    <Route path={"/settings/privacy"} component={Privacy} />
+    <Route path={"/settings/privacy/privacy-policy"} component={PrivacyPolicy} />
+    <Route path={"/settings/privacy/request-data"} component={RequestData} />
+    <Route path={"/settings/premium"} component={Premium} />
+    <Route path={"/settings/premium/subscription"} component={Subscription} />
+    <Route path={"/settings/premium/credits"} component={Credits} />
+    <Route path={"/settings/premium/billing"} component={Billing} />
+    <Route path={"/settings/premium/features"} component={PremiumFeatures} />
+    <Route path={"/settings/security"} component={AccountSecurity} />
+    <Route path={"/settings/monetization"} component={Monetization} />
+    <Route path={"/settings/monetization/metrics"} component={MonetizationMetrics} />
+    <Route path={"/settings/monetization/cashout"} component={MonetizationCashout} />
     <Route path={"/snippets"} component={Snippets}/> 
     <Route path="/bookmarks" component={bookmarks} />
   </Router>
