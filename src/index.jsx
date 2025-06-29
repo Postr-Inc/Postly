@@ -13,15 +13,21 @@ import Registration from './Pages/auth/Registration';
 import Settings from './Pages/settings';
 import profileSettings from './Pages/settings/profile-settings';
 import AccountManagement from './Pages/settings/account-management';
+
 import Notifications from './Pages/settings/notification';
+
 import Privacy from './Pages/settings/privacy';
 import PrivacyPolicy from './Pages/settings/privacy/privacy-policy';
 import RequestData from './Pages/settings/privacy/request-data';
+
 import Premium from './Pages/settings/premium';
 import Subscription from './Pages/settings/premium/subscription';
 import Credits from './Pages/settings/premium/credits';
 import Billing from './Pages/settings/premium/billing';
 import PremiumFeatures from './Pages/settings/premium/features';
+
+import AccountSecurity from './Pages/settings/account-security';
+
 import deviceManagement from './Pages/settings/device-management';
 import applicationUpdates from './Pages/settings/application-updates'; 
 import Snippets from './Pages/snippets';
@@ -63,6 +69,7 @@ render(() =>  (
     <Route path={"/settings/premium/credits"} component={Credits} />
     <Route path={"/settings/premium/billing"} component={Billing} />
     <Route path={"/settings/premium/features"} component={PremiumFeatures} />
+    <Route path={"/settings/security"} component={AccountSecurity} />
     <Route path={"/snippets"} component={Snippets}/> 
     <Route path="/bookmarks" component={bookmarks} />
   </Router>
