@@ -16,6 +16,7 @@ import AccountManagement from './Pages/settings/account-management';
 import Notifications from './Pages/settings/notification';
 import Privacy from './Pages/settings/privacy';
 import PrivacyPolicy from './Pages/settings/privacy/privacy-policy';
+import RequestData from './Pages/settings/privacy/request-data';
 import deviceManagement from './Pages/settings/device-management';
 import applicationUpdates from './Pages/settings/application-updates'; 
 import Snippets from './Pages/snippets';
@@ -51,6 +52,7 @@ render(() =>  (
     <Route path={"/settings/notifications"} component={Notifications} />
     <Route path={"/settings/privacy"} component={Privacy} />
     <Route path={"/settings/privacy/privacy-policy"} component={PrivacyPolicy} />
+    <Route path={"/settings/privacy/request-data"} component={RequestData} />
     <Route path={"/snippets"} component={Snippets}/> 
     <Route path="/bookmarks" component={bookmarks} />
   </Router>
