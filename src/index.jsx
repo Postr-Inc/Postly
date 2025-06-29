@@ -27,6 +27,9 @@ import Billing from './Pages/settings/premium/billing';
 import PremiumFeatures from './Pages/settings/premium/features';
 
 import AccountSecurity from './Pages/settings/account-security';
+import Monetization from './Pages/settings/monetization';
+import MonetizationMetrics from './Pages/settings/monetization/metrics';
+import MonetizationCashout from './Pages/settings/monetization/cashout';
 
 import deviceManagement from './Pages/settings/device-management';
 import applicationUpdates from './Pages/settings/application-updates'; 
@@ -70,6 +73,9 @@ render(() =>  (
     <Route path={"/settings/premium/billing"} component={Billing} />
     <Route path={"/settings/premium/features"} component={PremiumFeatures} />
     <Route path={"/settings/security"} component={AccountSecurity} />
+    <Route path={"/settings/monetization"} component={Monetization} />
+    <Route path={"/settings/monetization/metrics"} component={MonetizationMetrics} />
+    <Route path={"/settings/monetization/cashout"} component={MonetizationCashout} />
     <Route path={"/snippets"} component={Snippets}/> 
     <Route path="/bookmarks" component={bookmarks} />
   </Router>

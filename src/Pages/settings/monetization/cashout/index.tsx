@@ -16,22 +16,6 @@ export default function SettingsPage() {
     api.resetCache()
   }
 
-  const settingsOptions = [
-    {
-      title: "Metrics",
-      description:
-        "View metrics related to monetization",
-      path: "/settings/monetization/metrics",
-    },
-    {
-      title: "Cashout",
-      description:
-        "Modify settings related to monetization",
-      path: "/settings/monetization/cashout",
-    },
-     
-  ]
-
   return (
     <Page  {...{ navigate, params, route: route }} >
          <div class={joinClass("min-h-screen  ", 
@@ -55,22 +39,32 @@ export default function SettingsPage() {
 
       {/* Settings Options */}
       <div class="px-4 space-y-0">
-        {settingsOptions.map((option) => (
-          <div 
-            onClick={()=> navigate(option.path)}
-            class={joinClass("flex items-start py-4 cursor-pointer  transition-colors -mx-4 px-4" , theme() == "dark" ? "hover:bg-gray-900" : "hover:bg-base-300")}
-          >
-            <div class="flex-1">
-              <h3 class="font-bold text-lg mb-1">{option.title}</h3>
-              <p class="text-gray-400 text-sm leading-relaxed">{option.description}</p>
-            </div>
-            <div class="ml-4 mt-2">
-              <svg viewBox="0 0 24 24" class="w-5 h-5 text-gray-500" fill="currentColor">
-                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
-              </svg>
-            </div>
+        <div class="space-y-4">
+        {/* Cashout Options */}
+        <div class="flex flex-col p-4 space-y-4">
+          <h2 class="text-lg font-semibold">Cashout Options</h2>
+          <div class="flex items-center justify-between">
+            <span>Current Balance: $0.00</span>
           </div>
-        ))}
+          <div class="flex items-center justify-between">
+            <span>Cashout via PayPal</span>
+            <button class="btn text-white bg-blue-500 rounded-xl" >Connect</button>
+          </div>
+          <div class="flex items-center justify-between">
+            <span>Cashout via Bank Transfer</span>
+            <button class="btn text-white bg-blue-500 rounded-xl">Setup</button>
+          </div>
+          <div class="flex items-center justify-between">
+            <span>Cashout via Cryptocurrency</span>
+            <button class="btn text-white bg-blue-500 rounded-xl">Add Wallet</button>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-center">
+          <button class="btn text-white bg-green-500 rounded-xl" disabled={false}>Cashout $0.00</button>
+        </div>
+
+        </div>
       </div>
 
        

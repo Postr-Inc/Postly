@@ -16,22 +16,6 @@ export default function SettingsPage() {
     api.resetCache()
   }
 
-  const settingsOptions = [
-    {
-      title: "Metrics",
-      description:
-        "View metrics related to monetization",
-      path: "/settings/monetization/metrics",
-    },
-    {
-      title: "Cashout",
-      description:
-        "Modify settings related to monetization",
-      path: "/settings/monetization/cashout",
-    },
-     
-  ]
-
   return (
     <Page  {...{ navigate, params, route: route }} >
          <div class={joinClass("min-h-screen  ", 
@@ -55,22 +39,30 @@ export default function SettingsPage() {
 
       {/* Settings Options */}
       <div class="px-4 space-y-0">
-        {settingsOptions.map((option) => (
-          <div 
-            onClick={()=> navigate(option.path)}
-            class={joinClass("flex items-start py-4 cursor-pointer  transition-colors -mx-4 px-4" , theme() == "dark" ? "hover:bg-gray-900" : "hover:bg-base-300")}
-          >
-            <div class="flex-1">
-              <h3 class="font-bold text-lg mb-1">{option.title}</h3>
-              <p class="text-gray-400 text-sm leading-relaxed">{option.description}</p>
-            </div>
-            <div class="ml-4 mt-2">
-              <svg viewBox="0 0 24 24" class="w-5 h-5 text-gray-500" fill="currentColor">
-                <path d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z" />
-              </svg>
-            </div>
-          </div>
-        ))}
+      <div class="space-y-4">
+        <h2 class="text-2xl font-bold">Monetization Metrics</h2>
+        
+        <div class="bg-gray-100 p-4 rounded-md shadow">
+          <h3 class="font-semibold">Total Earnings</h3>
+          <p class="text-lg">$1,234.56</p>
+        </div>
+
+        <div class="bg-gray-100 p-4 rounded-md shadow">
+          <h3 class="font-semibold">Monthly Subscribers</h3>
+          <p class="text-lg">150</p>
+        </div>
+
+        <div class="bg-gray-100 p-4 rounded-md shadow">
+          <h3 class="font-semibold">Active Campaigns</h3>
+          <p class="text-lg">3</p>
+        </div>
+
+        <div class="bg-gray-100 p-4 rounded-md shadow">
+          <h3 class="font-semibold">Ad Revenue</h3>
+          <p class="text-lg">$789.00</p>
+        </div>
+      </div>
+
       </div>
 
        
