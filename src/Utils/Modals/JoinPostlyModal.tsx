@@ -155,7 +155,7 @@ export default function RequireSignupModal(props: RequireSignupModalProps = {}) 
       {/* Modal */}
       <Show when={visible()}>
         <div
-          class="fixed inset-0  sm:mb-32 z-[99999] flex items-center justify-center p-4"
+          class="fixed inset-0   z-[99999] flex items-center justify-center p-4"
           onClick={handleBackdropClick}
           style={{
             "background-color": "rgba(0, 0, 0, 0.5)",

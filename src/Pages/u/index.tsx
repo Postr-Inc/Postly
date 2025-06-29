@@ -478,7 +478,7 @@ export default function User() {
             <h1 class="text-2xl font-bold flex hero gap-2">
               {user() ? user().username : "Loading..."}
               <Show when={user() && user().verified}>
-                <div data-tip="Verified" class="tooltip tooltip-top"> <Verified class="h-7 w-7 text-white stroke-white fill-blue-500" /></div>
+                <div data-tip="Verified" class="tooltip tooltip-top"> <Verified class="h-7 w-7 text-white  fill-blue-500" /></div>
               </Show>
               <div>
 
