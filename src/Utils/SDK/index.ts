@@ -199,108 +199,108 @@ export default class SDK {
   }
 
   updateCache = async (collection: string, id: string, data: any, fullPost?: any, action: "add" | "remove" = "add") => {
-  const { set } = useCache();
-  const keys = await caches.keys();
+    const { set } = useCache();
+    const keys = await caches.keys();
 
-  for (let key of keys) {
-    const cache = await caches.open(key);
-    const requests = await cache.keys();
+    for (let key of keys) {
+      const cache = await caches.open(key);
+      const requests = await cache.keys();
 
-    for (let request of requests) {
-      const response = await cache.match(request);
-      const json = await response?.json();
-      const value = json?.value;
+      for (let request of requests) {
+        const response = await cache.match(request);
+        const json = await response?.json();
+        const value = json?.value;
 
-      if (!value) continue;
+        if (!value) continue;
 
-      let updated = false;
+        let updated = false;
 
-      switch (collection) {
-        case "posts":
-        case "comments": {
+        switch (collection) {
+          case "posts":
+          case "comments": {
+            if (Array.isArray(value)) {
+              const index = value.findIndex((e: any) => e.id === id);
+              if (index !== -1) {
+                value[index] = { ...value[index], ...data };
+                updated = true;
+              }
+            } else if (Array.isArray(value.payload)) {
+              const index = value.payload.findIndex((e: any) => e.id === id);
+              if (index !== -1) {
+                value.payload[index] = { ...value.payload[index], ...data };
+                updated = true;
+              }
+            } else if (value.payload?.id === id) {
+              value.payload = { ...value.payload, ...data };
+              updated = true;
+            } else if (value.id === id) {
+              json.value = { ...value, ...data };
+              updated = true;
+            }
+
+            break;
+          }
+
+          case "users": {
+            if (data.avatar && data.avatar instanceof Blob) {
+              data.avatar = await convertToBase64(data.avatar);
+            }
+            if (data.banner && data.banner instanceof Blob) {
+              data.banner = await convertToBase64(data.banner);
+            }
+
+            if (Array.isArray(value.payload)) {
+              const index = value.payload.findIndex((e: any) => e.username === id);
+              if (index !== -1) {
+                value.payload[index] = { ...value.payload[index], ...data };
+                updated = true;
+              }
+            } else if (Array.isArray(value)) {
+              const index = value.findIndex((e: any) => e.username === id);
+              if (index !== -1) {
+                value[index] = { ...value[index], ...data };
+                updated = true;
+              }
+            } else if (value.payload?.username === id || value?.username === id) {
+              console.log({ ...value, ...data })
+              json.value = { ...value, ...data };
+              updated = true;
+            }
+
+            break;
+          }
+
+          default:
+            break;
+        }
+
+        // ✅ ✅ ✅ SPECIAL CASE: Bookmarks pages
+        // If the key matches your bookmarks feed pattern:
+        const requestUrl = request.url.toLowerCase();
+        if (requestUrl.includes("bookmarks_bookmarks_") && fullPost) {
           if (Array.isArray(value)) {
-            const index = value.findIndex((e: any) => e.id === id);
-            if (index !== -1) {
-              value[index] = { ...value[index], ...data };
+            const exists = value.find((e: any) => e.id === id);
+
+            if (action === "add" && !exists) {
+              value.unshift(fullPost); // Add to front
+              updated = true;
+            } else if (action === "remove" && exists) {
+              const newValue = value.filter((e: any) => e.id !== id);
+              json.value = newValue;
               updated = true;
             }
-          } else if (Array.isArray(value.payload)) {
-            const index = value.payload.findIndex((e: any) => e.id === id);
-            if (index !== -1) {
-              value.payload[index] = { ...value.payload[index], ...data };
-              updated = true;
-            }
-          } else if (value.payload?.id === id) {
-            value.payload = { ...value.payload, ...data };
-            updated = true;
-          } else if (value.id === id) {
-            json.value = { ...value, ...data };
-            updated = true;
-          }
-
-          break;
-        }
-
-        case "users": {
-          if (data.avatar && data.avatar instanceof Blob) {
-            data.avatar = await convertToBase64(data.avatar);
-          }
-          if (data.banner && data.banner instanceof Blob) {
-            data.banner = await convertToBase64(data.banner);
-          }
- 
-          if (Array.isArray(value.payload)) {
-            const index = value.payload.findIndex((e: any) => e.username === id); 
-            if (index !== -1) {
-              value.payload[index] = { ...value.payload[index], ...data };
-              updated = true; 
-            }
-          } else if (Array.isArray(value)) {
-            const index = value.findIndex((e: any) => e.username === id);
-            if (index !== -1) {
-              value[index] = { ...value[index], ...data };
-              updated = true;
-            }
-          } else if (value.payload?.username === id || value?.username === id) {
-            console.log({...value, ...data})
-            json.value = { ...value, ...data };
-            updated = true;
-          }
-
-          break;
-        }
-
-        default:
-          break;
-      }
-
-      // ✅ ✅ ✅ SPECIAL CASE: Bookmarks pages
-      // If the key matches your bookmarks feed pattern:
-      const requestUrl = request.url.toLowerCase();
-      if (requestUrl.includes("bookmarks_bookmarks_") && fullPost) {
-        if (Array.isArray(value)) {
-          const exists = value.find((e: any) => e.id === id);
-
-          if (action === "add" && !exists) {
-            value.unshift(fullPost); // Add to front
-            updated = true;
-          } else if (action === "remove" && exists) {
-            const newValue = value.filter((e: any) => e.id !== id);
-            json.value = newValue;
-            updated = true;
           }
         }
-      }
 
-      // 📝 ✅ Only write if we did something
-      if (updated) {
-        set(request.url, json.value ?? value, Date.now() + 3600);
-      }else{
-        console.log(false)
+        // 📝 ✅ Only write if we did something
+        if (updated) {
+          set(request.url, json.value ?? value, Date.now() + 3600);
+        } else {
+          console.log(false)
+        }
       }
     }
-  }
-};
+  };
 
 
 
@@ -368,14 +368,14 @@ export default class SDK {
           }
         })
 
-        const { status, token, message, id} = await response.json();
+        const { status, token, message, id } = await response.json();
         if (status !== 200) {
           return reject(message)
         }
         else {
           localStorage.setItem("postr_auth", JSON.stringify({ token }))
           this.authStore.model.token = token
-          
+
           this.authStore.model.id = id
           resolve(true)
         }
@@ -426,229 +426,228 @@ export default class SDK {
 
     },
     login: async (emailOrUsername: string, password: string) => {
-      return new Promise(async (resolve, reject) => {
-        if (emailOrUsername === "" || password === "" || !emailOrUsername || !password || emailOrUsername.length < 3 || password.length < 3) {
-          reject("Invalid email or password")
-          return;
-        }
-        try {
-          const response = await fetch(`${this.serverURL}/auth/login`, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              emailOrUsername,
-              password,
-              deviceInfo: navigator.userAgent,
-            }),
-          });
-          const { data, status, message } = await response.json();
-          if (status !== 200) return reject(message);
-          this.authStore.model = data;
-          this.connectToWS();
-          localStorage.setItem("postr_auth", JSON.stringify(data));
-          return resolve(data);
-        } catch (error) {
-          resolve(error)
-        }
+      const response = await fetch(`${this.serverURL}/auth/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          emailOrUsername,
+          password,
+          deviceInfo: {
+            userAgent: navigator.userAgent,
+          },
+        }),
+      });
 
-      })
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw result; // Pass whole error to the UI
+      }
+
+      this.authStore.model = result.data;
+      this.wsReconnect()
+      localStorage.setItem("postr_auth", JSON.stringify(result.data));
+
+      return result.data;
     },
-  };
-  async getIP() {
-    try {
-      const response = await fetch("https://api.ipify.org?format=json");
-      const data = await response.json();
-      this.ip = data.ip;
-      return data.ip;
-    } catch (error) {
-      console.error(error);
+
+
+    async getIP() {
+      try {
+        const response = await fetch("https://api.ipify.org?format=json");
+        const data = await response.json();
+        this.ip = data.ip;
+        return data.ip;
+      } catch (error) {
+        console.error(error);
+      }
     }
   }
 
   connectToWS = () => {
-    this.ws = new WebSocket(`${this.serverURL}/subscriptions`);
-    this.ws.onmessage = (event) => {
-      this.handleMessages(event.data);
-    };
-  }
+      this.ws = new WebSocket(`${this.serverURL}/subscriptions`);
+      this.ws.onmessage = (event) => {
+        this.handleMessages(event.data);
+      };
+    }
 
   cdn = {
-    getUrl: (collection: string, id: string, file: string) => {
-      return this.serverURL + `/api/files/${collection}/${id}/${file}`;
+      getUrl: (collection: string, id: string, file: string) => {
+        return this.serverURL + `/api/files/${collection}/${id}/${file}`;
+      }
+    };
+    stripPagePart(key: string) {
+      // Replace any _<number>_ in the middle of underscores
+      return key.replace(/_(\d+)_/g, "_");
     }
-  };
-stripPagePart(key: string) {
-  // Replace any _<number>_ in the middle of underscores
-  return key.replace(/_(\d+)_/g, "_");
-}
 
 resetCache = async (key?: string) => {
-  const { remove, clear } = useCache();
+      const { remove, clear } = useCache();
 
-  if (!key) {
-    await clear();
-    return;
-  }
-
-  const cache = await caches.open("device-periscope-cache");
-  const requests = await cache.keys();
-
-  const normalizedTarget = this.stripPagePart(key.toLowerCase().trim());
-
-  for (const request of requests) {
-    const parts = request.url.split("/");
-    const requestKey = parts[parts.length - 1];
-    const normalizedRequestKey = this.stripPagePart(requestKey);
-
-    console.log("Normalized CacheKey:", normalizedRequestKey, "Target:", normalizedTarget);
-
-    if (normalizedRequestKey.includes(normalizedTarget)) {
-      await remove(requestKey);
-    }
-  }
-};
-
-
-
-
-
-
-  sendMsg = async (msg: any, type: any) => {
-    if (!this.ws && msg.byWebsocket) {
-      this.wsReconnect();
-    }
-
-    if (msg.byWebsocket && this.ws) {
-      if (this.ws.readyState !== WebSocket.OPEN) {
-        return {
-          opCode: HttpCodes.INTERNAL_SERVER_ERROR,
-          message: "WebSocket is not open",
-        };
+      if (!key) {
+        await clear();
+        return;
       }
 
-      this.waitUntilSocketIsOpen(() => {
-        let cid = this.callback((data: any) => {
-          console.log("Received data from WebSocket", data);
-          if (data.type === GeneralTypes.AUTH_ROLL_TOKEN) {
-            const newToken = data.token;
-            let authData = JSON.parse(localStorage.getItem("postr_auth") || "{}");
-            authData.token = newToken;
-            localStorage.setItem("postr_auth", JSON.stringify(authData));
-            this.authStore.model = authData;
-            window.dispatchEvent(this.changeEvent);
-          }
-        });
+      const cache = await caches.open("device-periscope-cache");
+      const requests = await cache.keys();
 
-        msg.callback = cid;
-        this.ws?.send(JSON.stringify(msg));
-      });
+      const normalizedTarget = this.stripPagePart(key.toLowerCase().trim());
 
-      return;
-    }
+      for (const request of requests) {
+        const parts = request.url.split("/");
+        const requestKey = parts[parts.length - 1];
+        const normalizedRequestKey = this.stripPagePart(requestKey);
 
-    // HTTP Path
-    try {
-      // Validate token
-      if (!msg.security || !msg.security.token || isTokenExpired(msg.security.token)) {
-        if (!this.authStore.isValid()) {
+        console.log("Normalized CacheKey:", normalizedRequestKey, "Target:", normalizedTarget);
+
+        if (normalizedRequestKey.includes(normalizedTarget)) {
+          await remove(requestKey);
+        }
+      }
+    };
+
+
+
+
+
+
+    sendMsg = async (msg: any, type: any) => {
+      if (!this.ws && msg.byWebsocket) {
+        this.wsReconnect();
+      }
+
+      if (msg.byWebsocket && this.ws) {
+        if (this.ws.readyState !== WebSocket.OPEN) {
           return {
-            opCode: ErrorCodes.INVALID_OR_MISSING_TOKEN,
-            message: "You are not authorized to perform this action",
+            opCode: HttpCodes.INTERNAL_SERVER_ERROR,
+            message: "WebSocket is not open",
           };
         }
+
+        this.waitUntilSocketIsOpen(() => {
+          let cid = this.callback((data: any) => {
+            console.log("Received data from WebSocket", data);
+            if (data.type === GeneralTypes.AUTH_ROLL_TOKEN) {
+              const newToken = data.token;
+              let authData = JSON.parse(localStorage.getItem("postr_auth") || "{}");
+              authData.token = newToken;
+              localStorage.setItem("postr_auth", JSON.stringify(authData));
+              this.authStore.model = authData;
+              window.dispatchEvent(this.changeEvent);
+            }
+          });
+
+          msg.callback = cid;
+          this.ws?.send(JSON.stringify(msg));
+        });
+
+        return;
       }
 
-      const token = JSON.parse(localStorage.getItem("postr_auth") || "{}").token;
-      const body = JSON.stringify(msg);
-      const headers = {
-        "Content-Type": "application/json",
-        Authorization: token,
-      };
-
-      const endpoint =
-        type === "search"
-          ? `${this.serverURL}/deepsearch`
-          : `${this.serverURL}/collection/${msg.payload.collection}`;
-
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers,
-        body,
-      });
-
-      const remaining = parseInt(response.headers.get("Ratelimit-Remaining") || "0");
-      const retryAfter = parseInt(response.headers.get("Retry-After") || "0");
-
-      if (!response.ok) {
-        if (remaining === 0 && retryAfter > 0) {
-          dispatchAlert({
-            type: "error",
-            message: `You've been rate-limited. Try again in ${retryAfter} seconds.`,
-          });
+      // HTTP Path
+      try {
+        // Validate token
+        if (!msg.security || !msg.security.token || isTokenExpired(msg.security.token)) {
+          if (!this.authStore.isValid()) {
+            return {
+              opCode: ErrorCodes.INVALID_OR_MISSING_TOKEN,
+              message: "You are not authorized to perform this action",
+            };
+          }
         }
 
-        // Try to parse server response, but fallback to default message
-        let errorMessage = "An error occurred";
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
-        } catch (_) {
-          // ignore bad JSON
+        const token = JSON.parse(localStorage.getItem("postr_auth") || "{}").token;
+        const body = JSON.stringify(msg);
+        const headers = {
+          "Content-Type": "application/json",
+          Authorization: token,
+        };
+
+        const endpoint =
+          type === "search"
+            ? `${this.serverURL}/deepsearch`
+            : `${this.serverURL}/collection/${msg.payload.collection}`;
+
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers,
+          body,
+        });
+
+        const remaining = parseInt(response.headers.get("Ratelimit-Remaining") || "0");
+        const retryAfter = parseInt(response.headers.get("Retry-After") || "0");
+
+        if (!response.ok) {
+          if (remaining === 0 && retryAfter > 0) {
+            dispatchAlert({
+              type: "error",
+              message: `You've been rate-limited. Try again in ${retryAfter} seconds.`,
+            });
+          }
+
+          // Try to parse server response, but fallback to default message
+          let errorMessage = "An error occurred";
+          try {
+            const errorData = await response.json();
+            errorMessage = errorData.message || errorMessage;
+          } catch (_) {
+            // ignore bad JSON
+          }
+
+          return {
+            opCode: response.status,
+            message: errorMessage,
+          };
         }
+
+        return await response.json();
+      } catch (err) {
+        dispatchAlert({
+          type: "error",
+          message: "Something went wrong while sending your request.",
+        });
 
         return {
-          opCode: response.status,
-          message: errorMessage,
+          opCode: ErrorCodes.SYSTEM_ERROR,
+          message: "Network or unexpected error occurred",
         };
       }
-
-      return await response.json();
-    } catch (err) {
-      dispatchAlert({
-        type: "error",
-        message: "Something went wrong while sending your request.",
-      });
-
-      return {
-        opCode: ErrorCodes.SYSTEM_ERROR,
-        message: "Network or unexpected error occurred",
-      };
-    }
-  };
-
-
-
-  callback(cb: (data: any) => void) {
-    const id = Math.random().toString(36).substring(7);
-    const cleanup = () => {
-      this.callbacks.delete(id);
     };
-    this.callbacks.set(id, (data: any) => {
-      cb(data);
-      cleanup();
-    });
-    return id;
-  }
+
+
+
+    callback(cb: (data: any) => void) {
+      const id = Math.random().toString(36).substring(7);
+      const cleanup = () => {
+        this.callbacks.delete(id);
+      };
+      this.callbacks.set(id, (data: any) => {
+        cb(data);
+        cleanup();
+      });
+      return id;
+    }
 
   public deepSearch = async (collections: string[], query: string) => {
-    return new Promise(async (resolve, reject) => {
-      let out = await this.sendMsg({
-        type: GeneralTypes.DEEP_SEARCH,
-        payload: {
-          collections,
-          query,
-        },
-        security: {
-          token: this.authStore.model.token,
-        },
-        callback: "",
-      }, "search") as any;
-      if (out.opCode !== HttpCodes.OK) return reject(out);
-      resolve(out.payload);
-    });
-  }
+      return new Promise(async (resolve, reject) => {
+        let out = await this.sendMsg({
+          type: GeneralTypes.DEEP_SEARCH,
+          payload: {
+            collections,
+            query,
+          },
+          security: {
+            token: this.authStore.model.token,
+          },
+          callback: "",
+        }, "search") as any;
+        if (out.opCode !== HttpCodes.OK) return reject(out);
+        resolve(out.payload);
+      });
+    }
 
   /**
    * @method collection
@@ -662,186 +661,186 @@ resetCache = async (key?: string) => {
    * }
    */
   public collection(name: string) {
-    return {
-      /**
-       * @method subscribe
-       * @description subscribe to a collection
-       * @param id
-       * @param options
-       * @returns {Promise<any>}
-       */
-      subscribe: async (id: "*" | string, options: { cb: (data: any) => void }) => {
-        return new Promise(async (resolve, reject) => {
-          if (!this.subscriptions.has(`${name}:${id}`)) {
-            this.subscriptions.set(`${name}:${id}`, options.cb);
-            this.waitUntilSocketIsOpen(() => {
-              this.ws?.send(JSON.stringify({ payload: { collection: name, id, callback: `${name}:${id}` }, security: { token: this.authStore.model.token } }));
-            });
-          } else {
-            reject("Already subscribed to this collection");
-          }
-        })
-      },
-      /**
-       * @method list
-       * @description list all records in a collection with pagination
-       * @param page
-       * @param limit
-       * @param options
-       * @param shouldCache
-       * @returns {Promise<{opCode: number, items: any[], totalItems: number, totalPages: number}>}
-       */
-      list: async (
-        page: number = 1,
-        limit: number = 10,
-        options?: {
-          order?: "asc" | "dec" | any;
-          sort?: string;
-          expand?: string[];
-          recommended?: boolean;
-          filter?: string;
-          cacheKey?: string;
-        },
-        shouldCache = true
-      ) => {
-        return new Promise(async (resolve, reject) => {
-          const { set, get, remove, clear } = useCache();
-          const cacheKey = options?.cacheKey || `${this.serverURL}/api/collections/${name}?page=${page}&limit=${limit}`;
-          const cacheData = shouldCache ? await get(cacheKey) : null;
-          if (cacheData) return resolve({
-            opCode: HttpCodes.OK,
-            ...(Array.isArray(cacheData) ? { items: [...cacheData] } : { items: cacheData.payload }), totalItems: cacheData.totalItems, totalPages: cacheData.totalPages
-          });
-
-          let out = await this.sendMsg({
-            type: GeneralTypes.LIST,
-            payload: {
-              collection: name,
-              page,
-              limit,
-              options,
-              cacheKey: options?.cacheKey
-            },
-            security: {
-              token: this.authStore.model.token,
-            },
-            callback: "",
-          }) as any;
-          if (out.opCode !== HttpCodes.OK) return reject(out);
-          shouldCache && set(cacheKey, out, new Date().getTime() + 3600); // cache for 1 hour\ 
-          resolve({
-            opCode: out.opCode,
-            items: out.payload,
-            totalItems: out.totalItems,
-            totalPages: out.totalPages,
-            cacheKey
-          }) as any;
-        });
-      },
-
-      createFile: async (file: File) => {
-        // turn file into a buffer
-        let reader = new FileReader();
-        reader.readAsArrayBuffer(file);
-        return new Promise((resolve, reject) => {
-          reader.onload = () => {
-            resolve({ data: Array.from(new Uint8Array(reader.result as ArrayBuffer)), name: file.name });
-          };
-        });
-      },
-      /**
-       * @method update
-       * @description Update a record in a collection
-       * @param id
-       * @param data
-       */
-
-      update: async (id: string, data: any, options?: { cacheKey?: string, expand?: any[], invalidateCache: string[] }) => {
-        return new Promise(async (resolve, reject) => {
-
-          this.updateCache(name, id, data)
-          let out = await this.sendMsg({
-            type: GeneralTypes.UPDATE,
-            payload: {
-              collection: name,
-              id: id,
-              fields: data,
-              options
-            },
-            security: {
-              token: JSON.parse(localStorage.getItem("postr_auth") || "{}").token
-            },
-            callback: ""
+      return {
+        /**
+         * @method subscribe
+         * @description subscribe to a collection
+         * @param id
+         * @param options
+         * @returns {Promise<any>}
+         */
+        subscribe: async (id: "*" | string, options: { cb: (data: any) => void }) => {
+          return new Promise(async (resolve, reject) => {
+            if (!this.subscriptions.has(`${name}:${id}`)) {
+              this.subscriptions.set(`${name}:${id}`, options.cb);
+              this.waitUntilSocketIsOpen(() => {
+                this.ws?.send(JSON.stringify({ payload: { collection: name, id, callback: `${name}:${id}` }, security: { token: this.authStore.model.token } }));
+              });
+            } else {
+              reject("Already subscribed to this collection");
+            }
           })
-          resolve(out.payload)
-        })
-      },
-      /**
-       * @method create
-       * @description create a record in a collection
-       * @param data
-       * @returns {Promise<any>}
-       */
-      create: async (data: any, options?: { cacheKey?: string, expand?: any[], [key: string]: any, invalidateCache?: string[] }) => {
-        return new Promise(async (resolve, reject) => {
-
-          if (options?.invalidateCache && Array.isArray(options.invalidateCache)) {
+        },
+        /**
+         * @method list
+         * @description list all records in a collection with pagination
+         * @param page
+         * @param limit
+         * @param options
+         * @param shouldCache
+         * @returns {Promise<{opCode: number, items: any[], totalItems: number, totalPages: number}>}
+         */
+        list: async (
+          page: number = 1,
+          limit: number = 10,
+          options?: {
+            order?: "asc" | "dec" | any;
+            sort?: string;
+            expand?: string[];
+            recommended?: boolean;
+            filter?: string;
+            cacheKey?: string;
+          },
+          shouldCache = true
+        ) => {
+          return new Promise(async (resolve, reject) => {
             const { set, get, remove, clear } = useCache();
-            // check keys that include the one in invalidateCache
-            const keys = await caches.keys();
-            for (let key of keys) {
-              const cacheData = await (await caches.open(key)).keys();
-              for (let cache of cacheData) {
-                if (options.invalidateCache.includes(cache.url)) {
-                  await caches.delete(cache.url);
+            const cacheKey = options?.cacheKey || `${this.serverURL}/api/collections/${name}?page=${page}&limit=${limit}`;
+            const cacheData = shouldCache ? await get(cacheKey) : null;
+            if (cacheData) return resolve({
+              opCode: HttpCodes.OK,
+              ...(Array.isArray(cacheData) ? { items: [...cacheData] } : { items: cacheData.payload }), totalItems: cacheData.totalItems, totalPages: cacheData.totalPages
+            });
+
+            let out = await this.sendMsg({
+              type: GeneralTypes.LIST,
+              payload: {
+                collection: name,
+                page,
+                limit,
+                options,
+                cacheKey: options?.cacheKey
+              },
+              security: {
+                token: this.authStore.model.token,
+              },
+              callback: "",
+            }) as any;
+            if (out.opCode !== HttpCodes.OK) return reject(out);
+            shouldCache && set(cacheKey, out, new Date().getTime() + 3600); // cache for 1 hour\ 
+            resolve({
+              opCode: out.opCode,
+              items: out.payload,
+              totalItems: out.totalItems,
+              totalPages: out.totalPages,
+              cacheKey
+            }) as any;
+          });
+        },
+
+        createFile: async (file: File) => {
+          // turn file into a buffer
+          let reader = new FileReader();
+          reader.readAsArrayBuffer(file);
+          return new Promise((resolve, reject) => {
+            reader.onload = () => {
+              resolve({ data: Array.from(new Uint8Array(reader.result as ArrayBuffer)), name: file.name });
+            };
+          });
+        },
+        /**
+         * @method update
+         * @description Update a record in a collection
+         * @param id
+         * @param data
+         */
+
+        update: async (id: string, data: any, options?: { cacheKey?: string, expand?: any[], invalidateCache: string[] }) => {
+          return new Promise(async (resolve, reject) => {
+
+            this.updateCache(name, id, data)
+            let out = await this.sendMsg({
+              type: GeneralTypes.UPDATE,
+              payload: {
+                collection: name,
+                id: id,
+                fields: data,
+                options
+              },
+              security: {
+                token: JSON.parse(localStorage.getItem("postr_auth") || "{}").token
+              },
+              callback: ""
+            })
+            resolve(out.payload)
+          })
+        },
+        /**
+         * @method create
+         * @description create a record in a collection
+         * @param data
+         * @returns {Promise<any>}
+         */
+        create: async (data: any, options?: { cacheKey?: string, expand?: any[], [key: string]: any, invalidateCache?: string[] }) => {
+          return new Promise(async (resolve, reject) => {
+
+            if (options?.invalidateCache && Array.isArray(options.invalidateCache)) {
+              const { set, get, remove, clear } = useCache();
+              // check keys that include the one in invalidateCache
+              const keys = await caches.keys();
+              for (let key of keys) {
+                const cacheData = await (await caches.open(key)).keys();
+                for (let cache of cacheData) {
+                  if (options.invalidateCache.includes(cache.url)) {
+                    await caches.delete(cache.url);
+                  }
                 }
               }
             }
-          }
 
-          let out = await this.sendMsg({
-            type: GeneralTypes.CREATE,
-            payload: {
-              collection: name,
-              invalidateCache: options?.invalidateCache,
-              data,
-              expand: options?.expand
-            },
-            security: {
-              token: JSON.parse(localStorage.getItem("postr_auth") || "{}").token,
-            },
-            callback: "",
-          }) as any
-          resolve(out.payload)
-        });
-      },
+            let out = await this.sendMsg({
+              type: GeneralTypes.CREATE,
+              payload: {
+                collection: name,
+                invalidateCache: options?.invalidateCache,
+                data,
+                expand: options?.expand
+              },
+              security: {
+                token: JSON.parse(localStorage.getItem("postr_auth") || "{}").token,
+              },
+              callback: "",
+            }) as any
+            resolve(out.payload)
+          });
+        },
 
-      /**
-       * @method get
-       * @description get a record in a collection
-       * @param id
-       * @returns {Promise<any>}
-       */
+        /**
+         * @method get
+         * @description get a record in a collection
+         * @param id
+         * @returns {Promise<any>}
+         */
 
-      get: async (id: string, options?: { expand?: string[], cacheKey?: string }) => {
-        return new Promise(async (resolve, reject) => {
+        get: async (id: string, options?: { expand?: string[], cacheKey?: string }) => {
+          return new Promise(async (resolve, reject) => {
 
-          let out = await this.sendMsg({
-            type: GeneralTypes.GET,
-            payload: {
-              collection: name,
-              id,
-              options
-            },
-            security: {
-              token: this.authStore.model.token
-            },
-            callback: ""
-          }) as any;
-          if (out.opCode !== HttpCodes.OK) return reject(out);
-          resolve(out.payload)
-        })
-      },
-    };
+            let out = await this.sendMsg({
+              type: GeneralTypes.GET,
+              payload: {
+                collection: name,
+                id,
+                options
+              },
+              security: {
+                token: this.authStore.model.token
+              },
+              callback: ""
+            }) as any;
+            if (out.opCode !== HttpCodes.OK) return reject(out);
+            resolve(out.payload)
+          })
+        },
+      };
+    }
   }
-}
