@@ -1,5 +1,5 @@
 import Modal from "@/src/components/Modal"
-import Logo from "@/src/assets/logo.svg"
+import Logo from "@/src/assets/logo.svg" 
 import useTheme from "../Hooks/useTheme";
 import { createEffect, createSignal } from "solid-js";
 import { Match, Show, Switch } from "solid-js";
@@ -8,6 +8,7 @@ import { joinClass } from "../Joinclass";
 import ArrowLeft from "@/src/components/Icons/ArrowLeft";
 import useNavigation from "../Hooks/useNavigation";
 import { HttpCodes } from "../SDK/opCodes";
+import { dispatchAlert } from "../SDK";
 export default function RegisterModal() {
     const { route, navigate } = useNavigation();
     let { theme } = useTheme();
@@ -25,6 +26,7 @@ export default function RegisterModal() {
     let [buisnessWebsite, setBusinessWebsite] = createSignal("")
     let [postlyUse, setPostlyUse] = createSignal("")
     let [niche, setNiche] = createSignal("")
+    let [loading, setLoading] = createSignal(false);
     function checkEmailandUsername() {
         fetch(`${api.serverURL}/auth/check`, {
             method: "POST",
@@ -43,6 +45,7 @@ export default function RegisterModal() {
         // wait until user stops typing
         let timeout: any;
         if (email() || username()) {
+            console.log("checking")
             if (timeout) {
                 clearTimeout(timeout);
             }
@@ -63,35 +66,54 @@ export default function RegisterModal() {
         return true;
     }
 
-    async function register() {
-        return new Promise(async (resolve, reject) => {
-            await fetch(`${api.serverURL}/auth/register`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    email: email(),
-                    password: password(),
-                    username: username(),
-                    isEarlyUser: true,
-                    dob: isBuisnessAccount() ? new Date().toDateString() : dob(),
-                    isBuisinessAccount: isBuisnessAccount(),
-                    first_last_name: firstLastName(),
-                    social: buisnessWebsite(),
-                    niche: niche(),
-                    postlyUse: postlyUse()
-                })
-            }).then(res => res.json()).then(async res => { 
-                if(res.status !== HttpCodes.OK){
-                    reject(false)
-                    return;
-                }
-                resolve(true)
+     async function register() {
+  const sanitizedUsername = username().replace(/\s+/g, "_");
+   setLoading(true);
 
-            }) 
-        })
+  try {
+    const res = await fetch(`${api.serverURL}/auth/register`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        email: email(),
+        password: password(),
+        username: sanitizedUsername,
+        isEarlyUser: true,
+        dob: isBuisnessAccount() ? new Date().toDateString() : dob(),
+        isBusinessAccount: isBuisnessAccount(),
+        first_last_name: firstLastName(),
+        social: buisnessWebsite(),
+        niche: niche(),
+        postlyUse: postlyUse()
+      })
+    });
+
+    const result = await res.json();
+    if (result.status !== HttpCodes.OK) {
+      dispatchAlert({
+        type: "error",
+        message: result?.message || "Registration failed. Please try again."
+      });
+      return false;
     }
+
+    dispatchAlert({
+      type: "success",
+      message: "Account created successfully!"
+    });
+
+    return true;
+  } catch (error) {
+    dispatchAlert({
+      type: "error",
+      message: error instanceof Error ? error.message : String(error)
+    });
+    return false;
+  } finally {
+    setLoading(false);
+  }
+}
+
     return (
         <Modal id="register" className={
             joinClass(" xl:w-[600px] focus:outline-none xl:h-[800px] md:w-[600px] self-center w-full h-full flex flex-col mx-auto xl:mt-12 md:mt-12 md:rounded-xl xl:rounded-xl",
@@ -300,10 +322,8 @@ export default function RegisterModal() {
                                     return;
                                 }
 
-                                try {
-                                    await api.authStore.login(email(), password());
-                                    navigate("/")
-                                    //@ts-ignore
+                                try { 
+                                    navigate("/auth/login") 
                                     document.getElementById("register").close();
                                 } catch (error) {
                                     console.error("Login failed:", error);
@@ -333,10 +353,15 @@ export default function RegisterModal() {
                                 if (!password() || !confirmPassword() || password() !== confirmPassword() || password().length < 8) {
                                     return;
                                 }
-                                register()
+                                await register()
                                 try {
+                                    console.log(email(), username(), password())
                                     await api.authStore.login(email(), password());
-                                    navigate("/")
+                                    if(window.location.pathname == "/"){
+                                        window.location.reload()
+                                    }else{
+                                        navigate("/")
+                                    } 
                                     //@ts-ignore
                                     document.getElementById("register").close();
                                 } catch (error) {
@@ -344,7 +369,7 @@ export default function RegisterModal() {
                                 }
                             }}
                             disabled={!password() || !confirmPassword() || password() !== confirmPassword() || password().length < 8}
-                        >Register</button>
+                        >{loading()  ? "Registering..." : "Register"}</button>
                     </div>
 
                 </Show>
