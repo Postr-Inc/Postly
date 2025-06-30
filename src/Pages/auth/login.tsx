@@ -74,21 +74,17 @@ export default function Login() {
     function startTyping() {
       if (typingTimeout) {
         clearTimeout(typingTimeout);
-      }
-      setIsTyping(true);
+      } 
 
     }
 
     function stopTyping() {
-      clearTimeout(typingTimeout);
-      setIsTyping(false);
+      clearTimeout(typingTimeout); 
     }
 
     async function handleKeydown(e: KeyboardEvent) {
-      if (e.key === "Enter") {
-        setIsTyping(false);
-        await login(email(), password());
-
+      if (e.key === "Enter") { 
+        await login(); 
       }
       startTyping();
     }
