@@ -458,7 +458,7 @@ export default function User() {
                   >
                     {notFound()
                       ? "User not found"
-                      : !api.authStore.model?.user
+                      : !api.authStore.model?.username
                         ? "Join the Community"
                         : "Follow"}
                   </button>
