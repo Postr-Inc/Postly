@@ -290,7 +290,7 @@ export default function User() {
   }
 
 
-  async function follow(type: "follow" | "unfollow") {
+  async function follow(type: "follow" | "unfollow") { 
     var followers = user().followers || [];
     if (type === "follow") {
       followers.push(api.authStore.model.id);
@@ -422,7 +422,12 @@ export default function User() {
                         ? "bg-white text-black p-2 w-24 mr-2 mt-2 text-sm"
                         : "bg-black text-white mt-2 p-2 rounded-full w-24 mr-2 text-sm"
                     }
-                    onclick={() => notFound() ? null : api.authStore.model.id && follow("unfollow")}
+                    onclick={() => {
+                      if (notFound()) return;
+                      //@ts-ignore
+                      if (!api.authStore.model?.username) return requireSignup();
+                      follow("unfollow");
+                    }}
                   >
                     Unfollow
                   </button>
@@ -447,15 +452,15 @@ export default function User() {
                     onclick={() => {
                       if (notFound()) return;
                       //@ts-ignore
-                      if (!api.authStore.model?.id) return requireSignup();
+                      if (!api.authStore.model?.username) return requireSignup();
                       follow("follow");
                     }}
                   >
                     {notFound()
                       ? "User not found"
-                      : !api.authStore.model?.id
+                      : !api.authStore.model?.user
                         ? "Join the Community"
-                        : "Follow user"}
+                        : "Follow"}
                   </button>
 
                 </Match>
