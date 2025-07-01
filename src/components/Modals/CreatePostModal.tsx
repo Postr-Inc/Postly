@@ -93,7 +93,7 @@ export default function CreatePostModal() {
     setHasError(false);
 
 
-    const data = { ...postData() };
+    const data = { ...postData(), author: JSON.parse(localStorage.getItem("postr_auth") || "{}").id };
     if (!data.author) {
       document.getElementById("createPostModal")?.close();
       dispatchAlert({ type: "error", "message": "Author missing can not create post" })
@@ -131,6 +131,7 @@ export default function CreatePostModal() {
           `/u/user_${api.authStore.model.username}/comments`
         ],
       }) as any;
+ 
 
       setPostData({
         content: "", links: [], tags: [],
@@ -142,19 +143,21 @@ export default function CreatePostModal() {
       setIsPosting(false);
 
       if (collection() === "comments") {
-        document.getElementById("createPostModal")?.close();
-        window.dispatchEvent(new CustomEvent("commentCreated", { detail: res }));
+        document.getElementById("createPostModal")?.close(); 
 
         const postId = window.location.pathname.split("/")[3];
         const p = await api.collection("posts").get(postId);
-        await api.collection("posts").update(postId, {
+        const d = await api.collection("posts").update(postId, {
           comments: [...(p.comments || []), res.id],
           invalidateCache: [
           `/u/user_${api.authStore.model.username}_posts`, 
             `post-${data.post}`,
           `/u/user_${api.authStore.model.username}/comments`
         ],
-        });
+        });  
+        api.updateCache("comments", postId, d);
+        
+        window.dispatchEvent(new CustomEvent("commentCreated", { detail: res }));
       } else {
         setTimeout(() => navigate(`/view/posts/${res.id}`), 100);
       }
