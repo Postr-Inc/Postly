@@ -1,59 +1,39 @@
-/**
- *  Cache hook using Cache API
- * @returns {set, get, remove, clear}
- */
-
 export default function useCache() {
-    const cacheName = "device-periscope-cache";
+    const cache = new Map<string, { value: any; expires: number }>();
 
-    const set = async (key: string, value: any, ttl: number) => {
-        const cache = await caches.open(cacheName);
+    const set = (key: string, value: any, ttl: number = 3600000) => {
         const expires = Date.now() + ttl;
-        const response = new Response(JSON.stringify({ value, expires }));
-        await cache.put(new Request(key), response);
-    }
+        cache.set(key, { value, expires });
+    };
 
-    const get = async (key: string) => {
-        const cache = await caches.open(cacheName);
-        const response = await cache.match(new Request(key));
-        if (!response) {
+    const get = (key: string) => {
+        const cached = cache.get(key);
+        if (!cached) return null;
+
+        if (Date.now() > cached.expires) {
+            cache.delete(key);
             return null;
         }
-        const { value, expires } = await response.json();
-        if (Date.now() > expires) {
-            await cache.delete(new Request(key));
-            return null;
-        }
-        return value;
-    }
+        return cached.value;
+    };
 
-    const remove = async (key: string) => {
-        const cache = await caches.open(cacheName);
-        await cache.delete(new Request(key));
-    }
+    const remove = (key: string) => {
+        cache.delete(key);
+    };
 
-    const clear = async () => {
-        const cache = await caches.open(cacheName);
-        await cache.keys().then(keys => {
-            keys.forEach(key => {
-                cache.delete(key);
-            });
-        });
-    }
+    const clear = () => {
+        cache.clear();
+    };
 
-    // clear expired items periodically
-    setInterval(async () => {
-        const cache = await caches.open(cacheName);
-        const keys = await cache.keys();
+    // Optional: clean expired entries periodically (every minute)
+    setInterval(() => {
         const now = Date.now();
-        for (const request of keys) {
-            const response = await cache.match(request) as Response;
-            const { expires } = await response.json() as any;
+        for (const [key, { expires }] of cache.entries()) {
             if (expires < now) {
-                await cache.delete(request);
+                cache.delete(key);
             }
         }
-    }, 1000);
+    }, 60 * 1000);
 
     return { set, get, remove, clear };
 }
