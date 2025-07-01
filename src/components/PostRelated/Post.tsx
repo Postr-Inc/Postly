@@ -5,7 +5,33 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { onCleanup } from "solid-js";
 
+// Inside your Post component, where you render the video CarouselItem
+// We'll define a helper component VideoWithCleanup to encapsulate the fix:
+
+function VideoWithCleanup(props: { src: string, class: string }) {
+  let videoRef: HTMLVideoElement | undefined;
+
+  onCleanup(() => {
+    if (videoRef) {
+      videoRef.pause();
+      videoRef.removeAttribute("src"); // Important: remove src to free resource
+      videoRef.load();                // Reset video element state
+    }
+  });
+
+  return (
+    <video
+      ref={el => (videoRef = el)}
+      class={props.class}
+      src={props.src}
+      controls
+      playsinline
+      muted={false} // user controls sound, so muted false here
+    />
+  );
+}
 import { api } from "@/src";
 import usePost from "@/src/Utils/Hooks/usePost";
 import useTheme from "@/src/Utils/Hooks/useTheme";
@@ -535,14 +561,13 @@ export default function Post(props: Props) {
                         )}
                       />
                     </Match>
-                    <Match when={getFileType(item) == "video"}>
-                      <video class={joinClass(
-                        "  w-full object-cover rounded-xl",
-                        "cursor-pointer",
-                        theme() === "dark"
-                          ? "border-[#121212] border"
-                          : "border-[#cacaca] border"
-                      )} src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)} controls />
+                    <Match when={getFileType(item) == "video"}> <VideoWithCleanup
+                      src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)}
+                      class={joinClass(
+                        "w-full object-cover rounded-xl cursor-pointer",
+                        theme() === "dark" ? "border-[#121212] border" : "border-[#cacaca] border"
+                      )}
+                    />
                     </Match>
                   </Switch>
                 </CarouselItem>
