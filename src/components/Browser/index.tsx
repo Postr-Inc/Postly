@@ -7,20 +7,23 @@ export default function Browser() {
     let [error, setError] = createSignal(false);
     let [showFullUrl, setShowFullUrl] = createSignal(false);
 
-    createEffect(()=>{
+    createEffect(() => {
+        var b4windowOpen = window.open;
         //@ts-ignore
-        window.open = (url: string) =>{
-           if(document.getElementById("browser-modal")){
-             setUrl(url)
-             var t = setInterval(()=>{
-              if(loading() == false && loaded()){
-                //@ts-ignore
-                document.getElementById("browser-modal").showModal()
-                clearInterval(t)
-              }
-             }, 1000)
-           }
-        }
+        window.open = (url: string) => {
+            const forbidden = ["github.com", "linkedin.com", "twitter.com", "facebook.com", "instagram.com", "reddit.com", "tiktok.com", "youtube.com", "discord.com", "whatsapp.com", "telegram.org", "snapchat.com"];
+            const needsExternal = forbidden.some(domain => url.includes(domain));
+
+            if (needsExternal) {
+                b4windowOpen(url, "_blank");
+            } else {
+                if (document.getElementById("browser-modal")) {
+                    setUrl(url);
+                    document.getElementById("browser-modal").showModal();
+                }
+            }
+        };
+
     })
     return (
 
@@ -29,26 +32,29 @@ export default function Browser() {
                 <div class="mockup-browser h-full   sm:w-screen sm:h-screen">
                     <div class="mockup-browser-toolbar justify-between gap-5">
                         <div class="input"
-                        onClick={()=>{
-                            setShowFullUrl(!showFullUrl())
-                        }}
+                            onClick={() => {
+                                setShowFullUrl(!showFullUrl())
+                            }}
                         >{url()}</div>
-                        <button class="btn focus:outline-none btn-circle btn-ghost" onClick={()=>{
+                        <button class="btn focus:outline-none btn-circle btn-ghost" onClick={() => {
                             setUrl("")
                             setLoading(true)
                             setLoaded(false)
                             //@ts-ignore
                             document.getElementById("browser-modal").close()
-                        }}> 
+                        }}>
                             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
                             </svg>
                         </button>
                     </div>
-                    <embed onload={()=>{
+                    <iframe onload={() => {
                         setLoading(false)
                         setLoaded(true)
-                    }} src={url()} class="w-full h-full" ></embed>
+                    }} onError={()=>{
+                        setError(true);
+                        setLoading(false);
+                    }}src={url()} class="w-full h-full" ></iframe>
                 </div>
             </div>
         </dialog>
