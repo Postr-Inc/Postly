@@ -9,13 +9,7 @@ import StringJoin from "@/src/Utils/StringJoin";
 function VideoWithCleanup(props: { src: string; index: number; onCanPlay: () => void }) {
   let videoRef: HTMLVideoElement | undefined;
  
-  onCleanup(() => {
-    if (videoRef) {
-      videoRef.pause();
-      videoRef.removeAttribute("src");
-      videoRef.load();
-    }
-  });
+ 
 
   return (
     <video
