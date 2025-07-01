@@ -8,12 +8,12 @@ async function list(
   feed: () => string,
   options: { filter?: string; sort?: string; limit?: number; _for?: any } = {}
 ) {
-
-  console.log({
-    recommended: feed() === "recommended",
-    order: options.sort || "-created",
-    filter: options.filter && options.filter.length > 0 ? options.filter : "author.deactivated=false",
-  })
+  
+  if(feed() === "following"){
+    options.filter = `author.followers ~"${api.authStore.model.id}" && author.deactivated=false` 
+  }else if(feed() === "trending"){
+    options.filter = `author.deactivated=false  && likes:length > 0 && repost.likes:length > 0 && author.id != "${api.authStore.model.id}"`
+  } 
   return api
     .collection(collection)
     .list(page, options.limit || 10, {
@@ -86,6 +86,7 @@ export default function useFeed(
 
       const page = resetFlag ? 1 : currentPage();
       const data = await list(collection, page, feed, fetchOptions);
+      console.log(data)
 
       // Deduplicate by ID
       const existingIds = new Set(posts().map(post => post.id));
