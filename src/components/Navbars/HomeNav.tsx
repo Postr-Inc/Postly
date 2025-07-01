@@ -125,7 +125,7 @@ export default function HomeNav({
 
   const getTabClasses = (isActive: boolean) => {
     if (isActive) {
-      return "bg-blue-600 dark:bg-blue-500 text-white   shadow-blue-500/25"
+      return "bg-blue-500 dark:bg-blue-500 text-white    "
     }
     return "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
   }
@@ -147,7 +147,7 @@ export default function HomeNav({
       )}
     >
       {/* Header Section */}
-      <div class="w-full px-4 py-3">
+      <div class="w-full px-2 py-3">
         <div class="flex items-center justify-between max-w-full">
           {/* User Section */}
           <div class="flex items-center gap-3 min-w-0 flex-1">
@@ -212,7 +212,7 @@ export default function HomeNav({
       </div>
 
       {/* Navigation Tabs */}
-      <div class="w-full px-4 pb-3">
+      <div class="w-full px-2 pb-3">
         <div class="flex items-center gap-2 overflow-x-auto scrollbar-hide">
           {/* Default Tabs */}
           <For each={defaultTabs}>
