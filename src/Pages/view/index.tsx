@@ -41,65 +41,8 @@ export default function View(props: any) {
 
   let { mobile, desktop, tablet } = useDevice();
 
-  async function createComment() {
-    let data = comment();
-    Object.assign(post().expand, { comments: post().expand.comments || [] });
+ 
 
-    // turn files into buffers
-    if (files().length > 0) {
-      let filesData = files().map((file: any) => {
-        let fileObj = {
-          name: file.name,
-          type: file.type,
-          size: file.size,
-        }
-        let reader = new FileReader();
-        reader.readAsArrayBuffer(file);
-        return new Promise((resolve, reject) => {
-          reader.onload = () => {
-            resolve({ data: Array.from(new Uint8Array(reader.result as ArrayBuffer)), ...fileObj });
-          };
-        });
-      });
-      filesData = await Promise.all(filesData);
-      data.files = filesData;
-    }
-
-    api.collection("comments").create(data, {
-      expand: ["author", "post", "post.author"],
-      invalidateCache: [`${collection}-${id}-comments`],
-    }).then((data: any) => {
-      let author = api.authStore.model;
-      delete author.token
-      delete author.email;
-      Object.assign(data, { expand: { author: api.authStore.model } });
-      if (post().expand.comments) {
-        post().expand.comments.push(data);
-      }
-      post().comments.push(data?.id);
-      if (!post().expand.comments.find((c: any) => c.id === data.id)) {
-        post().expand.comments.push(data);
-      }
-      let Updatedata = {
-        comments: post().comments,
-        expand: {
-          comments: post().expand.comments,
-          ...post().expand
-        }
-      }
-
-      setPost({
-        ...Updatedata,
-        ...post(),
-      });
-      setFiles([]);
-      setComments([data, ...comments()]);
-      setComment({ content: "", media: [], author: api.authStore.model.id, post: null });
-      api.collection(collection === "comments" ? "comments" : "posts").update(post().id, Updatedata).then((data) => {
-        setPost(data);
-      });
-    })
-  }
 
   function fetchP() {
     let { params } = useNavigation("/view/:collection/:id");
@@ -158,14 +101,23 @@ export default function View(props: any) {
         setPost(null)
         setLoading(true)
       });
-      window.addEventListener("commentCreated", (e) => {
-        let commentData = e.detail;
-        console.log("Comment created event received:", commentData);
-        if (commentData.post === id || (collection === "comments" && commentData.mainComment === id)) {
-          setComments([commentData, ...comments()]);
+     window.addEventListener("commentCreated", (e) => {
+  const newComment = e.detail;
+  console.log("New comment received via event:", newComment);
+  // Update your comments state here
+  setComments((comments) => [newComment, ...comments]);
 
-        }
-      });
+  // If you want to update the post's comment count locally:
+  setPost((post) => ({
+    ...post,
+    comments: [...(post.comments || []), newComment.id],
+    expand: {
+      ...post.expand,
+      comments: [newComment, ...(post.expand?.comments || [])],
+    },
+  }));
+});
+
       fetchP(); 
     }); // Depend on the `id` parameter
 
@@ -191,7 +143,7 @@ export default function View(props: any) {
               <LoadingIndicator />
             </Match>
             <Match when={post() !== null}>
-              <Post {...{ ...post(), page: route(), navigate, isComment: collection === "comments" }} />
+              <Post {...{ ...post(), page: route(), navigate, isComment: collection === "comments" }} commentCount={post().comments?.length || 0}/>
             </Match>
           </Switch>
         </div>
