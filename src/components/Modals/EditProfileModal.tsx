@@ -97,15 +97,15 @@ export default function EditProfileModal({
   const [bio, setBio] = createSignal(api.authStore.model.bio || "")
   const [location, setLocation] = createSignal(api.authStore.model.location || "")
   const [social, setSocial] = createSignal<string[]>(Array.isArray(api.authStore.model.social) ? api.authStore.model.social : [])
-  
+
   const [deactivated, setDeactivated] = createSignal(api.authStore.model.deactivated)
-const validateSocial = (socialLinks: string[]) => {
-  for (const link of socialLinks) {
-    if (link.length > 100) return "Each link must be less than 100 characters"
-    if (!/^https?:\/\//.test(link)) return "Links must start with http:// or https://"
+  const validateSocial = (socialLinks: string[]) => {
+    for (const link of socialLinks) {
+      if (link.length > 100) return "Each link must be less than 100 characters"
+      if (!/^https?:\/\//.test(link)) return "Links must start with http:// or https://"
+    }
+    return null
   }
-  return null
-}
 
   // UI state
   const [isSaving, setIsSaving] = createSignal(false)
@@ -465,56 +465,63 @@ const validateSocial = (socialLinks: string[]) => {
           </div>
 
           {/* Social */}
-          
-<div class="space-y-2">
-  <label class="block text-sm font-medium">Add a Social Link</label>
-  <select
-    class="select select-bordered rounded-xl w-full"
-    value=""
-    onChange={(e) => {
-      const selected = e.currentTarget.value
-      if (selected && !social().includes(selected)) {
-        setSocial([...social(), selected])
-      }
-    }}
-  >
-    <option disabled selected value="">Pick a network</option>
-    <option value="https://twitter.com/">Twitter</option>
-    <option value="https://linkedin.com/">LinkedIn</option>
-    <option value="https://github.com/">GitHub</option>
-  </select>
 
-  <div class="mt-2 space-y-1">
-     <div class="mt-2 space-y-1">
-  <For each={social()}>
-    {(link, index) => (
-      <div class="flex items-center gap-2">
-        <input
-          type="text"
-          class="input input-bordered w-full"
-          value={link}
-          onChange={(e) => {
-            const updated = [...social()]
-            updated[index()] = e.currentTarget.value
-            setSocial(updated)
-          }}
-        />
-        <button
-          type="button"
-          class="btn btn-error btn-sm"
-          onClick={() => {
-            const updated = social().filter((_, i) => i !== index())
-            setSocial(updated)
-          }}
-        >
-          Remove
-        </button>
-      </div>
-    )}
-  </For>
-</div>
-  </div>
-</div>
+          <div class="space-y-2">
+            <label class="block text-sm font-medium">Add a Social Link</label>
+            <select
+              class="select select-bordered rounded-xl w-full"
+              value=""
+              onChange={(e) => {
+                const selected = e.currentTarget.value
+                if (selected && !social().includes(selected)) {
+                  setSocial([...social(), selected])
+                }
+              }}
+            >
+              <option disabled selected value="">Pick a network</option>
+              <option value="https://twitter.com/">Twitter</option>
+              <option value="https://linkedin.com/">LinkedIn</option>
+              <option value="https://github.com/">GitHub</option>
+              <option value={"https://instagram.com/"}>Instagram</option>
+              <option value="https://facebook.com/">Facebook</option>
+              <option value="https://tiktok.com/">TikTok</option>
+              <option value="https://youtube.com/">YouTube</option>
+              <option value="https://reddit.com/">Reddit</option>
+              <option value="https://strafe.chat/">Strafe</option>
+              <option value="https://discord.com/">Discord</option>
+            </select>
+
+            <div class="mt-2 space-y-1">
+              <div class="mt-2 space-y-1">
+                <For each={social()}>
+                  {(link, index) => (
+                    <div class="flex items-center gap-2">
+                      <input
+                        type="text"
+                        class="input input-bordered w-full"
+                        value={link}
+                        onChange={(e) => {
+                          const updated = [...social()]
+                          updated[index()] = e.currentTarget.value
+                          setSocial(updated)
+                        }}
+                      />
+                      <button
+                        type="button"
+                        class="btn btn-error btn-sm"
+                        onClick={() => {
+                          const updated = social().filter((_, i) => i !== index())
+                          setSocial(updated)
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  )}
+                </For>
+              </div>
+            </div>
+          </div>
 
           {/* Account Deactivation */}
           <div
