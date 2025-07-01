@@ -198,109 +198,157 @@ export default class SDK {
     });
   }
 
-  updateCache = async (collection: string, id: string, data: any, fullPost?: any, action: "add" | "remove" = "add") => {
-    const { set } = useCache();
-    const keys = await caches.keys();
+ async  maybeConvertBlobFields(data: any) {
+  if (data.avatar instanceof Blob) {
+    data.avatar = await this.convertToBase64(data.avatar);
+  }
+  if (data.banner instanceof Blob) {
+    data.banner = await this.convertToBase64(data.banner);
+  }
+  return data;
+}
 
-    for (let key of keys) {
-      const cache = await caches.open(key);
-      const requests = await cache.keys();
+// ✅ Helper: Find and update by ID in arrays
+  updateArrayById(array: any[], id: string, data: any): boolean {
+  const index = array.findIndex((e) => e.id === id);
+  if (index !== -1) {
+    console.log("Updating item at index:", index, "with data:", data);
+    array[index] = { ...array[index], ...data };
+    return true;
+  }
+  return false;
+}
 
-      for (let request of requests) {
-        const response = await cache.match(request);
-        const json = await response?.json();
-        const value = json?.value;
+// ✅ Helper: Find and update by username in arrays
+ updateArrayByUsername = (array: any[], username: string, data: any): boolean =>{
+  const index = array.findIndex((e) => e.username === username);
+  if (index !== -1) {
+    array[index] = { ...array[index], ...data };
+    return true;
+  }
+  return false;
+}
+ 
+  updateCache = async (
+  collection: string,
+  id: string,
+  data: any,
+  fullPost?: any,
+  action: "add" | "remove" = "add"
+) => {
+  const { get, set, remove, clear } = useCache();
 
-        if (!value) continue;
+  // Since Map is in-memory, no async keys() or open caches, 
+  // so we need a way to track all cache keys.
+  // For simplicity, assume you maintain a separate Set of keys somewhere,
+  // or you can store keys in a special Map entry.
 
-        let updated = false;
+  // Example: a global cacheKeys Set stored in the cache object for demo:
+  // You need to implement and maintain this set elsewhere in your code.
+  const cacheKeys: string[] = get("__cache_keys__") || [];
 
-        switch (collection) {
-          case "posts":
-          case "comments": {
-            if (Array.isArray(value)) {
-              const index = value.findIndex((e: any) => e.id === id);
-              if (index !== -1) {
-                value[index] = { ...value[index], ...data };
-                updated = true;
-              }
-            } else if (Array.isArray(value.payload)) {
-              const index = value.payload.findIndex((e: any) => e.id === id);
-              if (index !== -1) {
-                value.payload[index] = { ...value.payload[index], ...data };
-                updated = true;
-              }
-            } else if (value.payload?.id === id) {
-              value.payload = { ...value.payload, ...data };
-              updated = true;
-            } else if (value.id === id) {
-              json.value = { ...value, ...data };
-              updated = true;
-            }
+  for (const key of cacheKeys) {
+    let value = get(key);
+    if (!value) continue;
 
-            break;
+    let updated = false;
+    const requestUrl = key.toLowerCase();
+
+    // Matchers same as before:
+    const isCommentsFeedForPost =
+      collection === "comments" &&
+      requestUrl.includes("comments") &&
+      requestUrl.includes(id);
+
+    const isBookmarksFeed = requestUrl.includes("bookmarks_bookmarks_");
+
+    switch (collection) {
+      case "posts":
+      case "comments": {
+        if (Array.isArray(value)) {
+          const index = value.findIndex((e: any) => e.id === id);
+          if (index !== -1) {
+            value[index] = { ...value[index], ...data };
+            updated = true;
           }
-
-          case "users": {
-            if (data.avatar && data.avatar instanceof Blob) {
-              data.avatar = await convertToBase64(data.avatar);
-            }
-            if (data.banner && data.banner instanceof Blob) {
-              data.banner = await convertToBase64(data.banner);
-            }
-
-            if (Array.isArray(value.payload)) {
-              const index = value.payload.findIndex((e: any) => e.username === id);
-              if (index !== -1) {
-                value.payload[index] = { ...value.payload[index], ...data };
-                updated = true;
-              }
-            } else if (Array.isArray(value)) {
-              const index = value.findIndex((e: any) => e.username === id);
-              if (index !== -1) {
-                value[index] = { ...value[index], ...data };
-                updated = true;
-              }
-            } else if (value.payload?.username === id || value?.username === id) {
-              console.log({ ...value, ...data })
-              json.value = { ...value, ...data };
-              updated = true;
-            }
-
-            break;
-          }
-
-          default:
-            break;
-        }
-
-        // ✅ ✅ ✅ SPECIAL CASE: Bookmarks pages
-        // If the key matches your bookmarks feed pattern:
-        const requestUrl = request.url.toLowerCase();
-        if (requestUrl.includes("bookmarks_bookmarks_") && fullPost) {
-          if (Array.isArray(value)) {
-            const exists = value.find((e: any) => e.id === id);
-
+          if (isCommentsFeedForPost && fullPost) {
+            const exists = value.find((e: any) => e.id === fullPost.id);
             if (action === "add" && !exists) {
-              value.unshift(fullPost); // Add to front
+              value.unshift(fullPost);
               updated = true;
             } else if (action === "remove" && exists) {
-              const newValue = value.filter((e: any) => e.id !== id);
-              json.value = newValue;
+              value = value.filter((e: any) => e.id !== fullPost.id);
               updated = true;
             }
           }
+        } else if (value.payload && Array.isArray(value.payload)) {
+          const index = value.payload.findIndex((e: any) => e.id === id);
+          if (index !== -1) {
+            value.payload[index] = { ...value.payload[index], ...data };
+            updated = true;
+          }
+        } else if (value.payload?.id === id) {
+          value.payload = { ...value.payload, ...data };
+          updated = true;
+        } else if (value.id === id) {
+          value = { ...value, ...data };
+          updated = true;
+        }
+        break;
+      }
+
+      case "users": {
+        // Assuming convertToBase64 is defined elsewhere if needed
+        if (data.avatar instanceof Blob) {
+          data.avatar = await convertToBase64(data.avatar);
+        }
+        if (data.banner instanceof Blob) {
+          data.banner = await convertToBase64(data.banner);
         }
 
-        // 📝 ✅ Only write if we did something
-        if (updated) {
-          set(request.url, json.value ?? value, Date.now() + 3600);
-        } else {
-          console.log(false)
+        if (value.payload && Array.isArray(value.payload)) {
+          const index = value.payload.findIndex((e: any) => e.username === id);
+          if (index !== -1) {
+            value.payload[index] = { ...value.payload[index], ...data };
+            updated = true;
+          }
+        } else if (Array.isArray(value)) {
+          const index = value.findIndex((e: any) => e.username === id);
+          if (index !== -1) {
+            value[index] = { ...value[index], ...data };
+            updated = true;
+          }
+        } else if (value.payload?.username === id || value?.username === id) {
+          value = { ...value, ...data };
+          updated = true;
+        }
+        break;
+      }
+    }
+
+    // Bookmarks special case
+    if (isBookmarksFeed && fullPost) {
+      if (Array.isArray(value)) {
+        const exists = value.find((e: any) => e.id === id);
+        if (action === "add" && !exists) {
+          value.unshift(fullPost);
+          updated = true;
+        } else if (action === "remove" && exists) {
+          value = value.filter((e: any) => e.id !== id);
+          updated = true;
         }
       }
     }
-  };
+
+    if (updated) {
+      set(key, value, 3600 * 1000); // 1 hour TTL
+      console.log(`✅ Cache updated for: ${key}`);
+    } else {
+      console.log(`⏭️ No update needed for: ${key}`);
+    }
+  }
+};
+
 
 
 
@@ -630,7 +678,14 @@ resetCache = async (key?: string) => {
       });
       return id;
     }
-
+ getCacheKey(type: "post" | "posts-comments", postId: string) {
+  switch (type) {
+    case "post":
+      return `post-${postId}`;
+    case "posts-comments":
+      return `posts-${postId}-comments`;
+  }
+}
   public deepSearch = async (collections: string[], query: string) => {
       return new Promise(async (resolve, reject) => {
         let out = await this.sendMsg({
@@ -727,6 +782,7 @@ resetCache = async (key?: string) => {
               callback: "",
             }) as any;
             if (out.opCode !== HttpCodes.OK) return reject(out);
+            console.log(cacheKey, "Caching data for key:", out.payload);
             shouldCache && set(cacheKey, out, new Date().getTime() + 3600); // cache for 1 hour\ 
             resolve({
               opCode: out.opCode,
@@ -822,25 +878,43 @@ resetCache = async (key?: string) => {
          * @returns {Promise<any>}
          */
 
-        get: async (id: string, options?: { expand?: string[], cacheKey?: string }) => {
-          return new Promise(async (resolve, reject) => {
+         get: async (
+  id: string,
+  options?: { expand?: string[], cacheKey?: string },
+  shouldCache = true
+) => {
+  return new Promise(async (resolve, reject) => {
+    const { set, get } = useCache();
 
-            let out = await this.sendMsg({
-              type: GeneralTypes.GET,
-              payload: {
-                collection: name,
-                id,
-                options
-              },
-              security: {
-                token: this.authStore.model.token
-              },
-              callback: ""
-            }) as any;
-            if (out.opCode !== HttpCodes.OK) return reject(out);
-            resolve(out.payload)
-          })
-        },
+    const cacheKey = options?.cacheKey || `${this.serverURL}/api/collections/${name}/${id}`;
+    const cached = shouldCache ? await get(cacheKey) : null;
+
+    if (cached) return resolve(cached);
+
+    const out = await this.sendMsg({
+      type: GeneralTypes.GET,
+      payload: {
+        collection: name,
+        id,
+        options
+      },
+      security: {
+        token: this.authStore.model.token
+      },
+      callback: ""
+    }) as any;
+
+    if (out.opCode !== HttpCodes.OK) return reject(out);
+
+    if (shouldCache) {
+      console.log("Caching data for key:", cacheKey);
+      await set(cacheKey, out.payload, Date.now() + 3600); // 1 hour TTL
+    }
+
+    resolve(out.payload);
+  });
+},
+
       };
     }
   }
