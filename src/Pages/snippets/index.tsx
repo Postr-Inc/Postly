@@ -4,8 +4,38 @@ import useNavigation from "@/src/Utils/Hooks/useNavigation";
 import useFeed from "@/src/Utils/Hooks/useFeed";
 import { api } from "@/src";
 import { joinClass } from "@/src/Utils/Joinclass";
-import StringJoin from "@/src/Utils/StringJoin";
+import StringJoin from "@/src/Utils/StringJoin"; 
 
+function VideoWithCleanup(props: { src: string; index: number; onCanPlay: () => void }) {
+  let videoRef: HTMLVideoElement | undefined;
+ 
+  onCleanup(() => {
+    if (videoRef) {
+      videoRef.pause();
+      videoRef.removeAttribute("src");
+      videoRef.load();
+    }
+  });
+
+  return (
+    <video
+      ref={el => {
+        videoRef = el!;
+        videoRefs[props.index] = el!;
+      }}
+      class="h-full w-full object-cover z-0"
+      muted
+      loop
+      playsinline
+      // REMOVE autoplay to let user control play/pause
+      src={props.src}
+      preload={props.index < 3 ? "auto" : "metadata"}
+      controls={false}
+      onCanPlay={props.onCanPlay}
+      onLoadedData={props.onCanPlay}
+    />
+  );
+}
 // Solid SVG Icons Component
 const Icons = {
   Heart: (props: any) => (
@@ -430,22 +460,11 @@ export default function SnippetReels() {
                       index() === posts().length - 1 ? "mb-24" : ""
                     )}
                   >
-                    <video
-                      ref={(el) => (videoRefs[index()] = el!)}
-                      class="h-full w-full object-cover z-0"
-                      muted
-                      loop
-                      playsinline
-                      autoplay
-                      src={videoUrl}
-                      preload={index() < 3 ? "auto" : "metadata"}
-                      controls={false}
-                      onError={(e) => {
-                        alert(e.message);
-                      }}
-                      onCanPlay={() => handleVideoLoaded(index())}
-                      onLoadedData={() => handleVideoLoaded(index())}
-                    />
+                    <VideoWithCleanup
+  src={videoUrl}
+  index={index()}
+  onCanPlay={() => handleVideoLoaded(index())}
+/>
 
                     {/* Header */}
                     <div class="absolute top-4 left-4 right-4 flex justify-between items-center z-20">
