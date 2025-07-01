@@ -290,7 +290,7 @@ export default function User() {
   }
 
 
-  async function follow(type: "follow" | "unfollow") { 
+  async function follow(type: "follow" | "unfollow") {
     var followers = user().followers || [];
     if (type === "follow") {
       followers.push(api.authStore.model.id);
@@ -498,33 +498,54 @@ export default function User() {
             </span>
             <p class=" mt-2">{user() && user().bio}</p>
             <div class="flex flex-row gap-5 mt-2">
-              {user() && typeof user().social === "string" && user().social.trim() !== "" && (
-                <p class="flex flex-row gap-1 items-center text-sm">
-                  <Link class="h-4 w-4" />
-                  <span
-                    onClick={() => {
-                      if (user().social.startsWith("https://")) {
-                        window.open(user().social, "_blank");
-                      }
-                    }}
-                    class="text-blue-500 cursor-pointer"
-                  >
-                    {(() => {
-                      try {
-                        const url = new URL(user().social.trim());
-                        const hostname = url.hostname;
+              {user() && Array.isArray(user().social) && user().social.length > 0 && (
+                <div class="flex flex-row gap-1 items-center text-sm">
 
-                        if (hostname.includes("vercel.app") || hostname.includes("github.io")) {
-                          return hostname.split(".")[0];
+                  <div class="dropdown">
+                    <div
+                      tabIndex={0}
+                      role="button"
+                      class="btn btn-sm px-3 py-1"
+
+                    ><Link class="h-4 w-4" />
+                      {(() => {
+                        try {
+                          const url = new URL(user().social[0].trim());
+                          return url.hostname.replace("www.", "").split(".")[0].charAt(0).toUpperCase() + url.hostname.replace("www.", "").split(".")[0].slice(1);
+                        } catch {
+                          return user().social[0].split(".")[0].toUpperCase().charAt(0) + user().social[0].slice(1);
                         }
-
-                        return hostname.replace("www.", "");
-                      } catch {
-                        return user().social;
-                      }
-                    })()}
-                  </span>
-                </p>
+                      })()}
+                    </div>
+                    {user().social.length > 1 && (
+                      <ul
+                        tabIndex={0}
+                        class="dropdown-content menu bg-base-100 rounded-box z-10 w-52 p-2 shadow"
+                      >
+                        {user().social.map((link) => (
+                          <li>
+                            <a
+                              onClick={() => {
+                                if (link.startsWith("https://")) {
+                                  window.open(link, "_blank");
+                                }
+                              }}
+                            >
+                              {(() => {
+                                try {
+                                  const url = new URL(link.trim());
+                                  return url.hostname.replace("www.", "").split(".")[0].charAt(0).toUpperCase() + url.hostname.replace("www.", "").split(".")[0].slice(1);
+                                } catch {
+                                  return link.split(".")[0].charAt(0).toUpperCase() + link.slice(1);
+                                }
+                              })()}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
               )}
 
               {user() && typeof user().location === "string" && user().location.trim() !== "" && (
