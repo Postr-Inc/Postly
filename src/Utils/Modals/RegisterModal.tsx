@@ -206,25 +206,25 @@ export default function RegisterModal() {
                         <h1 class="text-2xl font-bold">Join Postly</h1>
                         <label>{userNameExists() ? <span class="text-red-500">Username taken</span> : "Username"}</label>
                         <input
-  type="text"
-  value={username()}
-  onInput={(e) => setUsername(e.currentTarget.value)}
-  class={joinClass("input input-bordered", usernameError() ? "border-red-500" : "")}
-/>
-{usernameError() && <p class="text-red-500 text-sm mt-1">{usernameError()}</p>}
-                        <label>{emailExists() ?<span class="text-red-500">Email already has an account linked</span> : "Email"}</label>
-                       <input
-  type="email"
-  value={email()}
-  onInput={(e) => setEmail(e.currentTarget.value)}
-  class={joinClass("input input-bordered", emailError() ? "border-red-500" : "")}
-/>
-{emailError() && <p class="text-red-500 text-sm mt-1">{emailError()}</p>}
+                            type="text"
+                            value={username()}
+                            onInput={(e) => setUsername(e.currentTarget.value)}
+                            class={joinClass("input input-bordered rounded-xl placeholder:input-bordered", usernameError() ? "border-red-500" : "")}
+                        />
+                        {usernameError() && <p class="text-red-500 text-sm mt-1">{usernameError()}</p>}
+                        <label>{emailExists() ? <span class="text-red-500">Email already has an account linked</span> : "Email"}</label>
+                        <input
+                            type="email"
+                            value={email()}
+                            onInput={(e) => setEmail(e.currentTarget.value)}
+                            class={joinClass("input rounded-xl input-bordered", emailError() ? "border-red-500" : "")}
+                        />
+                        {emailError() && <p class="text-red-500 text-sm mt-1">{emailError()}</p>}
                         <label>Date of Birth</label>
-                        <input type="date" class="input input-bordered" value={dob()} onInput={(e) => setDob(e.target.value)} />
+                        <input type="date" class="input rounded-xl input-bordered" value={dob()} onInput={(e) => setDob(e.target.value)} />
                         {!checkDateOfBirth() && dob() && <p class="text-red-500">You must be at least 17.</p>}
                         <button
-                            class="btn btn-primary"
+                            class="btn rounded-xl btn-primary"
                             disabled={!canProceedStage1()}
                             onClick={async () => {
                                 if (await checkEmailandUsername()) {
@@ -239,7 +239,7 @@ export default function RegisterModal() {
                         >
                             {loading() ? "Checking Credentials" : "Next"}
                         </button>
-                        <button class="bg-blue-500 btn btn-md rounded-xl text-white" onClick={() => { setIsBusinessAccount(true); }}>Or Register Business</button>
+                        <button class="bg-blue-500  btn btn-md rounded-xl text-white" onClick={() => { setIsBusinessAccount(true); }}>Or Register Business</button>
                         <a href="/auth/login" class="text-center">Already have an account?</a>
                     </div>
                 </Show>
@@ -248,9 +248,9 @@ export default function RegisterModal() {
                 <Show when={stage() === 2 && !isBusinessAccount()}>
                     <div class="p-5 flex flex-col gap-5">
                         <label>Password</label>
-                        <input type="password" class="input input-bordered" value={password()} onInput={(e) => setPassword(e.target.value)} />
+                        <input type="password" class="input rounded-xl input-bordered" value={password()} onInput={(e) => setPassword(e.target.value)} />
                         <label>Confirm Password</label>
-                        <input type="password" class="input input-bordered" value={confirmPassword()} onInput={(e) => setConfirmPassword(e.target.value)} />
+                        <input type="password" class="input  rounded-xl input-bordered" value={confirmPassword()} onInput={(e) => setConfirmPassword(e.target.value)} />
                         {password() !== confirmPassword() && <p class="text-red-500">Passwords do not match</p>}
                         <button
                             class="btn btn-primary"
@@ -271,15 +271,15 @@ export default function RegisterModal() {
                 <Show when={stage() === 1 && isBusinessAccount()}>
                     <div class="p-5 flex flex-col gap-5">
                         <label>Business Name</label>
-                        <input class="input input-bordered" value={username()} onInput={(e) => setUsername(e.target.value)} />
+                        <input class="input  rounded-xlinput-bordered" value={username()} onInput={(e) => setUsername(e.target.value)} />
                         <label>Owner Name</label>
-                        <input class="input input-bordered" value={firstLastName()} onInput={(e) => setFirstLastName(e.target.value)} />
+                        <input class="input rounded-xl input-bordered" value={firstLastName()} onInput={(e) => setFirstLastName(e.target.value)} />
                         <label>Business Email</label>
-                        <input class="input input-bordered" value={email()} onInput={(e) => setEmail(e.target.value)} />
+                        <input class="input rounded-xl input-bordered" value={email()} onInput={(e) => setEmail(e.target.value)} />
                         <label>Password</label>
-                        <input type="password" class="input input-bordered" value={password()} onInput={(e) => setPassword(e.target.value)} />
+                        <input type="password" class="input rounded-xl input-bordered" value={password()} onInput={(e) => setPassword(e.target.value)} />
                         <button
-                            class="btn btn-primary"
+                            class="btn rounded-xl btn-primary"
                             disabled={!username() || !firstLastName() || !email() || !password()}
                             onClick={() => setStage(2)}
                         >
@@ -292,7 +292,7 @@ export default function RegisterModal() {
                 <Show when={stage() === 2 && isBusinessAccount()}>
                     <div class="p-5 flex flex-col gap-5">
                         <label>Website</label>
-                        <input class="input input-bordered" value={businessWebsite()} onInput={(e) => setBusinessWebsite(e.target.value)} />
+                        <input class="input rounded-xl input-bordered" value={businessWebsite()} onInput={(e) => setBusinessWebsite(e.target.value)} />
                         <label>Niche</label>
                         <select class="select" value={niche()} onInput={(e) => setNiche(e.currentTarget.value)}>
                             <option disabled selected>Select Niche</option>
@@ -301,9 +301,9 @@ export default function RegisterModal() {
                             {/* etc... */}
                         </select>
                         <label>How will you use Postly?</label>
-                        <input class="input input-bordered" value={postlyUse()} onInput={(e) => setPostlyUse(e.target.value)} />
+                        <input class="input rounded-xl  input-bordered" value={postlyUse()} onInput={(e) => setPostlyUse(e.target.value)} />
                         <button
-                            class="btn btn-primary"
+                            class="btn rounded-xl btn-primary"
                             disabled={!businessWebsite() || !niche() || !postlyUse()}
                             onClick={async () => {
                                 if (await register()) {
