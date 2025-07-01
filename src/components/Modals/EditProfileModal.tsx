@@ -3,7 +3,7 @@
 import { api } from "@/src"
 import useTheme from "@/src/Utils/Hooks/useTheme"
 import { joinClass } from "@/src/Utils/Joinclass"
-import { createSignal, createEffect, Switch, Match, Show } from "solid-js"
+import { createSignal, createEffect, Switch, Match, Show, For } from "solid-js"
 
 // Icon Components
 const CloseIcon = () => (
@@ -96,8 +96,16 @@ export default function EditProfileModal({
   const [username, setUsername] = createSignal(api.authStore.model.username)
   const [bio, setBio] = createSignal(api.authStore.model.bio || "")
   const [location, setLocation] = createSignal(api.authStore.model.location || "")
-  const [social, setSocial] = createSignal(api.authStore.model.social || "")
+  const [social, setSocial] = createSignal<string[]>(Array.isArray(api.authStore.model.social) ? api.authStore.model.social : [])
+  
   const [deactivated, setDeactivated] = createSignal(api.authStore.model.deactivated)
+const validateSocial = (socialLinks: string[]) => {
+  for (const link of socialLinks) {
+    if (link.length > 100) return "Each link must be less than 100 characters"
+    if (!/^https?:\/\//.test(link)) return "Links must start with http:// or https://"
+  }
+  return null
+}
 
   // UI state
   const [isSaving, setIsSaving] = createSignal(false)
@@ -240,17 +248,17 @@ export default function EditProfileModal({
   }
 
   return (
-    <dialog id="editProfileModal" class="modal">
+    <dialog id="editProfileModal" class="modal rounded-none overflow-y-scroll scroll-smooth no-scrollbar">
       <div
         class={joinClass(
-          "modal-content max-w-lg w-full mx-4 rounded-2xl shadow-2xl overflow-hidden",
+          "modal-content max-w-lg w-full mx-4   shadow-2xl   ",
           theme() === "dark" ? "bg-gray-900 text-white" : "bg-white text-gray-900",
         )}
       >
         {/* Header */}
         <div
           class={joinClass(
-            "flex items-center justify-between p-4 border-b",
+            "flex items-center  justify-between p-4 border-b",
             theme() === "dark" ? "border-gray-700" : "border-gray-200",
           )}
         >
@@ -382,7 +390,7 @@ export default function EditProfileModal({
               onInput={(e) => setUsername(e.currentTarget.value)}
               onBlur={() => handleFieldBlur("username")}
               class={joinClass(
-                "w-full px-3 py-2 rounded-lg border transition-colors",
+                "w-full px-3 py-2  rounded-xl  border transition-colors",
                 errors().username && touched().username
                   ? "border-red-500 focus:border-red-500"
                   : theme() === "dark"
@@ -411,7 +419,7 @@ export default function EditProfileModal({
               onInput={(e) => setBio(e.currentTarget.value)}
               onBlur={() => handleFieldBlur("bio")}
               class={joinClass(
-                "w-full px-3 py-2 rounded-lg border transition-colors resize-none h-20",
+                "w-full  px-3 py-2  rounded-xl  border transition-colors resize-none h-20",
                 errors().bio && touched().bio
                   ? "border-red-500 focus:border-red-500"
                   : theme() === "dark"
@@ -438,7 +446,7 @@ export default function EditProfileModal({
               onInput={(e) => setLocation(e.currentTarget.value)}
               onBlur={() => handleFieldBlur("location")}
               class={joinClass(
-                "w-full px-3 py-2 rounded-lg border transition-colors",
+                "w-full  rounded-xl  px-3 py-2 rounded-lg border transition-colors",
                 errors().location && touched().location
                   ? "border-red-500 focus:border-red-500"
                   : theme() === "dark"
@@ -457,31 +465,56 @@ export default function EditProfileModal({
           </div>
 
           {/* Social */}
-          <div class="space-y-2">
-            <label class="block text-sm font-medium">Website/Social</label>
-            <input
-              type="text"
-              value={social()}
-              onInput={(e) => setSocial(e.currentTarget.value)}
-              onBlur={() => handleFieldBlur("social")}
-              class={joinClass(
-                "w-full px-3 py-2 rounded-lg border transition-colors",
-                errors().social && touched().social
-                  ? "border-red-500 focus:border-red-500"
-                  : theme() === "dark"
-                    ? "border-gray-600 bg-gray-800 focus:border-blue-500"
-                    : "border-gray-300 bg-white focus:border-blue-500",
-                "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20",
-              )}
-              placeholder="https://yourwebsite.com"
-            />
-            <Show when={errors().social && touched().social}>
-              <div class="flex items-center gap-1 text-red-500 text-sm">
-                <AlertIcon />
-                {errors().social}
-              </div>
-            </Show>
-          </div>
+          
+<div class="space-y-2">
+  <label class="block text-sm font-medium">Add a Social Link</label>
+  <select
+    class="select select-bordered rounded-xl w-full"
+    value=""
+    onChange={(e) => {
+      const selected = e.currentTarget.value
+      if (selected && !social().includes(selected)) {
+        setSocial([...social(), selected])
+      }
+    }}
+  >
+    <option disabled selected value="">Pick a network</option>
+    <option value="https://twitter.com/">Twitter</option>
+    <option value="https://linkedin.com/">LinkedIn</option>
+    <option value="https://github.com/">GitHub</option>
+  </select>
+
+  <div class="mt-2 space-y-1">
+     <div class="mt-2 space-y-1">
+  <For each={social()}>
+    {(link, index) => (
+      <div class="flex items-center gap-2">
+        <input
+          type="text"
+          class="input input-bordered w-full"
+          value={link}
+          onChange={(e) => {
+            const updated = [...social()]
+            updated[index()] = e.currentTarget.value
+            setSocial(updated)
+          }}
+        />
+        <button
+          type="button"
+          class="btn btn-error btn-sm"
+          onClick={() => {
+            const updated = social().filter((_, i) => i !== index())
+            setSocial(updated)
+          }}
+        >
+          Remove
+        </button>
+      </div>
+    )}
+  </For>
+</div>
+  </div>
+</div>
 
           {/* Account Deactivation */}
           <div
@@ -508,6 +541,21 @@ export default function EditProfileModal({
           </div>
         </div>
       </div>
+      <style>
+        {`
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+        .no-scrollbar {
+          -ms-overflow-style: none;  /* IE and Edge */
+          scrollbar-width: none;  /* Firefox */
+        }
+        .scroll-smooth {
+          scroll-behavior: smooth;
+        }
+          
+        `}
+      </style>
     </dialog>
   )
 }
