@@ -160,8 +160,7 @@ export default class SDK {
       ...options.headers,
     };
 
-    const token = this.authStore.model.token;
-    console.log(token)
+    const token =  JSON.parse(localStorage.getItem("postr_auth") || "{}").token || null;
     if (token) {
       headers["Authorization"] = `${token}`;
     }
@@ -183,12 +182,25 @@ export default class SDK {
     return response.json();
   }
 
-  wsReconnect = () => {
-    this.ws = new WebSocket(`${this.serverURL}/subscriptions`);
-    this.ws.onmessage = (event) => {
-      this.handleMessages(event.data);
-    };
-  }
+ wsReconnect = () => {
+  this.ws = new WebSocket(`${this.serverURL}/subscriptions`);
+
+  this.ws.onopen = () => {
+    console.log("✅ WS connected");
+  };
+
+  this.ws.onerror = (err) => {
+    console.log("❌ WS error", err);
+  };
+
+  this.ws.onclose = (ev) => {
+    console.log(`⚠️ WS closed: ${ev.code} ${ev.reason}`);
+  };
+
+  this.ws.onmessage = (event) => {
+    this.handleMessages(event.data);
+  };
+};
 
   convertToBase64(file: Blob): Promise<string> {
     return new Promise((resolve) => {
@@ -280,6 +292,24 @@ export default class SDK {
               value = value.filter((e: any) => e.id !== fullPost.id);
               updated = true;
             }
+          }else if (isBookmarksFeed && fullPost) {
+            const exists = value.find((e: any) => e.id === fullPost.id);
+            if (action === "add" && !exists) {
+              value.unshift(fullPost);
+              updated = true;
+            } else if (action === "remove" && exists) {
+              value = value.filter((e: any) => e.id !== fullPost.id);
+              updated = true;
+            }
+          }else{
+            const exists = value.find((e: any) => e.id === id);
+            if (action === "add" && !exists) {
+              value.unshift(fullPost);
+              updated = true;
+            } else if (action === "remove" && exists) {
+              value = value.filter((e: any) => e.id !== id);
+              updated = true;
+            }
           }
         } else if (value.payload && Array.isArray(value.payload)) {
           const index = value.payload.findIndex((e: any) => e.id === id);
@@ -293,6 +323,12 @@ export default class SDK {
         } else if (value.id === id) {
           value = { ...value, ...data };
           updated = true;
+        }else if(action === "add" && fullPost) {
+          const exists = value.find((e: any) => e.id === fullPost.id);
+          if (!exists) {
+            value.unshift(fullPost);
+            updated = true;
+          }
         }
         break;
       }
@@ -576,8 +612,7 @@ resetCache = async (key?: string) => {
         }
 
         this.waitUntilSocketIsOpen(() => {
-          let cid = this.callback((data: any) => {
-            console.log("Received data from WebSocket", data);
+          let cid = this.callback((data: any) => { 
             if (data.type === GeneralTypes.AUTH_ROLL_TOKEN) {
               const newToken = data.token;
               let authData = JSON.parse(localStorage.getItem("postr_auth") || "{}");
