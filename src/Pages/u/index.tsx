@@ -501,11 +501,11 @@ export default function User() {
               {user() && Array.isArray(user().social) && user().social.length > 0 && (
                 <div class="flex flex-row gap-1 items-center text-sm">
 
-                  <div class="dropdown">
+                  <div class="dropdown rounded">
                     <div
                       tabIndex={0}
                       role="button"
-                      class="btn btn-sm px-3 py-1"
+                      class="btn btn-sm rounded px-3 py-1"
                       onClick={() => {
                         if(user().social.length > 0) return;
                         else{
@@ -528,7 +528,8 @@ export default function User() {
                     {user().social.length > 1 && (
                       <ul
                         tabIndex={0}
-                        class="dropdown-content menu bg-base-100 rounded-box z-10 w-52 p-2 shadow"
+                        class={joinClass("dropdown-content menu   rounded-box z-10 w-52 p-2 shadow dark:bg-base-200", theme()
+                          === "dark" ? "bg-base-200 rounded-xl" : "bg-base-100")}
                       >
                         {user().social.map((link) => (
                           <li>
