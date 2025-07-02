@@ -45,6 +45,7 @@ export default function BottomNav() {
           !window.location.pathname.includes("/settings") &&
           !window.location.pathname.includes("/snippets") &&
           !window.location.pathname.includes("/bookmarks")
+          && api.authStore.model.username
         }
       >
         <div
