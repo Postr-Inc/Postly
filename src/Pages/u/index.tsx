@@ -507,9 +507,11 @@ export default function User() {
                       role="button"
                       class="btn btn-sm px-3 py-1"
                       onClick={() => {
-                        if(user().social.length > 0 && user().social[0].trim() === "") return;
-                        if (user().social[0].startsWith("https://")) {
-                          window.open(user().social[0], "_blank");
+                        if(user().social.length > 0) return;
+                        else{
+                          if (user().social[0].startsWith("https://")) {
+                            window.open(user().social[0], "_blank");
+                          }
                         }
                       }}
 
