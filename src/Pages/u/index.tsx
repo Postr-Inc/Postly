@@ -133,6 +133,23 @@ export default function User() {
             } else {
 
               setUser(data.items[0]);
+              if (user().expand.followers) {
+
+                const relevantPeople: any[] = [];
+
+                for (const follower of user().expand.followers) {
+                  if (
+                    follower.id !== api.authStore.model.id && // not you
+                    !api.authStore.model.following.includes(follower.id) && // you don’t follow yet
+                    !follower.deactivated &&
+                    !relevantPeople.find(p => p.id === follower.id)
+                  ) {
+                    relevantPeople.push(follower);
+                    if (relevantPeople.length >= 5) break;
+                  }
+                }
+                window.setRelevantPeople(relevantPeople)
+              }
               switch (view()) {
                 case "posts":
                   handleFeed("posts", u, currentPage(), {
@@ -228,6 +245,8 @@ export default function User() {
       }
     }, [currentPage()]);
 
+
+
   })
 
 
@@ -295,9 +314,9 @@ export default function User() {
     const hasViewedAPost = api.metrics.getNotedMetrics("followed_after_post_view");
 
     console.log("Has viewed a post", hasViewedAPost)
-    
+
     if (type === "follow") {
-      if(hasViewedAPost.hasFollowed === false) { 
+      if (hasViewedAPost.hasFollowed === false) {
         api.metrics.trackUserMetric("followed_after_post_view", hasViewedAPost.postId)
       }
       followers.push(api.authStore.model.id);
@@ -514,8 +533,8 @@ export default function User() {
                       role="button"
                       class="btn btn-sm rounded px-3 py-1"
                       onClick={() => {
-                        if(user().social.length > 0) return;
-                        else{
+                        if (user().social.length > 0) return;
+                        else {
                           if (user().social[0].startsWith("https://")) {
                             window.open(user().social[0], "_blank");
                           }
