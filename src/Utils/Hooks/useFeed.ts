@@ -8,12 +8,12 @@ async function list(
   feed: () => string,
   options: { filter?: string; sort?: string; limit?: number; _for?: any } = {}
 ) {
-  
-  if(feed() === "following"){
-    options.filter = `author.followers ~"${api.authStore.model.id}" && author.deactivated=false` 
-  }else if(feed() === "trending"){
+
+  if (feed() === "following") {
+    options.filter = `author.followers ~"${api.authStore.model.id}" && author.deactivated=false`
+  } else if (feed() === "trending") {
     options.filter = `author.deactivated=false  && likes:length > 0 && repost.likes:length > 0 && author.id != "${api.authStore.model.id}"`
-  } 
+  }
   return api
     .collection(collection)
     .list(page, options.limit || 10, {
@@ -49,7 +49,7 @@ async function list(
 export default function useFeed(
   collection: string,
   options: { _for?: string; filter?: string; sort?: string; limit?: number } = {},
-  activeIndexSignal?: () => number, 
+  activeIndexSignal?: () => number,
 ) {
   const initialFeed = options._for === "home"
     ? "recommended"
@@ -86,8 +86,6 @@ export default function useFeed(
 
       const page = resetFlag ? 1 : currentPage();
       const data = await list(collection, page, feed, fetchOptions);
-      console.log(data)
-
       // Deduplicate by ID
       const existingIds = new Set(posts().map(post => post.id));
       const newItems = data.items.filter((item: any) => !existingIds.has(item.id));
@@ -106,23 +104,35 @@ export default function useFeed(
 
 
 
-      // Relevant people logic
       const relevantPeople: any[] = [];
-      for (const item of data.items) {
-        const followers = item?.expand?.author?.expand?.followers ?? [];
-        for (const follower of followers) {
-          if (
-            follower.id !== api.authStore.model.id &&
-            !follower.followers.includes(api.authStore.model.id) &&
-            !follower.deactivated &&
-            !relevantPeople.find(p => p.id === follower.id)
-          ) {
-            relevantPeople.push(follower);
-            if (relevantPeople.length >= 5) break;
+      // Relevant people logic
+      if (api.authStore.model.username) {
+        const yourFollowers = await api.collection("users").get(api.authStore.model.id, {
+          expand: ["followers.followers", "following.following", "following", "followers"],
+          cacheKey: `user_record-${api.authStore.model.id}`
+        })
+
+        for (const follower of yourFollowers.expand.followers) {
+          const theirFollowers = follower.expand?.followers ?? [];
+
+          for (const mutual of theirFollowers) {
+            if (
+              mutual.id !== api.authStore.model.id && // not you
+              !yourFollowers.expand.followers.find(p => p.id === mutual.id) && // not already your follower
+              !relevantPeople.find(p => p.id === mutual.id) && // not already added
+              !mutual.deactivated // not deactivated
+            ) {
+              relevantPeople.push(mutual);
+              if (relevantPeople.length >= 5) break; // limit to 5
+            }
           }
+
+          if (relevantPeople.length >= 5) break;
         }
       }
 
+
+ 
       // @ts-ignore
       window.setRelevantPeople?.(relevantPeople);
 
@@ -174,7 +184,7 @@ export default function useFeed(
 
     const touchStart = (e: TouchEvent) => {
       if (window.scrollY === 0 && activeIndexSignal?.() === 0) {
-        startY = e.touches[0].clientY; 
+        startY = e.touches[0].clientY;
       }
     };
 
