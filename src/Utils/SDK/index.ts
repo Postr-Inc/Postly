@@ -17,6 +17,7 @@ type MetricsStore = {
 export type AlertPayload = {
   type: "error" | "success" | "info" | "warning";
   message: string;
+  link?: string;
 };
 
 export function dispatchAlert(payload: AlertPayload) {
