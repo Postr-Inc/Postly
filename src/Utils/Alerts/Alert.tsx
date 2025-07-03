@@ -1,9 +1,13 @@
+"use client"
+
 import { createSignal, onMount, Show } from "solid-js"
+import useNavigation from "../Hooks/useNavigation"
 
 interface AlertPayload {
   message: string
   type?: "success" | "error" | "warning" | "info"
-  title?: string
+  title?: string,
+  link?:string
 }
 
 export default function CustomAlertDialog() {
@@ -13,6 +17,7 @@ export default function CustomAlertDialog() {
   const [isVisible, setIsVisible] = createSignal(false)
   const [isExiting, setIsExiting] = createSignal(false)
 
+  const { navigate } = useNavigation()
   let timeoutId: NodeJS.Timeout | null = null
 
   onMount(() => {
@@ -119,7 +124,7 @@ export default function CustomAlertDialog() {
     <Show when={_alert()}>
       <div
         class={`
-          fixed top-4 left-1/2 sm:w-[20rem] xsm:w-[25rem] w-[20rem] transform -translate-x-1/2 z-[999999] transition-all duration-300 ease-out
+          fixed top-4 left-1/2 sm:w-[20rem] xsm:w-[25rem] w-[20rem] transform -translate-x-1/2 z-[99999] transition-all duration-300 ease-out
           ${
             isExiting()
               ? "-translate-y-full opacity-0"
@@ -129,7 +134,13 @@ export default function CustomAlertDialog() {
           }
         `}
       >
-        <div
+        <div onClick={()=>{
+          if(_alert()?.link){
+            navigate(_alert()?.link as string)
+            setIsExiting(true)
+            setIsVisible(false)
+          }
+        }}
           class={`
             flex items-center gap-3 px-4 py-3 rounded-xl shadow-lg text-white max-w-md
             ${getAlertStyles(_alert()?.type || "error")}
