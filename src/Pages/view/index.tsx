@@ -47,6 +47,7 @@ export default function View(props: any) {
   function fetchP() {
     let { params } = useNavigation("/view/:collection/:id");
     let { id, collection } = params();
+    console.log(collection)
     api
       .collection(collection)
       .get(id, {
@@ -66,7 +67,7 @@ export default function View(props: any) {
           "hashtags",
         ],
       })
-      .then((data) => {
+      .then((data) => { 
         setPost(data);
         if (api.authStore.model.id !== post()?.author?.id) {
           api.metrics.noteMetrics("followed_after_post_view", {
@@ -75,6 +76,8 @@ export default function View(props: any) {
           hasFollowed: post()?.expand.author?.followers?.includes(api.authStore.model.id)
         }); 
         } 
+
+        window.setRelevantPeople([data.expand.author])
         if(data && data?.hashtags && data?.hashtags.length > 0) {
            data.expand.hashtags.map((hashtag: any)=>{
             api.metrics.trackUserMetric("viewed_hashtags", hashtag.id); 
