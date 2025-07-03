@@ -204,12 +204,14 @@ export default function Post(props: Props) {
     const hasLiked = currentLikes.includes(userId);
     const action = hasLiked ? "unlike" : "like";
     const collection = isComment ? "comments" : "posts";
-    if (!api.authStore.model.id) {
+    if (!api.authStore.model.username) {
       haptic.error()
       return;
     }
+    
     if (action === "like") {
       setLikes([...likes(), userId]);
+      api.metrics.trackUserMetric("posts_liked", props.id)
       haptic()
     } else {
       setLikes(hasLiked
@@ -281,6 +283,7 @@ export default function Post(props: Props) {
     } else {
       const newBookmarks = [...bookmarks(), userId];
       setBookmarks(newBookmarks);
+      api.metrics.trackUserMetric("posts_bookmarked", props.id);
       dispatchAlert({
         type: "info",
         message: "Added Post To Bookmarks"
