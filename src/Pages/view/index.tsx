@@ -9,7 +9,7 @@ import useNavigation from "@/src/Utils/Hooks/useNavigation";
 import useTheme from "@/src/Utils/Hooks/useTheme";
 import { joinClass } from "@/src/Utils/Joinclass";
 import Page from "@/src/Utils/Shared/Page";
-import { Index } from "solid-js"
+import { Index, onCleanup } from "solid-js"
 
 
 import { useNavigate, useParams } from "@solidjs/router";
@@ -124,21 +124,19 @@ export default function View(props: any) {
         // If you want to update the post's comment count locally:
         setPost((post) => ({
           ...post,
-          comments: [...(post.comments || []), newComment.id],
-          expand: {
-            ...post.expand,
-            comments: [newComment, ...(post.expand?.comments || [])],
-          },
+          comments: [...(post.comments || []), newComment.id], 
         }));
       });
-
+ 
       fetchP();
     }); // Depend on the `id` parameter
 
 
     // if user is not in author's followers we want to set a metric if the user follows after viewing this post we track it
 
-     
+      onCleanup(() => {
+    window.removeEventListener("commentCreated", listener);
+  });
 
   })
 
