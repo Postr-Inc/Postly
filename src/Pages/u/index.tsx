@@ -292,7 +292,14 @@ export default function User() {
 
   async function follow(type: "follow" | "unfollow") {
     var followers = user().followers || [];
+    const hasViewedAPost = api.metrics.getNotedMetrics("followed_after_post_view");
+
+    console.log("Has viewed a post", hasViewedAPost)
+    
     if (type === "follow") {
+      if(hasViewedAPost.hasFollowed === false) { 
+        api.metrics.trackUserMetric("followed_after_post_view", hasViewedAPost.postId)
+      }
       followers.push(api.authStore.model.id);
     } else {
       followers = followers.filter(id => id !== api.authStore.model.id);
