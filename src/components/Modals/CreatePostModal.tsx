@@ -43,7 +43,6 @@ export default function CreatePostModal() {
   let [hasError, setHasError] = createSignal(false, { equals: false })
   let [error, setError] = createSignal(null)
   const [collection, setCollection] = createSignal(window.location.pathname.split("/")[2] === "posts" && window.location.pathname.includes("view") ? "comments" : window.location.pathname.split("/")[2] === "comments" && window.location.pathname.includes("view") ? "comments" : "posts")
-  console.log("Collection", collection());
   let [postData, setPostData] = createSignal<any>({
     content: "",
     links: [],
@@ -81,10 +80,7 @@ export default function CreatePostModal() {
 
   let [Drafts, setDrafts] = createSignal(
     localStorage.getItem("postDrafts") ? JSON.parse(localStorage.getItem("drafts") as any) : []
-  )
-
-  console.log(postData())
-
+  ) 
 
 
   async function createPost() {
@@ -112,10 +108,11 @@ export default function CreatePostModal() {
       }
 
       if (collection() === "comments") {
-        const parts = window.location.pathname.split("/");
-        data.post = parts[3];
+        const parts = window.location.pathname.split("/"); 
         if (!window.location.pathname.includes("posts")) {
           data.mainComment = parts[3];
+        }else{
+          data.post = parts[3];
         }
       }
 
@@ -146,8 +143,8 @@ export default function CreatePostModal() {
         document.getElementById("createPostModal")?.close(); 
 
         const postId = window.location.pathname.split("/")[3];
-        const p = await api.collection("posts").get(postId);
-        const d = await api.collection("posts").update(postId, {
+        const p = await api.collection(window.location.pathname.split("/")[2])
+        const d = await api.collection(window.location.pathname.split("/")[2]).update(postId, {
           comments: [...(p.comments || []), res.id],
           invalidateCache: [
           `/u/user_${api.authStore.model.username}_posts`, 
@@ -157,8 +154,7 @@ export default function CreatePostModal() {
         });  
         api.updateCache("comments", postId, d);
         
-        window.dispatchEvent(new CustomEvent("commentCreated", { detail: res }));
-      } else {
+        window.dispatchEvent(new CustomEvent("commentCreated", { detail: res }));   } else {
         setTimeout(() => navigate(`/view/posts/${res.id}`), 100);
       }
 
@@ -201,7 +197,7 @@ export default function CreatePostModal() {
   }
   //@ts-ignore
   window.resetCreatePost = () => {
-    setCollection(window.location.pathname.split("/")[2] === "posts" ? "comments" : "posts");
+    setCollection(window.location.pathname.split("/")[2] === "posts" ? "comments" :  window.location.pathname.split("/")[2] === "comments" ? "comments" : "posts");
   }
 
   //@ts-ignore
