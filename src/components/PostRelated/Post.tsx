@@ -212,13 +212,13 @@ export default function Post(props: Props) {
     if (action === "like") {
       setLikes([...likes(), userId]);
       api.metrics.trackUserMetric("posts_liked", props.id)
+      api.metrics.uploadUserMetrics()
       haptic()
     } else {
       setLikes(hasLiked
         ? currentLikes.filter(id => id !== userId)
         : [...currentLikes, userId]
-      );
-
+      ); 
       haptic()
     }
 
@@ -286,12 +286,11 @@ export default function Post(props: Props) {
       api.metrics.trackUserMetric("posts_bookmarked", props.id);
       dispatchAlert({
         type: "info",
-        message: "Added Post To Bookmarks"
+        message: "Added Post To Bookmarks",
+        link: "/bookmarks"
       });
 
-      api.resetCache(`posts_bookmarks_feed_${api.authStore.model.id}`)
-
-
+      api.resetCache(`posts_bookmarks_feed_${api.authStore.model.id}`) 
       haptic();
     }
 
