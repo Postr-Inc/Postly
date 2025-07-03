@@ -133,12 +133,13 @@ export default function User() {
             } else {
 
               setUser(data.items[0]);
-              if (user().expand.followers) {
+              if (user().expand.followers && api.authStore.model.username) {
 
                 const relevantPeople: any[] = [];
 
                 for (const follower of user().expand.followers) {
                   if (
+                    
                     follower.id !== api.authStore.model.id && // not you
                     !api.authStore.model.following.includes(follower.id) && // you don’t follow yet
                     !follower.deactivated &&
