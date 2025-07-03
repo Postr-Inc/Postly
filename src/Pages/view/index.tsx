@@ -22,7 +22,7 @@ export default function View(props: any) {
   );
   let { id, collection } = useParams();
   const [isReplying, setIsReplying] = createSignal(false);
-  let [post, setPost] = createSignal<any>(null, {equals: false});
+  let [post, setPost] = createSignal<any>(null, { equals: false });
   let [comments, setComments] = createSignal<any[]>([]);
   let [loading, setLoading] = createSignal(true)
 
@@ -41,7 +41,7 @@ export default function View(props: any) {
 
   let { mobile, desktop, tablet } = useDevice();
 
- 
+
 
 
   function fetchP() {
@@ -62,16 +62,30 @@ export default function View(props: any) {
           "repost.likes",
           "repost.author",
           "post.author",
-          "post"
+          "post",
+          "hashtags",
         ],
       })
       .then((data) => {
         setPost(data);
-        window.setWhoCanReply(
+        if (api.authStore.model.id !== post()?.author?.id) {
+          api.metrics.noteMetrics("followed_after_post_view", {
+          postId: id,
+          authorId: post()?.author,
+          hasFollowed: post()?.expand.author?.followers?.includes(api.authStore.model.id)
+        }); 
+        } 
+        if(data.hashtags && data.hashtags.length > 0) {
+           data.expand.hashtags.map((hashtag: any)=>{
+            api.metrics.trackUserMetric("viewed_hashtags", hashtag.id); 
+           })  
+           api.metrics.uploadUserMetrics()
+        }
+          window.setWhoCanReply(
           data.whoCanSee && data.whoCanSee.length > 0 ? data.whoCanSee[0] : []
         )
         window.setMainPost(data)
-        setTimeout(()=>{
+        setTimeout(() => {
           setLoading(false)
         }, 2000)
       })
@@ -93,38 +107,42 @@ export default function View(props: any) {
 
   // CreateEffect to trigger refetching when the `id` changes
   onMount(() => {
-    
+
     createEffect(() => {
       api.checkAuth();
 
-      window.addEventListener("popstate", ()=>{
+      window.addEventListener("popstate", () => {
         setPost(null)
         setLoading(true)
       });
-     window.addEventListener("commentCreated", (e) => {
-  const newComment = e.detail;
-  console.log("New comment received via event:", newComment);
-  // Update your comments state here
-  setComments((comments) => [newComment, ...comments]);
+      window.addEventListener("commentCreated", (e) => {
+        const newComment = e.detail;
+        console.log("New comment received via event:", newComment);
+        // Update your comments state here
+        setComments((comments) => [newComment, ...comments]);
 
-  // If you want to update the post's comment count locally:
-  setPost((post) => ({
-    ...post,
-    comments: [...(post.comments || []), newComment.id],
-    expand: {
-      ...post.expand,
-      comments: [newComment, ...(post.expand?.comments || [])],
-    },
-  }));
-});
+        // If you want to update the post's comment count locally:
+        setPost((post) => ({
+          ...post,
+          comments: [...(post.comments || []), newComment.id],
+          expand: {
+            ...post.expand,
+            comments: [newComment, ...(post.expand?.comments || [])],
+          },
+        }));
+      });
 
-      fetchP(); 
+      fetchP();
     }); // Depend on the `id` parameter
 
-  
+
+    // if user is not in author's followers we want to set a metric if the user follows after viewing this post we track it
+
+     
+
   })
 
-  
+
 
   let { theme } = useTheme();
 
@@ -143,7 +161,7 @@ export default function View(props: any) {
               <LoadingIndicator />
             </Match>
             <Match when={post() !== null}>
-              <Post {...{ ...post(), page: route(), navigate, isComment: collection === "comments" }} commentCount={post().comments?.length || 0}/>
+              <Post {...{ ...post(), page: route(), navigate, isComment: collection === "comments" }} commentCount={post().comments?.length || 0} />
             </Match>
           </Switch>
         </div>
@@ -167,7 +185,7 @@ export default function View(props: any) {
         <div>
           <Switch>
             <Match when={loading()}>
-             <LoadingIndicator />
+              <LoadingIndicator />
             </Match>
             <Match when={post() && !loading() && comments().length > 0}>
               <For each={comments()}>
