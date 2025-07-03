@@ -122,11 +122,14 @@ export default class SDK {
     this.isOnIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
     const clearCache = async () => {
+      
+      this.metrics.uploadUserMetrics();
       console.log("Clearing app cache");
       const keys = await caches.keys();
       for (const key of keys) {
         await caches.delete(key);
       }
+       
     };
 
     if (this.isOnIos) {
@@ -161,9 +164,11 @@ export default class SDK {
 
   metrics = {
     uploadUserMetrics: async () => {
-      const store = JSON.parse(localStorage.getItem("postr_user_metrics") || "{}");
-      console.log(store)
-      if (!store.user) return;
+      if(!this.authStore.model.username) return;
+      const store = JSON.parse(localStorage.getItem("postr_user_metrics") || "{}"); 
+      if (!store.user) {
+         if(this.authStore.model.username) store.user = JSON.parse(localStorage.getItem("postr_auth") || "{}").id;
+      }
 
       try {
         const res = this.send("/metrics/user", {
@@ -174,10 +179,8 @@ export default class SDK {
             "Authorization": JSON.parse(localStorage.getItem("postr_auth") || "{}").token
           }
         });
-        const response = await res;
-
-        console.log(`Uploading user metrics:`, response);
-        if (response.ok) {
+        const response = await res; 
+        if (response.status == 200) {
           console.log(`✅ Uploaded user metrics`);
           localStorage.removeItem("postr_user_metrics");
         } else {
@@ -203,10 +206,15 @@ export default class SDK {
 
       if (!store[action].includes(relationId)) {
         store[action].push(relationId);
+        
+      console.log(`✅ Metric added: ${action} → ${relationId}`);
+      }else{
+        store[action] = store[action].filter((id)=> id !== relationId)
+        
+      console.log(`✅ Metric removed: ${action} → ${relationId}`);
       }
 
-      localStorage.setItem("postr_user_metrics", JSON.stringify(store));
-      console.log(`✅ Metric added: ${action} → ${relationId}`);
+      localStorage.setItem("postr_user_metrics", JSON.stringify(store)); 
     },
     initializeMetrics: () => {
       const existing = localStorage.getItem("postr_user_metrics");
