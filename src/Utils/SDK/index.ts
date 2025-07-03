@@ -5,7 +5,15 @@ import { authStore } from "./Types/AuthStore";
 import { GeneralTypes } from "./Types/GeneralTypes";
 import { Buffer } from "buffer/";
 const ip = null;
-
+type MetricsStore = {
+  user: string;
+  viewed_hashtags: string[];
+  viewed_profiles: string[];
+  posts_liked: string[];
+  posts_bookmarked: string[];
+  commented_on_post: string[];
+  followed_after_post_view: string[];
+};
 export type AlertPayload = {
   type: "error" | "success" | "info" | "warning";
   message: string;
@@ -71,6 +79,7 @@ export default class SDK {
   statisticalData: any[];
   callbacks: Map<string, (data: any) => void>;
   subscriptions: Map<string, (data: any) => void>;
+  notedMetrics: Map<string, any>;
   constructor(data: { serverURL: string }) {
     this.serverURL = data.serverURL;
     this.ip = sessionStorage.getItem("ip") as string;
@@ -81,7 +90,9 @@ export default class SDK {
      * @description data metrics used to track user activity - this is stored locally
      */
     this.statisticalData = JSON.parse(localStorage.getItem("postr_statistical") || "{}");
+    this.notedMetrics = new Map();
 
+    this.metrics.initializeMetrics()
     // autoroll new token every hour
     setInterval(() => {
       if (localStorage.getItem("postr_auth")) {
@@ -103,6 +114,8 @@ export default class SDK {
           console.log("Token expired, reauthenticating");
         }
       }
+
+      this.metrics.uploadUserMetrics();
     }, 3600000) // every hour
 
     //@ts-ignore
@@ -143,6 +156,76 @@ export default class SDK {
     });
   };
 
+  // Define the type for the metrics store
+
+
+  metrics = {
+    uploadUserMetrics: async () => {
+      const store = JSON.parse(localStorage.getItem("postr_user_metrics") || "{}");
+      console.log(store)
+      if (!store.user) return;
+
+      try {
+        const res = this.send("/metrics/user", {
+          method: "POST",
+          body: store,
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": JSON.parse(localStorage.getItem("postr_auth") || "{}").token
+          }
+        });
+        const response = await res;
+
+        console.log(`Uploading user metrics:`, response);
+        if (response.ok) {
+          console.log(`✅ Uploaded user metrics`);
+          localStorage.removeItem("postr_user_metrics");
+        } else {
+          console.warn(`⚠️ Failed to upload user metrics`);
+        }
+      } catch (err) {
+        console.warn(`❌ Upload error:`, err);
+      }
+    },
+    noteMetrics: (action: keyof Omit<MetricsStore, "user">, data: any) => {
+      console.log(`Note metric: ${action}`, data);
+      this.notedMetrics.set(action, data);
+    },
+    getNotedMetrics: (key: keyof Omit<MetricsStore, "user">) => {
+      return this.notedMetrics.get(key);
+    },
+    trackUserMetric: (action: keyof Omit<MetricsStore, "user">, relationId: string) => {
+      const store: MetricsStore = JSON.parse(localStorage.getItem("postr_user_metrics") || "{}");
+
+      if (!store[action]) {
+        store[action] = [];
+      }
+
+      if (!store[action].includes(relationId)) {
+        store[action].push(relationId);
+      }
+
+      localStorage.setItem("postr_user_metrics", JSON.stringify(store));
+      console.log(`✅ Metric added: ${action} → ${relationId}`);
+    },
+    initializeMetrics: () => {
+      const existing = localStorage.getItem("postr_user_metrics");
+      if (!existing) {
+        const newData: MetricsStore = {
+          user: this.authStore.model.id,
+          viewed_hashtags: [],
+          viewed_profiles: [],
+          posts_liked: [],
+          posts_bookmarked: [],
+          commented_on_post: [],
+          followed_after_post_view: []
+        };
+        localStorage.setItem("postr_user_metrics", JSON.stringify(newData));
+      }
+    }
+  }
+
+
   // Existing methods like collection(), authStore, etc...
 
   async send<T = any>(
@@ -160,7 +243,7 @@ export default class SDK {
       ...options.headers,
     };
 
-    const token =  JSON.parse(localStorage.getItem("postr_auth") || "{}").token || null;
+    const token = JSON.parse(localStorage.getItem("postr_auth") || "{}").token || null;
     if (token) {
       headers["Authorization"] = `${token}`;
     }
@@ -182,25 +265,25 @@ export default class SDK {
     return response.json();
   }
 
- wsReconnect = () => {
-  this.ws = new WebSocket(`${this.serverURL}/subscriptions`);
+  wsReconnect = () => {
+    this.ws = new WebSocket(`${this.serverURL}/subscriptions`);
 
-  this.ws.onopen = () => {
-    console.log("✅ WS connected");
-  };
+    this.ws.onopen = () => {
+      console.log("✅ WS connected");
+    };
 
-  this.ws.onerror = (err) => {
-    console.log("❌ WS error", err);
-  };
+    this.ws.onerror = (err) => {
+      console.log("❌ WS error", err);
+    };
 
-  this.ws.onclose = (ev) => {
-    console.log(`⚠️ WS closed: ${ev.code} ${ev.reason}`);
-  };
+    this.ws.onclose = (ev) => {
+      console.log(`⚠️ WS closed: ${ev.code} ${ev.reason}`);
+    };
 
-  this.ws.onmessage = (event) => {
-    this.handleMessages(event.data);
+    this.ws.onmessage = (event) => {
+      this.handleMessages(event.data);
+    };
   };
-};
 
   convertToBase64(file: Blob): Promise<string> {
     return new Promise((resolve) => {
@@ -210,180 +293,180 @@ export default class SDK {
     });
   }
 
- async  maybeConvertBlobFields(data: any) {
-  if (data.avatar instanceof Blob) {
-    data.avatar = await this.convertToBase64(data.avatar);
+  async maybeConvertBlobFields(data: any) {
+    if (data.avatar instanceof Blob) {
+      data.avatar = await this.convertToBase64(data.avatar);
+    }
+    if (data.banner instanceof Blob) {
+      data.banner = await this.convertToBase64(data.banner);
+    }
+    return data;
   }
-  if (data.banner instanceof Blob) {
-    data.banner = await this.convertToBase64(data.banner);
-  }
-  return data;
-}
 
-// ✅ Helper: Find and update by ID in arrays
+  // ✅ Helper: Find and update by ID in arrays
   updateArrayById(array: any[], id: string, data: any): boolean {
-  const index = array.findIndex((e) => e.id === id);
-  if (index !== -1) {
-    console.log("Updating item at index:", index, "with data:", data);
-    array[index] = { ...array[index], ...data };
-    return true;
+    const index = array.findIndex((e) => e.id === id);
+    if (index !== -1) {
+      console.log("Updating item at index:", index, "with data:", data);
+      array[index] = { ...array[index], ...data };
+      return true;
+    }
+    return false;
   }
-  return false;
-}
 
-// ✅ Helper: Find and update by username in arrays
- updateArrayByUsername = (array: any[], username: string, data: any): boolean =>{
-  const index = array.findIndex((e) => e.username === username);
-  if (index !== -1) {
-    array[index] = { ...array[index], ...data };
-    return true;
+  // ✅ Helper: Find and update by username in arrays
+  updateArrayByUsername = (array: any[], username: string, data: any): boolean => {
+    const index = array.findIndex((e) => e.username === username);
+    if (index !== -1) {
+      array[index] = { ...array[index], ...data };
+      return true;
+    }
+    return false;
   }
-  return false;
-}
- 
+
   updateCache = async (
-  collection: string,
-  id: string,
-  data: any,
-  fullPost?: any,
-  action: "add" | "remove" = "add"
-) => {
-  const { get, set, remove, clear } = useCache();
+    collection: string,
+    id: string,
+    data: any,
+    fullPost?: any,
+    action: "add" | "remove" = "add"
+  ) => {
+    const { get, set, remove, clear } = useCache();
 
-  // Since Map is in-memory, no async keys() or open caches, 
-  // so we need a way to track all cache keys.
-  // For simplicity, assume you maintain a separate Set of keys somewhere,
-  // or you can store keys in a special Map entry.
+    // Since Map is in-memory, no async keys() or open caches, 
+    // so we need a way to track all cache keys.
+    // For simplicity, assume you maintain a separate Set of keys somewhere,
+    // or you can store keys in a special Map entry.
 
-  // Example: a global cacheKeys Set stored in the cache object for demo:
-  // You need to implement and maintain this set elsewhere in your code.
-  const cacheKeys: string[] = get("__cache_keys__") || [];
+    // Example: a global cacheKeys Set stored in the cache object for demo:
+    // You need to implement and maintain this set elsewhere in your code.
+    const cacheKeys: string[] = get("__cache_keys__") || [];
 
-  for (const key of cacheKeys) {
-    let value = get(key);
-    if (!value) continue;
+    for (const key of cacheKeys) {
+      let value = get(key);
+      if (!value) continue;
 
-    let updated = false;
-    const requestUrl = key.toLowerCase();
+      let updated = false;
+      const requestUrl = key.toLowerCase();
 
-    // Matchers same as before:
-    const isCommentsFeedForPost =
-      collection === "comments" &&
-      requestUrl.includes("comments") &&
-      requestUrl.includes(id);
+      // Matchers same as before:
+      const isCommentsFeedForPost =
+        collection === "comments" &&
+        requestUrl.includes("comments") &&
+        requestUrl.includes(id);
 
-    const isBookmarksFeed = requestUrl.includes("bookmarks_bookmarks_");
+      const isBookmarksFeed = requestUrl.includes("bookmarks_bookmarks_");
 
-    switch (collection) {
-      case "posts":
-      case "comments": {
+      switch (collection) {
+        case "posts":
+        case "comments": {
+          if (Array.isArray(value)) {
+            const index = value.findIndex((e: any) => e.id === id);
+            if (index !== -1) {
+              value[index] = { ...value[index], ...data };
+              updated = true;
+            }
+            if (isCommentsFeedForPost && fullPost) {
+              const exists = value.find((e: any) => e.id === fullPost.id);
+              if (action === "add" && !exists) {
+                value.unshift(fullPost);
+                updated = true;
+              } else if (action === "remove" && exists) {
+                value = value.filter((e: any) => e.id !== fullPost.id);
+                updated = true;
+              }
+            } else if (isBookmarksFeed && fullPost) {
+              const exists = value.find((e: any) => e.id === fullPost.id);
+              if (action === "add" && !exists) {
+                value.unshift(fullPost);
+                updated = true;
+              } else if (action === "remove" && exists) {
+                value = value.filter((e: any) => e.id !== fullPost.id);
+                updated = true;
+              }
+            } else {
+              const exists = value.find((e: any) => e.id === id);
+              if (action === "add" && !exists) {
+                value.unshift(fullPost);
+                updated = true;
+              } else if (action === "remove" && exists) {
+                value = value.filter((e: any) => e.id !== id);
+                updated = true;
+              }
+            }
+          } else if (value.payload && Array.isArray(value.payload)) {
+            const index = value.payload.findIndex((e: any) => e.id === id);
+            if (index !== -1) {
+              value.payload[index] = { ...value.payload[index], ...data };
+              updated = true;
+            }
+          } else if (value.payload?.id === id) {
+            value.payload = { ...value.payload, ...data };
+            updated = true;
+          } else if (value.id === id) {
+            value = { ...value, ...data };
+            updated = true;
+          } else if (action === "add" && fullPost) {
+            const exists = value.find((e: any) => e.id === fullPost.id);
+            if (!exists) {
+              value.unshift(fullPost);
+              updated = true;
+            }
+          }
+          break;
+        }
+
+        case "users": {
+          // Assuming convertToBase64 is defined elsewhere if needed
+          if (data.avatar instanceof Blob) {
+            data.avatar = await convertToBase64(data.avatar);
+          }
+          if (data.banner instanceof Blob) {
+            data.banner = await convertToBase64(data.banner);
+          }
+
+          if (value.payload && Array.isArray(value.payload)) {
+            const index = value.payload.findIndex((e: any) => e.username === id);
+            if (index !== -1) {
+              value.payload[index] = { ...value.payload[index], ...data };
+              updated = true;
+            }
+          } else if (Array.isArray(value)) {
+            const index = value.findIndex((e: any) => e.username === id);
+            if (index !== -1) {
+              value[index] = { ...value[index], ...data };
+              updated = true;
+            }
+          } else if (value.payload?.username === id || value?.username === id) {
+            value = { ...value, ...data };
+            updated = true;
+          }
+          break;
+        }
+      }
+
+      // Bookmarks special case
+      if (isBookmarksFeed && fullPost) {
         if (Array.isArray(value)) {
-          const index = value.findIndex((e: any) => e.id === id);
-          if (index !== -1) {
-            value[index] = { ...value[index], ...data };
-            updated = true;
-          }
-          if (isCommentsFeedForPost && fullPost) {
-            const exists = value.find((e: any) => e.id === fullPost.id);
-            if (action === "add" && !exists) {
-              value.unshift(fullPost);
-              updated = true;
-            } else if (action === "remove" && exists) {
-              value = value.filter((e: any) => e.id !== fullPost.id);
-              updated = true;
-            }
-          }else if (isBookmarksFeed && fullPost) {
-            const exists = value.find((e: any) => e.id === fullPost.id);
-            if (action === "add" && !exists) {
-              value.unshift(fullPost);
-              updated = true;
-            } else if (action === "remove" && exists) {
-              value = value.filter((e: any) => e.id !== fullPost.id);
-              updated = true;
-            }
-          }else{
-            const exists = value.find((e: any) => e.id === id);
-            if (action === "add" && !exists) {
-              value.unshift(fullPost);
-              updated = true;
-            } else if (action === "remove" && exists) {
-              value = value.filter((e: any) => e.id !== id);
-              updated = true;
-            }
-          }
-        } else if (value.payload && Array.isArray(value.payload)) {
-          const index = value.payload.findIndex((e: any) => e.id === id);
-          if (index !== -1) {
-            value.payload[index] = { ...value.payload[index], ...data };
-            updated = true;
-          }
-        } else if (value.payload?.id === id) {
-          value.payload = { ...value.payload, ...data };
-          updated = true;
-        } else if (value.id === id) {
-          value = { ...value, ...data };
-          updated = true;
-        }else if(action === "add" && fullPost) {
-          const exists = value.find((e: any) => e.id === fullPost.id);
-          if (!exists) {
+          const exists = value.find((e: any) => e.id === id);
+          if (action === "add" && !exists) {
             value.unshift(fullPost);
             updated = true;
-          }
-        }
-        break;
-      }
-
-      case "users": {
-        // Assuming convertToBase64 is defined elsewhere if needed
-        if (data.avatar instanceof Blob) {
-          data.avatar = await convertToBase64(data.avatar);
-        }
-        if (data.banner instanceof Blob) {
-          data.banner = await convertToBase64(data.banner);
-        }
-
-        if (value.payload && Array.isArray(value.payload)) {
-          const index = value.payload.findIndex((e: any) => e.username === id);
-          if (index !== -1) {
-            value.payload[index] = { ...value.payload[index], ...data };
+          } else if (action === "remove" && exists) {
+            value = value.filter((e: any) => e.id !== id);
             updated = true;
           }
-        } else if (Array.isArray(value)) {
-          const index = value.findIndex((e: any) => e.username === id);
-          if (index !== -1) {
-            value[index] = { ...value[index], ...data };
-            updated = true;
-          }
-        } else if (value.payload?.username === id || value?.username === id) {
-          value = { ...value, ...data };
-          updated = true;
-        }
-        break;
-      }
-    }
-
-    // Bookmarks special case
-    if (isBookmarksFeed && fullPost) {
-      if (Array.isArray(value)) {
-        const exists = value.find((e: any) => e.id === id);
-        if (action === "add" && !exists) {
-          value.unshift(fullPost);
-          updated = true;
-        } else if (action === "remove" && exists) {
-          value = value.filter((e: any) => e.id !== id);
-          updated = true;
         }
       }
-    }
 
-    if (updated) {
-      set(key, value, 3600 * 1000); // 1 hour TTL
-      console.log(`✅ Cache updated for: ${key}`);
-    } else {
-      console.log(`⏭️ No update needed for: ${key}`);
+      if (updated) {
+        set(key, value, 3600 * 1000); // 1 hour TTL
+        console.log(`✅ Cache updated for: ${key}`);
+      } else {
+        console.log(`⏭️ No update needed for: ${key}`);
+      }
     }
-  }
-};
+  };
 
 
 
@@ -551,193 +634,193 @@ export default class SDK {
   }
 
   connectToWS = () => {
-      this.ws = new WebSocket(`${this.serverURL}/subscriptions`);
-      this.ws.onmessage = (event) => {
-        this.handleMessages(event.data);
-      };
-    }
+    this.ws = new WebSocket(`${this.serverURL}/subscriptions`);
+    this.ws.onmessage = (event) => {
+      this.handleMessages(event.data);
+    };
+  }
 
   cdn = {
-      getUrl: (collection: string, id: string, file: string) => {
-        return this.serverURL + `/api/files/${collection}/${id}/${file}`;
-      }
-    };
-    stripPagePart(key: string) {
-      // Replace any _<number>_ in the middle of underscores
-      return key.replace(/_(\d+)_/g, "_");
+    getUrl: (collection: string, id: string, file: string) => {
+      return this.serverURL + `/api/files/${collection}/${id}/${file}`;
+    }
+  };
+  stripPagePart(key: string) {
+    // Replace any _<number>_ in the middle of underscores
+    return key.replace(/_(\d+)_/g, "_");
+  }
+
+  resetCache = async (key?: string) => {
+    const { remove, clear } = useCache();
+
+    if (!key) {
+      await clear();
+      return;
     }
 
-resetCache = async (key?: string) => {
-      const { remove, clear } = useCache();
+    const cache = await caches.open("device-periscope-cache");
+    const requests = await cache.keys();
 
-      if (!key) {
-        await clear();
-        return;
+    const normalizedTarget = this.stripPagePart(key.toLowerCase().trim());
+
+    for (const request of requests) {
+      const parts = request.url.split("/");
+      const requestKey = parts[parts.length - 1];
+      const normalizedRequestKey = this.stripPagePart(requestKey);
+
+      console.log("Normalized CacheKey:", normalizedRequestKey, "Target:", normalizedTarget);
+
+      if (normalizedRequestKey.includes(normalizedTarget)) {
+        await remove(requestKey);
       }
-
-      const cache = await caches.open("device-periscope-cache");
-      const requests = await cache.keys();
-
-      const normalizedTarget = this.stripPagePart(key.toLowerCase().trim());
-
-      for (const request of requests) {
-        const parts = request.url.split("/");
-        const requestKey = parts[parts.length - 1];
-        const normalizedRequestKey = this.stripPagePart(requestKey);
-
-        console.log("Normalized CacheKey:", normalizedRequestKey, "Target:", normalizedTarget);
-
-        if (normalizedRequestKey.includes(normalizedTarget)) {
-          await remove(requestKey);
-        }
-      }
-    };
+    }
+  };
 
 
 
 
 
 
-    sendMsg = async (msg: any, type: any) => {
-      if (!this.ws && msg.byWebsocket) {
-        this.wsReconnect();
-      }
+  sendMsg = async (msg: any, type: any) => {
+    if (!this.ws && msg.byWebsocket) {
+      this.wsReconnect();
+    }
 
-      if (msg.byWebsocket && this.ws) {
-        if (this.ws.readyState !== WebSocket.OPEN) {
-          return {
-            opCode: HttpCodes.INTERNAL_SERVER_ERROR,
-            message: "WebSocket is not open",
-          };
-        }
-
-        this.waitUntilSocketIsOpen(() => {
-          let cid = this.callback((data: any) => { 
-            if (data.type === GeneralTypes.AUTH_ROLL_TOKEN) {
-              const newToken = data.token;
-              let authData = JSON.parse(localStorage.getItem("postr_auth") || "{}");
-              authData.token = newToken;
-              localStorage.setItem("postr_auth", JSON.stringify(authData));
-              this.authStore.model = authData;
-              window.dispatchEvent(this.changeEvent);
-            }
-          });
-
-          msg.callback = cid;
-          this.ws?.send(JSON.stringify(msg));
-        });
-
-        return;
-      }
-
-      // HTTP Path
-      try {
-        // Validate token
-        if (!msg.security || !msg.security.token || isTokenExpired(msg.security.token)) {
-          if (!this.authStore.isValid()) {
-            return {
-              opCode: ErrorCodes.INVALID_OR_MISSING_TOKEN,
-              message: "You are not authorized to perform this action",
-            };
-          }
-        }
-
-        const token = JSON.parse(localStorage.getItem("postr_auth") || "{}").token;
-        const body = JSON.stringify(msg);
-        const headers = {
-          "Content-Type": "application/json",
-          Authorization: token,
+    if (msg.byWebsocket && this.ws) {
+      if (this.ws.readyState !== WebSocket.OPEN) {
+        return {
+          opCode: HttpCodes.INTERNAL_SERVER_ERROR,
+          message: "WebSocket is not open",
         };
+      }
 
-        const endpoint =
-          type === "search"
-            ? `${this.serverURL}/deepsearch`
-            : `${this.serverURL}/collection/${msg.payload.collection}`;
-
-        const response = await fetch(endpoint, {
-          method: "POST",
-          headers,
-          body,
+      this.waitUntilSocketIsOpen(() => {
+        let cid = this.callback((data: any) => {
+          if (data.type === GeneralTypes.AUTH_ROLL_TOKEN) {
+            const newToken = data.token;
+            let authData = JSON.parse(localStorage.getItem("postr_auth") || "{}");
+            authData.token = newToken;
+            localStorage.setItem("postr_auth", JSON.stringify(authData));
+            this.authStore.model = authData;
+            window.dispatchEvent(this.changeEvent);
+          }
         });
 
-        const remaining = parseInt(response.headers.get("Ratelimit-Remaining") || "0");
-        const retryAfter = parseInt(response.headers.get("Retry-After") || "0");
+        msg.callback = cid;
+        this.ws?.send(JSON.stringify(msg));
+      });
 
-        if (!response.ok) {
-          if (remaining === 0 && retryAfter > 0) {
-            dispatchAlert({
-              type: "error",
-              message: `You've been rate-limited. Try again in ${retryAfter} seconds.`,
-            });
-          }
+      return;
+    }
 
-          // Try to parse server response, but fallback to default message
-          let errorMessage = "An error occurred";
-          try {
-            const errorData = await response.json();
-            errorMessage = errorData.message || errorMessage;
-          } catch (_) {
-            // ignore bad JSON
-          }
-
+    // HTTP Path
+    try {
+      // Validate token
+      if (!msg.security || !msg.security.token || isTokenExpired(msg.security.token)) {
+        if (!this.authStore.isValid()) {
           return {
-            opCode: response.status,
-            message: errorMessage,
+            opCode: ErrorCodes.INVALID_OR_MISSING_TOKEN,
+            message: "You are not authorized to perform this action",
           };
         }
+      }
 
-        return await response.json();
-      } catch (err) {
-        dispatchAlert({
-          type: "error",
-          message: "Something went wrong while sending your request.",
-        });
+      const token = JSON.parse(localStorage.getItem("postr_auth") || "{}").token;
+      const body = JSON.stringify(msg);
+      const headers = {
+        "Content-Type": "application/json",
+        Authorization: token,
+      };
+
+      const endpoint =
+        type === "search"
+          ? `${this.serverURL}/deepsearch`
+          : `${this.serverURL}/collection/${msg.payload.collection}`;
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers,
+        body,
+      });
+
+      const remaining = parseInt(response.headers.get("Ratelimit-Remaining") || "0");
+      const retryAfter = parseInt(response.headers.get("Retry-After") || "0");
+
+      if (!response.ok) {
+        if (remaining === 0 && retryAfter > 0) {
+          dispatchAlert({
+            type: "error",
+            message: `You've been rate-limited. Try again in ${retryAfter} seconds.`,
+          });
+        }
+
+        // Try to parse server response, but fallback to default message
+        let errorMessage = "An error occurred";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (_) {
+          // ignore bad JSON
+        }
 
         return {
-          opCode: ErrorCodes.SYSTEM_ERROR,
-          message: "Network or unexpected error occurred",
+          opCode: response.status,
+          message: errorMessage,
         };
       }
-    };
 
+      return await response.json();
+    } catch (err) {
+      dispatchAlert({
+        type: "error",
+        message: "Something went wrong while sending your request.",
+      });
 
-
-    callback(cb: (data: any) => void) {
-      const id = Math.random().toString(36).substring(7);
-      const cleanup = () => {
-        this.callbacks.delete(id);
+      return {
+        opCode: ErrorCodes.SYSTEM_ERROR,
+        message: "Network or unexpected error occurred",
       };
-      this.callbacks.set(id, (data: any) => {
-        cb(data);
-        cleanup();
-      });
-      return id;
     }
- getCacheKey(type: "post" | "posts-comments", postId: string) {
-  switch (type) {
-    case "post":
-      return `post-${postId}`;
-    case "posts-comments":
-      return `posts-${postId}-comments`;
+  };
+
+
+
+  callback(cb: (data: any) => void) {
+    const id = Math.random().toString(36).substring(7);
+    const cleanup = () => {
+      this.callbacks.delete(id);
+    };
+    this.callbacks.set(id, (data: any) => {
+      cb(data);
+      cleanup();
+    });
+    return id;
   }
-}
-  public deepSearch = async (collections: string[], query: string) => {
-      return new Promise(async (resolve, reject) => {
-        let out = await this.sendMsg({
-          type: GeneralTypes.DEEP_SEARCH,
-          payload: {
-            collections,
-            query,
-          },
-          security: {
-            token: this.authStore.model.token,
-          },
-          callback: "",
-        }, "search") as any;
-        if (out.opCode !== HttpCodes.OK) return reject(out);
-        resolve(out.payload);
-      });
+  getCacheKey(type: "post" | "posts-comments", postId: string) {
+    switch (type) {
+      case "post":
+        return `post-${postId}`;
+      case "posts-comments":
+        return `posts-${postId}-comments`;
     }
+  }
+  public deepSearch = async (collections: string[], query: string) => {
+    return new Promise(async (resolve, reject) => {
+      let out = await this.sendMsg({
+        type: GeneralTypes.DEEP_SEARCH,
+        payload: {
+          collections,
+          query,
+        },
+        security: {
+          token: this.authStore.model.token,
+        },
+        callback: "",
+      }, "search") as any;
+      if (out.opCode !== HttpCodes.OK) return reject(out);
+      resolve(out.payload);
+    });
+  }
 
   /**
    * @method collection
@@ -751,205 +834,205 @@ resetCache = async (key?: string) => {
    * }
    */
   public collection(name: string) {
-      return {
-        /**
-         * @method subscribe
-         * @description subscribe to a collection
-         * @param id
-         * @param options
-         * @returns {Promise<any>}
-         */
-        subscribe: async (id: "*" | string, options: { cb: (data: any) => void }) => {
-          return new Promise(async (resolve, reject) => {
-            if (!this.subscriptions.has(`${name}:${id}`)) {
-              this.subscriptions.set(`${name}:${id}`, options.cb);
-              this.waitUntilSocketIsOpen(() => {
-                this.ws?.send(JSON.stringify({ payload: { collection: name, id, callback: `${name}:${id}` }, security: { token: this.authStore.model.token } }));
-              });
-            } else {
-              reject("Already subscribed to this collection");
-            }
-          })
-        },
-        /**
-         * @method list
-         * @description list all records in a collection with pagination
-         * @param page
-         * @param limit
-         * @param options
-         * @param shouldCache
-         * @returns {Promise<{opCode: number, items: any[], totalItems: number, totalPages: number}>}
-         */
-        list: async (
-          page: number = 1,
-          limit: number = 10,
-          options?: {
-            order?: "asc" | "dec" | any;
-            sort?: string;
-            expand?: string[];
-            recommended?: boolean;
-            filter?: string;
-            cacheKey?: string;
-          },
-          shouldCache = true
-        ) => {
-          return new Promise(async (resolve, reject) => {
-            const { set, get, remove, clear } = useCache();
-            const cacheKey = options?.cacheKey || `${this.serverURL}/api/collections/${name}?page=${page}&limit=${limit}`;
-            const cacheData = shouldCache ? await get(cacheKey) : null;
-            if (cacheData) return resolve({
-              opCode: HttpCodes.OK,
-              ...(Array.isArray(cacheData) ? { items: [...cacheData] } : { items: cacheData.payload }), totalItems: cacheData.totalItems, totalPages: cacheData.totalPages
+    return {
+      /**
+       * @method subscribe
+       * @description subscribe to a collection
+       * @param id
+       * @param options
+       * @returns {Promise<any>}
+       */
+      subscribe: async (id: "*" | string, options: { cb: (data: any) => void }) => {
+        return new Promise(async (resolve, reject) => {
+          if (!this.subscriptions.has(`${name}:${id}`)) {
+            this.subscriptions.set(`${name}:${id}`, options.cb);
+            this.waitUntilSocketIsOpen(() => {
+              this.ws?.send(JSON.stringify({ payload: { collection: name, id, callback: `${name}:${id}` }, security: { token: this.authStore.model.token } }));
             });
-
-            let out = await this.sendMsg({
-              type: GeneralTypes.LIST,
-              payload: {
-                collection: name,
-                page,
-                limit,
-                options,
-                cacheKey: options?.cacheKey
-              },
-              security: {
-                token: this.authStore.model.token,
-              },
-              callback: "",
-            }) as any;
-            if (out.opCode !== HttpCodes.OK) return reject(out);
-            console.log(cacheKey, "Caching data for key:", out.payload);
-            shouldCache && set(cacheKey, out, new Date().getTime() + 3600); // cache for 1 hour\ 
-            resolve({
-              opCode: out.opCode,
-              items: out.payload,
-              totalItems: out.totalItems,
-              totalPages: out.totalPages,
-              cacheKey
-            }) as any;
-          });
+          } else {
+            reject("Already subscribed to this collection");
+          }
+        })
+      },
+      /**
+       * @method list
+       * @description list all records in a collection with pagination
+       * @param page
+       * @param limit
+       * @param options
+       * @param shouldCache
+       * @returns {Promise<{opCode: number, items: any[], totalItems: number, totalPages: number}>}
+       */
+      list: async (
+        page: number = 1,
+        limit: number = 10,
+        options?: {
+          order?: "asc" | "dec" | any;
+          sort?: string;
+          expand?: string[];
+          recommended?: boolean;
+          filter?: string;
+          cacheKey?: string;
         },
-
-        createFile: async (file: File) => {
-          // turn file into a buffer
-          let reader = new FileReader();
-          reader.readAsArrayBuffer(file);
-          return new Promise((resolve, reject) => {
-            reader.onload = () => {
-              resolve({ data: Array.from(new Uint8Array(reader.result as ArrayBuffer)), name: file.name });
-            };
+        shouldCache = true
+      ) => {
+        return new Promise(async (resolve, reject) => {
+          const { set, get, remove, clear } = useCache();
+          const cacheKey = options?.cacheKey || `${this.serverURL}/api/collections/${name}?page=${page}&limit=${limit}`;
+          const cacheData = shouldCache ? await get(cacheKey) : null;
+          if (cacheData) return resolve({
+            opCode: HttpCodes.OK,
+            ...(Array.isArray(cacheData) ? { items: [...cacheData] } : { items: cacheData.payload }), totalItems: cacheData.totalItems, totalPages: cacheData.totalPages
           });
-        },
-        /**
-         * @method update
-         * @description Update a record in a collection
-         * @param id
-         * @param data
-         */
 
-        update: async (id: string, data: any, options?: { cacheKey?: string, expand?: any[], invalidateCache: string[] }) => {
-          return new Promise(async (resolve, reject) => {
+          let out = await this.sendMsg({
+            type: GeneralTypes.LIST,
+            payload: {
+              collection: name,
+              page,
+              limit,
+              options,
+              cacheKey: options?.cacheKey
+            },
+            security: {
+              token: this.authStore.model.token,
+            },
+            callback: "",
+          }) as any;
+          if (out.opCode !== HttpCodes.OK) return reject(out);
+          console.log(cacheKey, "Caching data for key:", out.payload);
+          shouldCache && set(cacheKey, out, new Date().getTime() + 3600); // cache for 1 hour\ 
+          resolve({
+            opCode: out.opCode,
+            items: out.payload,
+            totalItems: out.totalItems,
+            totalPages: out.totalPages,
+            cacheKey
+          }) as any;
+        });
+      },
 
-            this.updateCache(name, id, data)
-            let out = await this.sendMsg({
-              type: GeneralTypes.UPDATE,
-              payload: {
-                collection: name,
-                id: id,
-                fields: data,
-                options
-              },
-              security: {
-                token: JSON.parse(localStorage.getItem("postr_auth") || "{}").token
-              },
-              callback: ""
-            })
-            resolve(out.payload)
+      createFile: async (file: File) => {
+        // turn file into a buffer
+        let reader = new FileReader();
+        reader.readAsArrayBuffer(file);
+        return new Promise((resolve, reject) => {
+          reader.onload = () => {
+            resolve({ data: Array.from(new Uint8Array(reader.result as ArrayBuffer)), name: file.name });
+          };
+        });
+      },
+      /**
+       * @method update
+       * @description Update a record in a collection
+       * @param id
+       * @param data
+       */
+
+      update: async (id: string, data: any, options?: { cacheKey?: string, expand?: any[], invalidateCache: string[] }) => {
+        return new Promise(async (resolve, reject) => {
+
+          this.updateCache(name, id, data)
+          let out = await this.sendMsg({
+            type: GeneralTypes.UPDATE,
+            payload: {
+              collection: name,
+              id: id,
+              fields: data,
+              options
+            },
+            security: {
+              token: JSON.parse(localStorage.getItem("postr_auth") || "{}").token
+            },
+            callback: ""
           })
-        },
-        /**
-         * @method create
-         * @description create a record in a collection
-         * @param data
-         * @returns {Promise<any>}
-         */
-        create: async (data: any, options?: { cacheKey?: string, expand?: any[], [key: string]: any, invalidateCache?: string[] }) => {
-          return new Promise(async (resolve, reject) => {
+          resolve(out.payload)
+        })
+      },
+      /**
+       * @method create
+       * @description create a record in a collection
+       * @param data
+       * @returns {Promise<any>}
+       */
+      create: async (data: any, options?: { cacheKey?: string, expand?: any[], [key: string]: any, invalidateCache?: string[] }) => {
+        return new Promise(async (resolve, reject) => {
 
-            if (options?.invalidateCache && Array.isArray(options.invalidateCache)) {
-              const { set, get, remove, clear } = useCache();
-              // check keys that include the one in invalidateCache
-              const keys = await caches.keys();
-              for (let key of keys) {
-                const cacheData = await (await caches.open(key)).keys();
-                for (let cache of cacheData) {
-                  if (options.invalidateCache.includes(cache.url)) {
-                    await caches.delete(cache.url);
-                  }
+          if (options?.invalidateCache && Array.isArray(options.invalidateCache)) {
+            const { set, get, remove, clear } = useCache();
+            // check keys that include the one in invalidateCache
+            const keys = await caches.keys();
+            for (let key of keys) {
+              const cacheData = await (await caches.open(key)).keys();
+              for (let cache of cacheData) {
+                if (options.invalidateCache.includes(cache.url)) {
+                  await caches.delete(cache.url);
                 }
               }
             }
+          }
 
-            let out = await this.sendMsg({
-              type: GeneralTypes.CREATE,
-              payload: {
-                collection: name,
-                invalidateCache: options?.invalidateCache,
-                data,
-                expand: options?.expand
-              },
-              security: {
-                token: JSON.parse(localStorage.getItem("postr_auth") || "{}").token,
-              },
-              callback: "",
-            }) as any
-            resolve(out.payload)
-          });
-        },
-
-        /**
-         * @method get
-         * @description get a record in a collection
-         * @param id
-         * @returns {Promise<any>}
-         */
-
-         get: async (
-  id: string,
-  options?: { expand?: string[], cacheKey?: string },
-  shouldCache = true
-) => {
-  return new Promise(async (resolve, reject) => {
-    const { set, get } = useCache();
-
-    const cacheKey = options?.cacheKey || `${this.serverURL}/api/collections/${name}/${id}`;
-    const cached = shouldCache ? await get(cacheKey) : null;
-
-    if (cached) return resolve(cached);
-
-    const out = await this.sendMsg({
-      type: GeneralTypes.GET,
-      payload: {
-        collection: name,
-        id,
-        options
+          let out = await this.sendMsg({
+            type: GeneralTypes.CREATE,
+            payload: {
+              collection: name,
+              invalidateCache: options?.invalidateCache,
+              data,
+              expand: options?.expand
+            },
+            security: {
+              token: JSON.parse(localStorage.getItem("postr_auth") || "{}").token,
+            },
+            callback: "",
+          }) as any
+          resolve(out.payload)
+        });
       },
-      security: {
-        token: this.authStore.model.token
+
+      /**
+       * @method get
+       * @description get a record in a collection
+       * @param id
+       * @returns {Promise<any>}
+       */
+
+      get: async (
+        id: string,
+        options?: { expand?: string[], cacheKey?: string },
+        shouldCache = true
+      ) => {
+        return new Promise(async (resolve, reject) => {
+          const { set, get } = useCache();
+
+          const cacheKey = options?.cacheKey || `${this.serverURL}/api/collections/${name}/${id}`;
+          const cached = shouldCache ? await get(cacheKey) : null;
+
+          if (cached) return resolve(cached);
+
+          const out = await this.sendMsg({
+            type: GeneralTypes.GET,
+            payload: {
+              collection: name,
+              id,
+              options
+            },
+            security: {
+              token: this.authStore.model.token
+            },
+            callback: ""
+          }) as any;
+
+          if (out.opCode !== HttpCodes.OK) return reject(out);
+
+          if (shouldCache) {
+            console.log("Caching data for key:", cacheKey);
+            await set(cacheKey, out.payload, Date.now() + 3600); // 1 hour TTL
+          }
+
+          resolve(out.payload);
+        });
       },
-      callback: ""
-    }) as any;
 
-    if (out.opCode !== HttpCodes.OK) return reject(out);
-
-    if (shouldCache) {
-      console.log("Caching data for key:", cacheKey);
-      await set(cacheKey, out.payload, Date.now() + 3600); // 1 hour TTL
-    }
-
-    resolve(out.payload);
-  });
-},
-
-      };
-    }
+    };
   }
+}
