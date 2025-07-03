@@ -75,14 +75,14 @@ export default function View(props: any) {
           hasFollowed: post()?.expand.author?.followers?.includes(api.authStore.model.id)
         }); 
         } 
-        if(data.hashtags && data.hashtags.length > 0) {
+        if(data && data?.hashtags && data?.hashtags.length > 0) {
            data.expand.hashtags.map((hashtag: any)=>{
             api.metrics.trackUserMetric("viewed_hashtags", hashtag.id); 
            })  
            api.metrics.uploadUserMetrics()
         }
           window.setWhoCanReply(
-          data.whoCanSee && data.whoCanSee.length > 0 ? data.whoCanSee[0] : []
+          data?.whoCanSee && data?.whoCanSee.length > 0 ? data?.whoCanSee[0] : []
         )
         window.setMainPost(data)
         setTimeout(() => {
@@ -107,15 +107,7 @@ export default function View(props: any) {
 
   // CreateEffect to trigger refetching when the `id` changes
   onMount(() => {
-
-    createEffect(() => {
-      api.checkAuth();
-
-      window.addEventListener("popstate", () => {
-        setPost(null)
-        setLoading(true)
-      });
-      window.addEventListener("commentCreated", (e) => {
+    const listener = (e) =>{
         const newComment = e.detail;
         console.log("New comment received via event:", newComment);
         // Update your comments state here
@@ -126,7 +118,16 @@ export default function View(props: any) {
           ...post,
           comments: [...(post.comments || []), newComment.id], 
         }));
+    }
+
+    createEffect(() => {
+      api.checkAuth();
+
+      window.addEventListener("popstate", () => {
+        setPost(null)
+        setLoading(true)
       });
+      window.addEventListener("commentCreated",  listener)
  
       fetchP();
     }); // Depend on the `id` parameter
