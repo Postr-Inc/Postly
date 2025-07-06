@@ -138,8 +138,7 @@ export default function User() {
                 const relevantPeople: any[] = [];
 
                 for (const follower of user().expand.followers) {
-                  if (
-                    
+                  if ( 
                     follower.id !== api.authStore.model.id && // not you
                     !api.authStore.model.following.includes(follower.id) && // you don’t follow yet
                     !follower.deactivated &&
@@ -317,7 +316,7 @@ export default function User() {
     console.log("Has viewed a post", hasViewedAPost)
 
     if (type === "follow") {
-      if (hasViewedAPost.hasFollowed === false) {
+      if (hasViewedAPost && hasViewedAPost.hasFollowed === false) {
         api.metrics.trackUserMetric("followed_after_post_view", hasViewedAPost.postId)
       }
       followers.push(api.authStore.model.id);
