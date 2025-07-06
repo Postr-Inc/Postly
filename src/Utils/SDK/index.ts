@@ -88,7 +88,7 @@ export default class SDK {
     this.callbacks = new Map();
     this.changeEvent = new CustomEvent("authChange");
     this.subscriptions = new Map();
-    this.wsUrl =  this.serverURL
+    this.wsUrl = this.serverURL
     /**
      * @description data metrics used to track user activity - this is stored locally
      */
@@ -682,7 +682,7 @@ export default class SDK {
 
   cdn = {
     getUrl: (collection: string, id: string, file: string) => {
-      return  `https://origin.postlyapp.com/api/files/${collection}/${id}/${file}`;
+      return `${this.serverURL}/api/files/${collection}/${id}/${file}`;
     }
   };
   stripPagePart(key: string) {
@@ -722,20 +722,25 @@ export default class SDK {
 
 
   sendMsg = async (msg: any, type: any) => {
-    if (!this.ws && msg.byWebsocket) {
-      this.wsReconnect();
-    }
+    // WebSocket path
+    if (msg.byWebsocket) {
+      if (!this.ws) {
+        this.wsReconnect();
+        // Optionally wait for connection here before sending, or just return and try again later
+        return {
+          message: "WebSocket not connected, reconnecting...",
+        };
+      }
 
-    if (msg.byWebsocket && this.ws) {
       if (this.ws.readyState !== WebSocket.OPEN) {
         return {
-          opCode: HttpCodes.INTERNAL_SERVER_ERROR,
           message: "WebSocket is not open",
         };
       }
 
+      // Wait until socket open and send
       this.waitUntilSocketIsOpen(() => {
-        let cid = this.callback((data: any) => {
+        const cid = this.callback((data: any) => {
           if (data.type === GeneralTypes.AUTH_ROLL_TOKEN) {
             const newToken = data.token;
             let authData = JSON.parse(localStorage.getItem("postr_auth") || "{}");
@@ -747,14 +752,15 @@ export default class SDK {
         });
 
         msg.callback = cid;
-        this.ws?.send(JSON.stringify(msg));
+        this.ws.send(JSON.stringify(msg));
       });
 
       return;
     }
 
-    // HTTP Path
+    // HTTP path
     try {
+      // Token validation
       if (!msg.security || !msg.security.token || isTokenExpired(msg.security.token)) {
         if (!this.authStore.isValid()) {
           return {
@@ -764,19 +770,48 @@ export default class SDK {
         }
       }
 
-      const token = JSON.parse(localStorage.getItem("postr_auth") || "{}").token;
-
-      let endpoint: string;
+      const token = JSON.parse(localStorage.getItem("postr_auth") || "{}").token; 
+      let endpoint = "";
       let method = "POST";
-      let body: BodyInit | undefined;
+      let body: BodyInit | undefined = undefined;
       const headers: HeadersInit = {
-        "Authorization": token,
+        Authorization: token,
       };
 
-      if (type === "search") {
-        endpoint = `${this.serverURL}/deepsearch`;
-      } else if (msg.type === "list" || msg.type == "get") {
-        // 🟢 New: use GET for 'list'
+      // Handle file uploads for create with files
+      if (
+        msg.type === GeneralTypes.CREATE &&
+        msg.payload.data.files &&
+        Array.isArray(msg.payload.data.files) &&
+        msg.payload.data.files.length > 0
+      ) {
+        endpoint = `${this.serverURL}/collection/${msg.payload.collection}`;
+
+        const formData = new FormData();
+        const { files, ...restOfData } = msg.payload.data; 
+        // Append JSON payload (without files)
+        const payloadWithoutFiles = {
+          ...msg,
+          payload: {
+            ...msg.payload,
+            data: restOfData,
+          } 
+        };
+        formData.append("payload", JSON.stringify(payloadWithoutFiles.payload));
+        formData.append("type", msg.type);
+        formData.append("security",  JSON.stringify({
+          token
+        }));
+        // Append files individually
+        for (const file of files) {
+          // Ensure file is a File or Blob instance
+          formData.append("files", file);
+        }
+
+        body = formData;
+        // DO NOT set Content-Type for FormData — browser sets it automatically
+      } else if (msg.type === "list" || msg.type === "get") {
+        // GET requests with query parameters
         method = "GET";
         endpoint = `${this.serverURL}/collection/${msg.payload.collection}`;
 
@@ -789,20 +824,28 @@ export default class SDK {
             params.append(key, String(value));
           }
         }
-
         endpoint += `?${params.toString()}`;
+      } else if (type === "search") {
+        // Deep search endpoint
+        endpoint = `${this.serverURL}/deepsearch`;
+        method = "POST";
+        headers["Content-Type"] = "application/json";
+        body = JSON.stringify(msg);
       } else {
+        // Default JSON POST
         endpoint = `${this.serverURL}/collection/${msg.payload.collection}`;
         headers["Content-Type"] = "application/json";
         body = JSON.stringify(msg);
       }
 
+      // Send fetch request
       const response = await fetch(endpoint, {
         method,
         headers,
         body,
       });
 
+      // Handle rate limiting headers
       const remaining = parseInt(response.headers.get("Ratelimit-Remaining") || "0");
       const retryAfter = parseInt(response.headers.get("Retry-After") || "0");
 
@@ -827,7 +870,6 @@ export default class SDK {
       }
 
       return await response.json();
-
     } catch (err) {
       dispatchAlert({
         type: "error",
@@ -839,8 +881,8 @@ export default class SDK {
         message: "Network or unexpected error occurred",
       };
     }
-
   };
+
 
 
 
@@ -1033,6 +1075,7 @@ export default class SDK {
 
           let out = await this.sendMsg({
             type: GeneralTypes.CREATE,
+            hasFiles: data.files,
             payload: {
               collection: name,
               invalidateCache: options?.invalidateCache,
