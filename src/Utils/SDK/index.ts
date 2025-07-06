@@ -125,14 +125,14 @@ export default class SDK {
     this.isOnIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
     const clearCache = async () => {
-      
+
       this.metrics.uploadUserMetrics();
       console.log("Clearing app cache");
       const keys = await caches.keys();
       for (const key of keys) {
         await caches.delete(key);
       }
-       
+
     };
 
     if (this.isOnIos) {
@@ -167,10 +167,10 @@ export default class SDK {
 
   metrics = {
     uploadUserMetrics: async () => {
-      if(!this.authStore.model.username) return;
-      const store = JSON.parse(localStorage.getItem("postr_user_metrics") || "{}"); 
+      if (!this.authStore.model.username) return;
+      const store = JSON.parse(localStorage.getItem("postr_user_metrics") || "{}");
       if (!store.user) {
-         if(this.authStore.model.username) store.user = JSON.parse(localStorage.getItem("postr_auth") || "{}").id;
+        if (this.authStore.model.username) store.user = JSON.parse(localStorage.getItem("postr_auth") || "{}").id;
       }
 
       try {
@@ -182,7 +182,7 @@ export default class SDK {
             "Authorization": JSON.parse(localStorage.getItem("postr_auth") || "{}").token
           }
         });
-        const response = await res; 
+        const response = await res;
         if (response.status == 200) {
           console.log(`✅ Uploaded user metrics`);
           localStorage.removeItem("postr_user_metrics");
@@ -209,15 +209,15 @@ export default class SDK {
 
       if (!store[action].includes(relationId)) {
         store[action].push(relationId);
-        
-      console.log(`✅ Metric added: ${action} → ${relationId}`);
-      }else{
-        store[action] = store[action].filter((id)=> id !== relationId)
-        
-      console.log(`✅ Metric removed: ${action} → ${relationId}`);
+
+        console.log(`✅ Metric added: ${action} → ${relationId}`);
+      } else {
+        store[action] = store[action].filter((id) => id !== relationId)
+
+        console.log(`✅ Metric removed: ${action} → ${relationId}`);
       }
 
-      localStorage.setItem("postr_user_metrics", JSON.stringify(store)); 
+      localStorage.setItem("postr_user_metrics", JSON.stringify(store));
     },
     initializeMetrics: () => {
       const existing = localStorage.getItem("postr_user_metrics");
@@ -277,7 +277,7 @@ export default class SDK {
   }
 
   wsReconnect = () => {
-    if(!this.wsUrl) return;
+    if (!this.wsUrl) return;
     this.ws = new WebSocket(`${this.wsUrl}/subscriptions`);
 
     this.ws.onopen = () => {
@@ -548,14 +548,24 @@ export default class SDK {
         })
 
         const { status, token, message, id } = await response.json();
-         
-        this.wsUrl = response.headers.get("Server") as string 
-        if(this.wsUrl && this.wsUrl.startsWith("localhost")){
-          this.wsUrl = "http://" + this.wsUrl
+
+        let wsUrl = response.headers.get("Server") || "";
+
+        if (!wsUrl || wsUrl.trim() === "") {
+          wsUrl = this.serverURL; // fallback
+        } else if (wsUrl.startsWith("localhost")) {
+          wsUrl = "http://" + wsUrl;
         }
+
+        // Convert http(s) to ws(s)
+        if (!wsUrl.startsWith("ws://") && !wsUrl.startsWith("wss://")) {
+          wsUrl = wsUrl.replace(/^https?:\/\//, (match) => (match === "https://" ? "wss://" : "ws://"));
+        }
+
+        this.wsUrl = wsUrl;
         if (status !== 200) {
           return reject(message)
-        } 
+        }
         else {
           localStorage.setItem("postr_auth", JSON.stringify({ token, wsUrl: this.wsUrl }))
           this.authStore.model.token = token
@@ -623,12 +633,20 @@ export default class SDK {
           },
         }),
       });
-      this.wsUrl = response.headers.get("Server") as string
-        if(this.wsUrl.startsWith("localhost")){
-          this.wsUrl = "http://" + this.wsUrl
-        }else{
-          this.wsUrl = "https://" + this.wsUrl
-        }
+      let wsUrl = response.headers.get("Server") || "";
+
+      if (!wsUrl || wsUrl.trim() === "") {
+        wsUrl = this.serverURL; // fallback
+      } else if (wsUrl.startsWith("localhost")) {
+        wsUrl = "http://" + wsUrl;
+      }
+
+      // Convert http(s) to ws(s)
+      if (!wsUrl.startsWith("ws://") && !wsUrl.startsWith("wss://")) {
+        wsUrl = wsUrl.replace(/^https?:\/\//, (match) => (match === "https://" ? "wss://" : "ws://"));
+      }
+
+      this.wsUrl = wsUrl;
       const result = await response.json();
 
       if (!response.ok) {
@@ -637,7 +655,7 @@ export default class SDK {
 
       this.authStore.model = result.data;
       this.wsReconnect()
-      localStorage.setItem("postr_auth", JSON.stringify({...result.data, wsUrl: this.wsUrl}));
+      localStorage.setItem("postr_auth", JSON.stringify({ ...result.data, wsUrl: this.wsUrl }));
 
       return result.data;
     },
@@ -702,7 +720,7 @@ export default class SDK {
 
 
 
-  
+
   sendMsg = async (msg: any, type: any) => {
     if (!this.ws && msg.byWebsocket) {
       this.wsReconnect();
@@ -736,91 +754,91 @@ export default class SDK {
     }
 
     // HTTP Path
-     try {
-  if (!msg.security || !msg.security.token || isTokenExpired(msg.security.token)) {
-    if (!this.authStore.isValid()) {
-      return {
-        opCode: ErrorCodes.INVALID_OR_MISSING_TOKEN,
-        message: "You are not authorized to perform this action",
-      };
-    }
-  }
-
-  const token = JSON.parse(localStorage.getItem("postr_auth") || "{}").token;
-
-  let endpoint: string;
-  let method = "POST";
-  let body: BodyInit | undefined;
-  const headers: HeadersInit = {
-    "Authorization": token,
-  };
-
-  if (type === "search") {
-    endpoint = `${this.serverURL}/deepsearch`;
-  } else if (msg.type === "list" || msg.type == "get") {
-    // 🟢 New: use GET for 'list'
-    method = "GET";
-    endpoint = `${this.serverURL}/collection/${msg.payload.collection}`;
-
-    const params = new URLSearchParams();
-    for (const [key, value] of Object.entries(msg.payload)) {
-      if (key === "collection") continue; // skip, it's in path
-      if (typeof value === "object") {
-        params.append(key, JSON.stringify(value));
-      } else {
-        params.append(key, String(value));
+    try {
+      if (!msg.security || !msg.security.token || isTokenExpired(msg.security.token)) {
+        if (!this.authStore.isValid()) {
+          return {
+            opCode: ErrorCodes.INVALID_OR_MISSING_TOKEN,
+            message: "You are not authorized to perform this action",
+          };
+        }
       }
-    }
 
-    endpoint += `?${params.toString()}`;
-  } else {
-    endpoint = `${this.serverURL}/collection/${msg.payload.collection}`;
-    headers["Content-Type"] = "application/json";
-    body = JSON.stringify(msg);
-  }
+      const token = JSON.parse(localStorage.getItem("postr_auth") || "{}").token;
 
-  const response = await fetch(endpoint, {
-    method,
-    headers,
-    body,
-  });
+      let endpoint: string;
+      let method = "POST";
+      let body: BodyInit | undefined;
+      const headers: HeadersInit = {
+        "Authorization": token,
+      };
 
-  const remaining = parseInt(response.headers.get("Ratelimit-Remaining") || "0");
-  const retryAfter = parseInt(response.headers.get("Retry-After") || "0");
+      if (type === "search") {
+        endpoint = `${this.serverURL}/deepsearch`;
+      } else if (msg.type === "list" || msg.type == "get") {
+        // 🟢 New: use GET for 'list'
+        method = "GET";
+        endpoint = `${this.serverURL}/collection/${msg.payload.collection}`;
 
-  if (!response.ok) {
-    if (remaining === 0 && retryAfter > 0) {
+        const params = new URLSearchParams();
+        for (const [key, value] of Object.entries(msg.payload)) {
+          if (key === "collection") continue; // skip, it's in path
+          if (typeof value === "object") {
+            params.append(key, JSON.stringify(value));
+          } else {
+            params.append(key, String(value));
+          }
+        }
+
+        endpoint += `?${params.toString()}`;
+      } else {
+        endpoint = `${this.serverURL}/collection/${msg.payload.collection}`;
+        headers["Content-Type"] = "application/json";
+        body = JSON.stringify(msg);
+      }
+
+      const response = await fetch(endpoint, {
+        method,
+        headers,
+        body,
+      });
+
+      const remaining = parseInt(response.headers.get("Ratelimit-Remaining") || "0");
+      const retryAfter = parseInt(response.headers.get("Retry-After") || "0");
+
+      if (!response.ok) {
+        if (remaining === 0 && retryAfter > 0) {
+          dispatchAlert({
+            type: "error",
+            message: `You've been rate-limited. Try again in ${retryAfter} seconds.`,
+          });
+        }
+
+        let errorMessage = "An error occurred";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.message || errorMessage;
+        } catch (_) { }
+
+        return {
+          opCode: response.status,
+          message: errorMessage,
+        };
+      }
+
+      return await response.json();
+
+    } catch (err) {
       dispatchAlert({
         type: "error",
-        message: `You've been rate-limited. Try again in ${retryAfter} seconds.`,
+        message: "Something went wrong while sending your request.",
       });
+
+      return {
+        opCode: ErrorCodes.SYSTEM_ERROR,
+        message: "Network or unexpected error occurred",
+      };
     }
-
-    let errorMessage = "An error occurred";
-    try {
-      const errorData = await response.json();
-      errorMessage = errorData.message || errorMessage;
-    } catch (_) {}
-
-    return {
-      opCode: response.status,
-      message: errorMessage,
-    };
-  }
-
-  return await response.json();
-
-} catch (err) {
-  dispatchAlert({
-    type: "error",
-    message: "Something went wrong while sending your request.",
-  });
-
-  return {
-    opCode: ErrorCodes.SYSTEM_ERROR,
-    message: "Network or unexpected error occurred",
-  };
-}
 
   };
 
