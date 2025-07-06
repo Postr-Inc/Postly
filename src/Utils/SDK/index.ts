@@ -77,6 +77,7 @@ export default class SDK {
   isOnIos: Boolean;
   changeEvent: CustomEvent;
   ws: WebSocket | null = null;
+  wsUrl: string;
   statisticalData: any[];
   callbacks: Map<string, (data: any) => void>;
   subscriptions: Map<string, (data: any) => void>;
@@ -87,6 +88,7 @@ export default class SDK {
     this.callbacks = new Map();
     this.changeEvent = new CustomEvent("authChange");
     this.subscriptions = new Map();
+    this.wsUrl = ""
     /**
      * @description data metrics used to track user activity - this is stored locally
      */
@@ -275,7 +277,8 @@ export default class SDK {
   }
 
   wsReconnect = () => {
-    this.ws = new WebSocket(`${this.serverURL}/subscriptions`);
+    if(!this.wsUrl) return;
+    this.ws = new WebSocket(`${this.wsUrl}/subscriptions`);
 
     this.ws.onopen = () => {
       console.log("✅ WS connected");
@@ -538,18 +541,23 @@ export default class SDK {
     getBasicAuthToken: () => {
       return new Promise(async (resolve, reject) => {
         const response = await fetch(`${this.serverURL}/auth/get-basic-auth-token`, {
-          method: "POST",
+          method: "GET",
           headers: {
             "Content-Type": "application/json"
           }
         })
 
         const { status, token, message, id } = await response.json();
+         
+        this.wsUrl = response.headers.get("Server") as string 
+        if(this.wsUrl && this.wsUrl.startsWith("localhost")){
+          this.wsUrl = "http://" + this.wsUrl
+        }
         if (status !== 200) {
           return reject(message)
-        }
+        } 
         else {
-          localStorage.setItem("postr_auth", JSON.stringify({ token }))
+          localStorage.setItem("postr_auth", JSON.stringify({ token, wsUrl: this.wsUrl }))
           this.authStore.model.token = token
 
           this.authStore.model.id = id
@@ -615,7 +623,12 @@ export default class SDK {
           },
         }),
       });
-
+      this.wsUrl = response.headers.get("Server") as string
+        if(this.wsUrl.startsWith("localhost")){
+          this.wsUrl = "http://" + this.wsUrl
+        }else{
+          this.wsUrl = "https://" + this.wsUrl
+        }
       const result = await response.json();
 
       if (!response.ok) {
@@ -624,7 +637,7 @@ export default class SDK {
 
       this.authStore.model = result.data;
       this.wsReconnect()
-      localStorage.setItem("postr_auth", JSON.stringify(result.data));
+      localStorage.setItem("postr_auth", JSON.stringify({...result.data, wsUrl: this.wsUrl}));
 
       return result.data;
     },
@@ -643,7 +656,7 @@ export default class SDK {
   }
 
   connectToWS = () => {
-    this.ws = new WebSocket(`${this.serverURL}/subscriptions`);
+    this.ws = new WebSocket(`${this.wsUrl}/subscriptions`);
     this.ws.onmessage = (event) => {
       this.handleMessages(event.data);
     };
@@ -689,7 +702,7 @@ export default class SDK {
 
 
 
-
+  
   sendMsg = async (msg: any, type: any) => {
     if (!this.ws && msg.byWebsocket) {
       this.wsReconnect();
@@ -723,73 +736,92 @@ export default class SDK {
     }
 
     // HTTP Path
-    try {
-      // Validate token
-      if (!msg.security || !msg.security.token || isTokenExpired(msg.security.token)) {
-        if (!this.authStore.isValid()) {
-          return {
-            opCode: ErrorCodes.INVALID_OR_MISSING_TOKEN,
-            message: "You are not authorized to perform this action",
-          };
-        }
-      }
-
-      const token = JSON.parse(localStorage.getItem("postr_auth") || "{}").token;
-      const body = JSON.stringify(msg);
-      const headers = {
-        "Content-Type": "application/json",
-        Authorization: token,
-      };
-
-      const endpoint =
-        type === "search"
-          ? `${this.serverURL}/deepsearch`
-          : `${this.serverURL}/collection/${msg.payload.collection}`;
-
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers,
-        body,
-      });
-
-      const remaining = parseInt(response.headers.get("Ratelimit-Remaining") || "0");
-      const retryAfter = parseInt(response.headers.get("Retry-After") || "0");
-
-      if (!response.ok) {
-        if (remaining === 0 && retryAfter > 0) {
-          dispatchAlert({
-            type: "error",
-            message: `You've been rate-limited. Try again in ${retryAfter} seconds.`,
-          });
-        }
-
-        // Try to parse server response, but fallback to default message
-        let errorMessage = "An error occurred";
-        try {
-          const errorData = await response.json();
-          errorMessage = errorData.message || errorMessage;
-        } catch (_) {
-          // ignore bad JSON
-        }
-
-        return {
-          opCode: response.status,
-          message: errorMessage,
-        };
-      }
-
-      return await response.json();
-    } catch (err) {
-      dispatchAlert({
-        type: "error",
-        message: "Something went wrong while sending your request.",
-      });
-
+     try {
+  if (!msg.security || !msg.security.token || isTokenExpired(msg.security.token)) {
+    if (!this.authStore.isValid()) {
       return {
-        opCode: ErrorCodes.SYSTEM_ERROR,
-        message: "Network or unexpected error occurred",
+        opCode: ErrorCodes.INVALID_OR_MISSING_TOKEN,
+        message: "You are not authorized to perform this action",
       };
     }
+  }
+
+  const token = JSON.parse(localStorage.getItem("postr_auth") || "{}").token;
+
+  let endpoint: string;
+  let method = "POST";
+  let body: BodyInit | undefined;
+  const headers: HeadersInit = {
+    "Authorization": token,
+  };
+
+  if (type === "search") {
+    endpoint = `${this.serverURL}/deepsearch`;
+  } else if (msg.type === "list" || msg.type == "get") {
+    // 🟢 New: use GET for 'list'
+    method = "GET";
+    endpoint = `${this.serverURL}/collection/${msg.payload.collection}`;
+
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(msg.payload)) {
+      if (key === "collection") continue; // skip, it's in path
+      if (typeof value === "object") {
+        params.append(key, JSON.stringify(value));
+      } else {
+        params.append(key, String(value));
+      }
+    }
+
+    endpoint += `?${params.toString()}`;
+  } else {
+    endpoint = `${this.serverURL}/collection/${msg.payload.collection}`;
+    headers["Content-Type"] = "application/json";
+    body = JSON.stringify(msg);
+  }
+
+  const response = await fetch(endpoint, {
+    method,
+    headers,
+    body,
+  });
+
+  const remaining = parseInt(response.headers.get("Ratelimit-Remaining") || "0");
+  const retryAfter = parseInt(response.headers.get("Retry-After") || "0");
+
+  if (!response.ok) {
+    if (remaining === 0 && retryAfter > 0) {
+      dispatchAlert({
+        type: "error",
+        message: `You've been rate-limited. Try again in ${retryAfter} seconds.`,
+      });
+    }
+
+    let errorMessage = "An error occurred";
+    try {
+      const errorData = await response.json();
+      errorMessage = errorData.message || errorMessage;
+    } catch (_) {}
+
+    return {
+      opCode: response.status,
+      message: errorMessage,
+    };
+  }
+
+  return await response.json();
+
+} catch (err) {
+  dispatchAlert({
+    type: "error",
+    message: "Something went wrong while sending your request.",
+  });
+
+  return {
+    opCode: ErrorCodes.SYSTEM_ERROR,
+    message: "Network or unexpected error occurred",
+  };
+}
+
   };
 
 
