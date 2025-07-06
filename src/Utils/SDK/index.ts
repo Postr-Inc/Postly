@@ -682,7 +682,7 @@ export default class SDK {
 
   cdn = {
     getUrl: (collection: string, id: string, file: string) => {
-      return this.serverURL + `/api/files/${collection}/${id}/${file}`;
+      return  `origin.postlyapp.com/api/files/${collection}/${id}/${file}`;
     }
   };
   stripPagePart(key: string) {
