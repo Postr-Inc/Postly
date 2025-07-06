@@ -46,20 +46,10 @@ export async function compressImage(file: File, maxSize = 1024): Promise<File> {
   });
 }
 
-export async function prepareFile(file: File) {
+export async function prepareFile(file: File): Promise<File> {
   const fileType = getFileType(file);
-  const compressedFile = fileType === "image" ? await compressImage(file) : file;
-  const reader = new FileReader();
-  return new Promise((resolve, reject) => {
-    reader.onload = () => {
-      resolve({
-        data: Array.from(new Uint8Array(reader.result as ArrayBuffer)),
-        name: compressedFile.name,
-        type: compressedFile.type,
-        size: compressedFile.size,
-      });
-    };
-    reader.onerror = reject;
-    reader.readAsArrayBuffer(compressedFile);
-  });
+  if (fileType === "image") {
+    return compressImage(file);
+  }
+  return file;
 }
