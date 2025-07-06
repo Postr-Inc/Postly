@@ -88,7 +88,7 @@ export default class SDK {
     this.callbacks = new Map();
     this.changeEvent = new CustomEvent("authChange");
     this.subscriptions = new Map();
-    this.wsUrl = ""
+    this.wsUrl =  this.serverURL
     /**
      * @description data metrics used to track user activity - this is stored locally
      */
