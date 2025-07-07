@@ -7,7 +7,9 @@ import { joinClass } from './Utils/Joinclass';
 // Lazily import components for route-based loading
 const Home = lazy(() => import('./Pages'));
 const Login = lazy(() => import('./Pages/auth/login'));
-const Registration = lazy(() => import('./Pages/auth/Registration')); 
+const Registration = lazy(() => import('./Pages/auth/Registration'));
+const Settings = lazy(() => import('./Pages/settings'));
+
 function App() {
   const { route, navigate } = useNavigation();
   const [checkedAuth, setCheckedAuth] = createSignal(false);
@@ -20,7 +22,7 @@ function App() {
     if (!api.authStore.isValid()) {
       try {
         await api.authStore.getBasicAuthToken();
-        setTimeout(() => setCheckedAuth(true), 3500);
+        setTimeout(() => setCheckedAuth(true), 1000);
       } catch (err) {
         console.warn("Unable to issue basic auth token:", err);
       }
@@ -40,7 +42,9 @@ function App() {
   const renderContent = () => {
     switch (route()) {
       case '/':
-        return <Home navigate={navigate} />; 
+        return <Home navigate={navigate} />;
+      case '/settings':
+        return <Settings navigate={navigate} />;
       case '/auth/login':
         return <Login navigate={navigate} />;
       case '/auth/register':
