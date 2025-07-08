@@ -550,7 +550,7 @@ export default function Post(props: Props) {
             >
               <img
                 src={_preview_meta().image || '/placeholder.png'}
-                class="w-full h-full object-cover"
+                class="w-full h-full aspect-[16/9] object-cover"
                 alt="Link preview"
               />
               <div class="absolute bottom-0 bg-black bg-opacity-60 text-white p-2 text-sm w-full">
@@ -578,7 +578,7 @@ export default function Post(props: Props) {
                       <img
                         src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)}
                         class={joinClass(
-                          "w-full h-[400px]  object-cover rounded-xl",
+                          "w-full h-[400px]  aspect-[16/9]  object-cover rounded-xl",
                           "cursor-pointer",
                           theme() === "dark"
                             ? "border-[#121212] border"
