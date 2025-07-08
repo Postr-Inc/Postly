@@ -1,7 +1,7 @@
 
-![Screenshot 2025-07-08 084216](https://github.com/user-attachments/assets/0f6ab81d-ee9d-4854-98b2-3701b1806e6c)
+![Screenshot 2025-07-08 110440](https://github.com/user-attachments/assets/af07fecc-5808-4b1f-abc7-e7c70197c24c)
+# Setup 
 
-# Setup
 
 1. Fork Repo
 2. run `npm install` & `npm run dev`
