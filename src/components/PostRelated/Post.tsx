@@ -546,11 +546,11 @@ export default function Post(props: Props) {
               href={props.embedded_link}
               target="_blank"
               rel="noopener noreferrer"
-              class="block w-full h-[20rem] mt-5 relative rounded-xl overflow-hidden border"
+              class="block w-full h-[20rem]  aspect-[16/9] mt-5 relative rounded-xl overflow-hidden border"
             >
               <img
                 src={_preview_meta().image || '/placeholder.png'}
-                class="w-full h-full aspect-[16/9] object-cover"
+                class="w-full h-full   object-contain"
                 alt="Link preview"
               />
               <div class="absolute bottom-0 bg-black bg-opacity-60 text-white p-2 text-sm w-full">
@@ -578,7 +578,7 @@ export default function Post(props: Props) {
                       <img
                         src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)}
                         class={joinClass(
-                          "w-full h-[400px]  aspect-[16/9]  object-cover rounded-xl",
+                          "w-full h-[400px]  aspect-[16/9]  object-contain rounded-xl",
                           "cursor-pointer",
                           theme() === "dark"
                             ? "border-[#121212] border"
@@ -589,7 +589,7 @@ export default function Post(props: Props) {
                     <Match when={getFileType(item) == "video"}> <VideoWithCleanup
                       src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)}
                       class={joinClass(
-                        "w-full object-cover rounded-xl cursor-pointer",
+                        "w-full  aspect-[16/9]  object-contain rounded-xl cursor-pointer",
                         theme() === "dark" ? "border-[#121212] border" : "border-[#cacaca] border"
                       )}
                     />
