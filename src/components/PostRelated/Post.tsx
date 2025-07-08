@@ -651,12 +651,13 @@ export default function Post(props: Props) {
                 console.log(item, props.id),
                 <CarouselItem
 
-                  onClick={() => {
-                    window.open(api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item), "_blank");
-                  }}>
+                 >
                   <Switch>
                     <Match when={getFileType(item) == "image"}>
                       <img
+                        onClick={() => {
+                    window.open(api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item), "_blank");
+                  }}
                         src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)}
                         class={joinClass(
                           "w-full   aspect-[16/9]  object-fill rounded-xl",
