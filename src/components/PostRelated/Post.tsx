@@ -127,6 +127,9 @@ export default function Post(props: Props) {
   let [commentLength, setCommentLength] = createSignal(
     props?.comments?.length || 0, { equals: false }
   );
+  let [pinned, setPinned] = createSignal(props?.pinned === true, { equals: false })
+
+  console.log(pinned(), props.pinned)
   let [views, setViews] = createSignal<any[]>(props.views || []);
 
 
@@ -199,6 +202,68 @@ export default function Post(props: Props) {
   async function updatePoll() {
 
   }
+
+  async function Pin() {
+    const topin = !pinned();
+    setPinned(topin);
+    try {
+      if (typeof props.setPosts === "function") {
+        props.setPosts((prev: any[]) => {
+          // Update pinned state in the list
+          const updated = prev.map(post =>
+            post.id === props.id ? { ...post, pinned: pinned() } : post
+          );
+
+          // Sort: pinned at top, then by created date descending
+          return updated.sort((a, b) => {
+            // Pinned first
+            if (a.pinned && !b.pinned) return -1;
+            if (!a.pinned && b.pinned) return 1;
+            // Then newest first
+            return new Date(b.created).getTime() - new Date(a.created).getTime();
+          });
+        });
+      }
+      const { res } = await api.send(`/actions/posts/${topin ? "pin" : "unpin"}`, {
+        body: { targetId: props.id }
+      });
+      // Optionally use backend truth
+      if (res && "pinned" in res) {
+        setPinned(res.pinned);
+      }
+      console.log(props.setPosts)
+
+
+      api.updateCache("posts", props.id, { pinned: pinned() });
+      dispatchAlert({
+        type: "success",
+        message: topin ? "Post pinned!" : "Post unpinned!"
+      });
+    } catch (err) {
+      if (typeof props.setPosts === "function") {
+        props.setPosts((prev: any[]) => {
+          // Update pinned state in the list
+          const updated = prev.map(post =>
+            post.id === props.id ? { ...post, pinned: pinned() } : post
+          );
+
+          // Sort: pinned at top, then by created date descending
+          return updated.sort((a, b) => {
+            // Pinned first
+            if (a.pinned && !b.pinned) return -1;
+            if (!a.pinned && b.pinned) return 1;
+            // Then newest first
+            return new Date(b.created).getTime() - new Date(a.created).getTime();
+          });
+        });
+      }
+      dispatchAlert({
+        type: "error",
+        message: "Failed to pin/unpin post."
+      });
+    }
+  }
+
   async function updateLikes(userId: string, isComment: boolean = false) {
     const currentLikes = likes();
     const hasLiked = currentLikes.includes(userId);
@@ -208,7 +273,7 @@ export default function Post(props: Props) {
       haptic.error()
       return;
     }
-    
+
     if (action === "like") {
       setLikes([...likes(), userId]);
       api.metrics.trackUserMetric("posts_liked", props.id)
@@ -218,7 +283,7 @@ export default function Post(props: Props) {
       setLikes(hasLiked
         ? currentLikes.filter(id => id !== userId)
         : [...currentLikes, userId]
-      ); 
+      );
       haptic()
     }
 
@@ -242,6 +307,14 @@ export default function Post(props: Props) {
         api.updateCache(isComment ? "comments" : "posts", props.id, {
           likes: likes(),
         })
+      }
+
+      if (typeof props.setPosts === "function") {
+        props.setPosts((prev: any[]) =>
+          prev.map(post =>
+            post.id === props.id ? { ...post, pinned: pinned() } : post
+          )
+        );
       }
 
     } catch (error) {
@@ -290,7 +363,7 @@ export default function Post(props: Props) {
         link: "/bookmarks"
       });
 
-      api.resetCache(`posts_bookmarks_feed_${api.authStore.model.id}`) 
+      api.resetCache(`posts_bookmarks_feed_${api.authStore.model.id}`)
       haptic();
     }
 
@@ -313,7 +386,7 @@ export default function Post(props: Props) {
       });
     }
   }
- 
+
 
 
   onMount(() => {
@@ -353,7 +426,7 @@ export default function Post(props: Props) {
           }`
       )}
     >
-      <Show when={props.pinned && window.location.pathname.includes("/u")}>
+      <Show when={pinned() && window.location.pathname.includes("/u")}>
         <div class="flex hero   gap-5  "><svg viewBox="0 0 24 24" aria-hidden="true" class={
           joinClass(
             "w-4 h-4",
@@ -457,6 +530,14 @@ export default function Post(props: Props) {
                     Embed Post
                   </a>
                 </li>
+                <Show when={props.expand.author.id === api.authStore.model.id}>
+                  <li>
+                    <a onClick={Pin}>
+                      <svg viewBox="0 0 24 24" aria-hidden="true" class="w-4 h-4 text-black"><g><path d="M7 4.5C7 3.12 8.12 2 9.5 2h5C15.88 2 17 3.12 17 4.5v5.26L20.12 16H13v5l-1 2-1-2v-5H3.88L7 9.76V4.5z"></path></g></svg>
+                      {pinned() ? "Unpin Post" : "Pin Post"}
+                    </a>
+                  </li>
+                </Show>
                 <li>
                   <a>
                     <svg
@@ -468,7 +549,7 @@ export default function Post(props: Props) {
                         <path d="M8.75 21V3h2v18h-2zM18 21V8.5h2V21h-2zM4 21l.004-10h2L6 21H4zm9.248 0v-7h2v7h-2z"></path>
                       </g>
                     </svg>
-                    View Post Engagement
+                    View  Engagement
                   </a>
                 </li>
                 <Show when={props.expand.author.id !== api.authStore.model.id}>
@@ -529,7 +610,7 @@ export default function Post(props: Props) {
       <CardContent class="p-1 cursor-pointer">
 
         <a onClick={() => props.navigate(StringJoin("/view/", props.isComment ? "comments/" : "posts/", props.id))}>
-         <p class="text-md whitespace-pre-wrap">{props.content}</p>
+          <p class="text-md whitespace-pre-wrap">{props.content}</p>
 
         </a>
       </CardContent>
@@ -546,11 +627,11 @@ export default function Post(props: Props) {
               href={props.embedded_link}
               target="_blank"
               rel="noopener noreferrer"
-              class="block w-full h-[20rem]  aspect-[16/9] mt-5 relative rounded-xl overflow-hidden border"
+              class="block w-full h-[20rem] mt-5 relative rounded-xl overflow-hidden border"
             >
               <img
                 src={_preview_meta().image || '/placeholder.png'}
-                class="w-full h-full   object-contain"
+                class="w-full h-full aspect-[16/9] object-cover"
                 alt="Link preview"
               />
               <div class="absolute bottom-0 bg-black bg-opacity-60 text-white p-2 text-sm w-full">
@@ -578,7 +659,7 @@ export default function Post(props: Props) {
                       <img
                         src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)}
                         class={joinClass(
-                          "object-fit w-full rounded-xl",
+                          "w-full h-[400px]  aspect-[16/9]  object-cover rounded-xl",
                           "cursor-pointer",
                           theme() === "dark"
                             ? "border-[#121212] border"
@@ -589,7 +670,7 @@ export default function Post(props: Props) {
                     <Match when={getFileType(item) == "video"}> <VideoWithCleanup
                       src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)}
                       class={joinClass(
-                        " rounded-xl cursor-pointer w-full object-fit",
+                        "w-full object-cover rounded-xl cursor-pointer",
                         theme() === "dark" ? "border-[#121212] border" : "border-[#cacaca] border"
                       )}
                     />
