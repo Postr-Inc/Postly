@@ -578,7 +578,7 @@ export default function Post(props: Props) {
                       <img
                         src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)}
                         class={joinClass(
-                          "w-full h-[400px]  aspect-[16/9]  object-contain rounded-xl",
+                          "object-contain rounded-xl",
                           "cursor-pointer",
                           theme() === "dark"
                             ? "border-[#121212] border"
@@ -589,7 +589,7 @@ export default function Post(props: Props) {
                     <Match when={getFileType(item) == "video"}> <VideoWithCleanup
                       src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)}
                       class={joinClass(
-                        "w-full  aspect-[16/9]  object-contain rounded-xl cursor-pointer",
+                        " rounded-xl cursor-pointer",
                         theme() === "dark" ? "border-[#121212] border" : "border-[#cacaca] border"
                       )}
                     />
