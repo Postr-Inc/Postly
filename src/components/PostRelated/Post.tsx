@@ -631,7 +631,7 @@ export default function Post(props: Props) {
             >
               <img
                 src={_preview_meta().image || '/placeholder.png'}
-                class="w-full h-full aspect-[16/9] object-cover"
+                class="w-full h-full aspect-[16/9] object-fit"
                 alt="Link preview"
               />
               <div class="absolute bottom-0 bg-black bg-opacity-60 text-white p-2 text-sm w-full">
@@ -659,7 +659,7 @@ export default function Post(props: Props) {
                       <img
                         src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)}
                         class={joinClass(
-                          "w-full h-[400px]  aspect-[16/9]  object-cover rounded-xl",
+                          "w-full   aspect-[16/9]  object-fill rounded-xl",
                           "cursor-pointer",
                           theme() === "dark"
                             ? "border-[#121212] border"
@@ -670,7 +670,7 @@ export default function Post(props: Props) {
                     <Match when={getFileType(item) == "video"}> <VideoWithCleanup
                       src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)}
                       class={joinClass(
-                        "w-full object-cover rounded-xl cursor-pointer",
+                        "w-full   aspect-[16/9]  object-fill  rounded-xl cursor-pointer",
                         theme() === "dark" ? "border-[#121212] border" : "border-[#cacaca] border"
                       )}
                     />
