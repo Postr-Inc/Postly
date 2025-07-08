@@ -1,6 +1,5 @@
-<p align="center"><img src="https://v6-0.pages.dev/icons/icon-blue.jpg"/></p>
 
-<p>Postr - building a space safe for all ( open source is simply better. )</p>
+![Screenshot 2025-07-08 084216](https://github.com/user-attachments/assets/0f6ab81d-ee9d-4854-98b2-3701b1806e6c)
 
 # Setup
 
