@@ -12,7 +12,7 @@ export default function () {
         console.log(posts().length)
         //@ts-ignore
         window.removeFromBookMarks = (id) => {
-            setPosts(posts().filter((p) => p.id !== id))
+            setPosts(posts().filter((p) => p.id !== id))  
         }
     })
     return (
@@ -31,9 +31,9 @@ export default function () {
                 </div>
                 </Match>
                 <Match when={posts()  && posts().length >= 1  && !loading() }>
- <For each={posts()}>
+                 <For each={posts()}>
                     {(p) => {
-                        return <Post {...p} />
+                        return <Post {...p} navigate={navigate} />
                     }}
                 </For>
                 </Match>
