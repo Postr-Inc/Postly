@@ -119,7 +119,7 @@ function getFileType(file: string) {
 }
 
 export default function Post(props: Props) {
-  console.log(props.comments?.length)
+  console.log(props.comments?.length, props.expand)
   let { theme } = useTheme();
   let [likes, setLikes] = createSignal<any[]>(props.likes || [], { equals: false });
   let [bookmarks, setBookmarks] = createSignal(props.bookmarked || [])
@@ -529,7 +529,7 @@ export default function Post(props: Props) {
       <CardContent class="p-1 cursor-pointer">
 
         <a onClick={() => props.navigate(StringJoin("/view/", props.isComment ? "comments/" : "posts/", props.id))}>
-          <p class="text-md">{props.content}</p>
+         <p class="text-md whitespace-pre-wrap">{props.content}</p>
 
         </a>
       </CardContent>
