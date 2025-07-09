@@ -26,15 +26,17 @@ async function getAuthToken() {
 
 
 
-async function openWs() {
-  const token = await getAuthToken();
+async function openWs(token) {
+  if(!token){
+    token = await getAuthToken()
+  } 
 
   if (!token) {
     console.error("No auth token found!");
     return;
   }
 
-  const ws = new WebSocket(`wss://api.postlyapp.com/subscriptions?token=${encodeURIComponent(token)}`);
+  const ws = new WebSocket(`ws://localhost:8080/subscriptions?token=${encodeURIComponent(token)}`);
 
   ws.onopen = () => console.log("✅ WS connected in SW");
 
@@ -88,10 +90,10 @@ self.addEventListener("activate", (e) => {
 
 
 self.addEventListener("message", (e) => {
-  const { type } = e.data;
+  const { type, token } = e.data;
   if (type === "reconnect") {
     console.log("Received reconnect message");
-    openWs();
+    openWs(token);
   }
 });
 
