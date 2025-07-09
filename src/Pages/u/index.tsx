@@ -14,7 +14,7 @@ import { HttpCodes } from "@/src/Utils/SDK/opCodes";
 import Page from "@/src/Utils/Shared/Page";
 import StringJoin from "@/src/Utils/StringJoin";
 import { Item } from "@kobalte/core/menubar";
-import { createEffect, createSignal, For, Match, Show, Switch, onMount } from "solid-js";
+import { createEffect, createSignal, For, Match, Show, Switch, onMount, onCleanup } from "solid-js";
 import EditProfileModal from "@/src/components/Modals/EditProfileModal";
 import { Portal } from "solid-js/web";
 import useFeed from "@/src/Utils/Hooks/useFeed";
@@ -22,6 +22,7 @@ import { useParams } from "@solidjs/router";
 import LoadingIndicator from "@/src/components/Icons/loading";
 import FollowingListModal from "@/src/components/Modals/FollowingListModal";
 import MapPin from "@/src/components/Icons/MapPin";
+import { GeneralTypes } from "@/src/Utils/SDK/Types/GeneralTypes";
 async function handleFeed(
   type: string,
   params: any,
@@ -57,197 +58,139 @@ export default function User() {
   const [showFollowingModal, setShowFollowingModal] = createSignal(false)
 
   onMount(() => {
-    createEffect(() => {
-      api.checkAuth()
-      setCurrentPage(0)
-      window.onbeforeunload = function () {
-        window.scrollTo(0, 0);
+    // One-time scroll handler
+    const handleScroll = () => {
+      if (
+        window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - (window.innerWidth > 768 ? 100 : 50) &&
+        !feedLoading() &&
+        currentPage() < totalPages()
+      ) {
+        setCurrentPage(currentPage() + 1);
       }
-      // more on scroll
+    };
 
-      window.onscroll = function () {
-        // handle desktop scrolling
-        if (window.innerWidth > 768) {
-          if (
-            window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 100 &&
-            !feedLoading() &&
-            currentPage() < totalPages()
-          ) {
-            setCurrentPage(currentPage() + 1);
-          }
-        } else if (window.innerWidth <= 768) {
-          // handle mobile scrolling
-          if (
-            window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - 50 &&
-            !feedLoading() &&
-            currentPage() < totalPages()
-          ) {
-            setCurrentPage(currentPage() + 1);
-          }
-        }
-      };
+    window.addEventListener("scroll", handleScroll);
 
+    // Cleanup
+    onCleanup(() => {
+      window.removeEventListener("scroll", handleScroll);
+    });
 
-
+    createEffect(() => {
+      // Reset on user change
+      api.checkAuth();
+      setCurrentPage(1);
+      setNotFound(false);
+      setLoading(true);
 
       api.collection("users")
         .list(1, 1, {
-          filter: StringJoin("username", "=", `"${u.id}"`),
+          filter: `username="${u.id}"`,
           expand: ["followers", "following"],
           cacheKey: `/u/user_${u.id}`
         })
-        .then((data: any) => {
+        .then(data => {
           if (!data.items[0]) {
             setNotFound(true);
-            setUser({
-              id: crypto.randomUUID(),
-              username: "not found",
-              created: new Date().toISOString(),
-              bio: "User not found",
-              followers: [],
-              following: [],
-              expand: {
-                followers: [],
-                following: [],
-              }
-            })
             setLoading(false);
             return;
           }
-          if (data.opCode === HttpCodes.OK) {
-            if (data.items[0].deactivated == true && data.items[0].id !== api.authStore.model.id) {
-              setUser({
-                id: crypto.randomUUID(),
-                username: "not found",
-                created: new Date().toISOString(),
-                bio: "User not found",
-                deactivated: true,
-                followers: [],
-                following: [],
-                expand: {
-                  followers: [],
-                  following: [],
-                }
-              })
-              setLoading(false);
-            } else {
 
-              setUser(data.items[0]);
-              if (user().expand.followers && api.authStore.model.username) {
+          const profile = data.items[0];
 
-                const relevantPeople: any[] = [];
+          if (profile.deactivated && profile.id !== api.authStore.model.id) {
+            setUser({ ...profile, username: "not found", bio: "User not found" });
+            setNotFound(true);
+            setLoading(false);
+            return;
+          }
 
-                for (const follower of user().expand.followers) {
-                  if ( 
-                    follower.id !== api.authStore.model.id && // not you
-                    !api.authStore.model.following.includes(follower.id) && // you don’t follow yet
-                    !follower.deactivated &&
-                    !relevantPeople.find(p => p.id === follower.id)
-                  ) {
-                    relevantPeople.push(follower);
-                    if (relevantPeople.length >= 5) break;
-                  }
-                }
-                window.setRelevantPeople(relevantPeople)
-              }
-              switch (view()) {
-                case "posts":
-                  handleFeed("posts", u, currentPage(), {
-                    filter: `author.username="${u.id}"`,
-                    sort: '-pinned',
-                  }).then((data: any) => {
-                    if (data.opCode === HttpCodes.OK) {
-                      setPosts(data.items);
-                      setTotalPages(data.totalPages);
-                      setLoading(false);
-                    }
-                  });
-                  break;
-                case "Likes":
-                  handleFeed("likes", u, currentPage(), {
-                    filter: `likes ~"${user().id}" && author.id !="${user().id}"`,
-                  }).then((data: any) => {
-                    if (data.opCode === HttpCodes.OK) {
-                      setPosts(data.items);
-                      setTotalPages(data.totalPages);
-                      setLoading(false);
-                    }
-                  });
-                  break;
-                case "comments":
-                  handleFeed("comments", u, currentPage(), {
-                    filter: `author.username="${u.id}"`,
-                  }).then((data: any) => {
-                    if (data.opCode === HttpCodes.OK) {
-                      setPosts(data.items);
-                      setLoading(false)
-                      setTotalPages(data.totalPages)
-                    }
-                  });
-              }
+          setUser(profile);
 
-            }
+          // Who to follow suggestion
+          if (profile.expand.followers && api.authStore.model.username) {
+            const relevant = profile.expand.followers
+              .filter(f => f.id !== api.authStore.model.id && !api.authStore.model.following.includes(f.id) && !f.deactivated)
+              .slice(0, 5);
+            window.setRelevantPeople(relevant);
+          }
 
+          switch (view()) {
+            case "posts":
+              handleFeed("posts", u, 1, {
+                filter: `author.username="${u.id}"`,
+                sort: "-pinned"
+              }).then(data => {
+                setPosts(data.items);
+                setTotalPages(data.totalPages);
+                setLoading(false);
+              });
+              break;
+            case "Likes":
+              handleFeed("likes", u, 1, {
+                filter: `likes ~"${profile.id}" && author.id !="${profile.id}"`,
+              }).then(data => {
+                setPosts(data.items);
+                setTotalPages(data.totalPages);
+                setLoading(false);
+              });
+              break;
+            case "comments":
+              handleFeed("comments", u, 1, {
+                filter: `author.username="${u.id}"`,
+              }).then(data => {
+                setPosts(data.items);
+                setTotalPages(data.totalPages);
+                setLoading(false);
+              });
+              break;
           }
         });
 
+      setRelevantText("You might also like");
+    });
 
-
-      //@ts-ignore
-      setRelevantText("You might also like")
-      setCurrentPage(1)
-    }, [u.id]);
-
+    // Handle page > 1
     createEffect(() => {
-      if (currentPage() > 1) {
+      if (currentPage() <= 1) return;
 
-        if (user().deactivated) {
-          setLoading(false)
-          return
-        };
-        switch (view()) {
-          case "posts":
-            handleFeed("posts", u, currentPage(), {
-              filter: `author.username="${u.id}"`,
-              sort: '-pinned',
-            }).then((data: any) => {
-              if (data.opCode === HttpCodes.OK) {
-                setPosts([...posts(), ...data.items]);
-                setTotalPages(data.totalPages);
-                setLoading(false);
-              }
-            });
-            break;
-          case "Likes":
-            handleFeed("likes", u, currentPage(), {
-              filter: `likes ~"${user().id}" && author.id !="${user().id}"`,
-            }).then((data: any) => {
-              if (data.opCode === HttpCodes.OK) {
-                setPosts([...posts(), ...data.items]);
-                setTotalPages(data.totalPages);
-                setLoading(false);
-              }
-            });
-            break;
-          case "comments":
-            handleFeed("comments", u, currentPage(), {
-              filter: `author.username="${u.id}"`,
-            }).then((data: any) => {
-              if (data.opCode === HttpCodes.OK) {
-                setPosts([...posts(), ...data.items]);
-                setTotalPages(data.items)
-                setLoading(false)
-              }
-            });
-          case "snippets":
-            break;
-        }
+      setLoading(true);
+
+      const common = { page: currentPage(), user: u };
+
+      switch (view()) {
+        case "posts":
+          handleFeed("posts", u, currentPage(), {
+            filter: `author.username="${u.id}"`,
+            sort: "-pinned"
+          }).then(data => {
+            setPosts([...posts(), ...data.items]);
+            setTotalPages(data.totalPages);
+            setLoading(false);
+          });
+          break;
+        case "Likes":
+          handleFeed("likes", u, currentPage(), {
+            filter: `likes ~"${user().id}" && author.id !="${user().id}"`,
+          }).then(data => {
+            setPosts([...posts(), ...data.items]);
+            setTotalPages(data.totalPages);
+            setLoading(false);
+          });
+          break;
+        case "comments":
+          handleFeed("comments", u, currentPage(), {
+            filter: `author.username="${u.id}"`,
+          }).then(data => {
+            setPosts([...posts(), ...data.items]);
+            setTotalPages(data.totalPages);
+            setLoading(false);
+          });
+          break;
       }
-    }, [currentPage()]);
+    });
+  });
 
-
-
-  })
 
 
   function swapFeed(type: string) {
@@ -334,6 +277,28 @@ export default function User() {
           targetId: targetUserId
         }
       });
+
+      if (type == "follow" && api.ws) {
+        api.ws.send(JSON.stringify({
+          payload: {
+            type: GeneralTypes.NOTIFY,
+            notification_data: {
+              author: api.authStore.model.id,
+              recipients: [user().id],
+              url: `${window.location.host}/notifications`,
+              notification_title: `${api.authStore.model.username} started following you`,
+              notification_body: ``,
+              message: ``,
+              icon: `${api.authStore.model.avatar ? api.cdn.getUrl("users", api.authStore.model.id, api.authStore.model.avatar || "") : "/icons/usernotfound/image.png"}`,
+              image: `${api.cdn.getUrl("posts", props.id, props.files[0])}`
+            }
+          },
+          security: {
+            token: api.authStore.model.token
+          }
+        }))
+
+      }
 
       // Optionally update local UI (after server confirms)
       // Fetch fresh state or update safely
@@ -712,6 +677,7 @@ export default function User() {
                               id={copiedObj.id}
                               likes={copiedObj.likes}
                               navigate={navigate}
+                              setPosts={setPosts}
                               pinned={copiedObj.pinned}
                               expand={copiedObj.expand}
                               embedded_link={copiedObj.embedded_link}
