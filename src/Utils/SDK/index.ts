@@ -14,6 +14,12 @@ type MetricsStore = {
   commented_on_post: string[];
   followed_after_post_view: string[];
 };
+
+type AuthData = {
+  token: string;
+  id?: string;
+  [key: string]: any;
+};
 export type AlertPayload = {
   type: "error" | "success" | "info" | "warning";
   message: string;
@@ -563,7 +569,7 @@ export default class SDK {
 
         const { status, token, message, id } = await response.json();
 
-        let wsUrl = response.headers.get("Server");
+        let wsUrl = response.headers.get("Server") || "";
 
         if (!wsUrl || wsUrl.trim() === "") {
           wsUrl = this.serverURL; // fallback
@@ -630,83 +636,82 @@ export default class SDK {
       if (window.location.pathname !== "/auth/login") {
         localStorage.removeItem("postr_auth");
         window.location.href = "/auth/login";
-      } 
+      }
 
 
     },
     login: async (emailOrUsername: string, password: string) => {
-      const response = await fetch(`${this.serverURL}/auth/login`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          emailOrUsername,
-          password,
-          deviceInfo: {
-            userAgent: navigator.userAgent,
+      try {
+        const response = await fetch(`${this.serverURL}/auth/login`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
           },
-        }),
-      });
-      let wsUrl = response.headers.get("Server") || "";
+          body: JSON.stringify({
+            emailOrUsername,
+            password,
+            deviceInfo: {
+              userAgent: navigator.userAgent,
+            },
+          }),
+        });
 
-      if (!wsUrl || wsUrl.trim() === "") {
-        wsUrl = this.serverURL; // fallback
-      } else if (wsUrl.startsWith("localhost")) {
-        wsUrl = "http://" + wsUrl;
-      }
+        // Handle WebSocket URL from headers or fallback
+        let wsUrl = response.headers.get("Server") || this.serverURL;
 
-      // Convert http(s) to ws(s)
-      if (!wsUrl.startsWith("ws://") && !wsUrl.startsWith("wss://")) {
-        wsUrl = wsUrl.replace(/^https?:\/\//, (match) => (match === "https://" ? "wss://" : "ws://"));
-      }
-
-      this.wsUrl = wsUrl;
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw result; // Pass whole error to the UI
-      }
-
-      this.authStore.model = result.data;
-      this.wsReconnect()
-      localStorage.setItem("postr_auth", JSON.stringify({ ...result.data, wsUrl: this.wsUrl }));
-      this.ws?.close()
-      this.wsReconnect()
-      navigator.serviceWorker.controller?.postMessage({ type: "reconnect" });
-
-
-      // Store token in IndexedDB for service worker access
-      const dbRequest = indexedDB.open("postr_auth_db", 1);
-      dbRequest.onupgradeneeded = function (event) {
-        const db = dbRequest.result;
-        if (!db.objectStoreNames.contains("auth")) {
-          db.createObjectStore("auth", { keyPath: "id" });
+        // Ensure proper URL format
+        if (wsUrl.startsWith("localhost")) {
+          wsUrl = `http://${wsUrl}`;
         }
-      };
-      dbRequest.onsuccess = function (event) {
-        const db = dbRequest.result;
-        const tx = db.transaction("auth", "readwrite");
-        const store = tx.objectStore("auth");
-        store.put({ id: "token", token: result.data.token });
-        tx.oncomplete = () => db.close();
-      };
 
-      return result.data;
+        // Convert http(s) to ws(s)
+        if (!wsUrl.startsWith("ws://") && !wsUrl.startsWith("wss://")) {
+          wsUrl = wsUrl.replace(/^https?:\/\//, (match) =>
+            match === "https://" ? "wss://" : "ws://"
+          );
+        }
+
+        this.wsUrl = wsUrl;
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw result; // Pass error to the UI
+        }
+
+        // Update auth store and localStorage
+        this.authStore.model = result.data;
+        const authData = { ...result.data, wsUrl: this.wsUrl };
+        localStorage.setItem("postr_auth", JSON.stringify(authData));
+
+        // Handle WebSocket reconnection
+        if (this.ws) {
+          this.ws.close();
+        }
+        this.wsReconnect();
+
+        // Store token in IndexedDB for service worker
+        await this.storeTokenInIndexedDB(result.data.token);
+
+        // Notify service worker
+        if (navigator.serviceWorker?.controller) {
+          navigator.serviceWorker.controller.postMessage({
+            type: "reconnect",
+            token: result.data.token
+          });
+        }
+
+        return result.data;
+      } catch (error) {
+        console.error("Login failed:", error);
+        throw error;
+      }
     },
 
+    // Helper method for IndexedDB token storage
 
-    async getIP() {
-      try {
-        const response = await fetch("https://api.ipify.org?format=json");
-        const data = await response.json();
-        this.ip = data.ip;
-        return data.ip;
-      } catch (error) {
-        console.error(error);
-      }
-    }
-  }
+
+
+    
 
   connectToWS = () => {
     this.ws = new WebSocket(`${this.wsUrl}/subscriptions`);
@@ -753,7 +758,42 @@ export default class SDK {
 
 
 
+  private storeTokenInIndexedDB = (token: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const dbRequest = indexedDB.open("postr_auth_db", 1);
 
+      dbRequest.onerror = () => {
+        console.error("Failed to open IndexedDB");
+        reject(new Error("Failed to open IndexedDB"));
+      };
+
+      dbRequest.onupgradeneeded = (event) => {
+        const db = dbRequest.result;
+        if (!db.objectStoreNames.contains("auth")) {
+          db.createObjectStore("auth", { keyPath: "id" });
+        }
+      };
+
+      dbRequest.onsuccess = (event) => {
+        const db = dbRequest.result;
+        const tx = db.transaction("auth", "readwrite");
+        const store = tx.objectStore("auth");
+
+        const request = store.put({ id: "token", token });
+
+        request.onerror = () => {
+          console.error("Failed to store token");
+          db.close();
+          reject(new Error("Failed to store token"));
+        };
+
+        tx.oncomplete = () => {
+          db.close();
+          resolve();
+        };
+      };
+    });
+  },
 
 
   sendMsg = async (msg: any, type: any) => {
@@ -798,10 +838,10 @@ export default class SDK {
               tx.oncomplete = () => db.close();
             };
             window.dispatchEvent(this.changeEvent);
-            
+
             navigator.serviceWorker.controller?.postMessage({ type: "reconnect" });
           }
-        }); 
+        });
 
         msg.callback = cid;
         this.ws.send(JSON.stringify(msg));
