@@ -591,6 +591,7 @@ export default class SDK {
           this.authStore.model.token = token
 
           this.authStore.model.id = id
+          this.storeTokenInIndexedDB(token)
           resolve(true)
         }
       })
