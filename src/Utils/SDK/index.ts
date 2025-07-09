@@ -794,7 +794,7 @@ export default class SDK {
         };
       };
     });
-  },
+  } 
 
 
   sendMsg = async (msg: any, type: any) => {
