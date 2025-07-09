@@ -50,6 +50,7 @@ import { O } from "@kobalte/core/dist/index-766ec211";
 import useCache from "@/src/Utils/Hooks/useCache";
 import BlockUserModal from "../Modals/BlockedModal";
 import { P } from "@kobalte/core/dist/popper-root-14a88a55";
+import { GeneralTypes } from "@/src/Utils/SDK/Types/GeneralTypes";
 const created = (created: any) => {
   let date = new Date(created);
   let now = new Date();
@@ -279,6 +280,27 @@ export default function Post(props: Props) {
       api.metrics.trackUserMetric("posts_liked", props.id)
       api.metrics.uploadUserMetrics()
       haptic()
+      if (api.ws) {
+        api.ws.send(JSON.stringify({
+          payload: {
+            type: GeneralTypes.NOTIFY,
+            notification_data: {
+              author: api.authStore.model.id,
+              ...(props.isComment ? {comment: props.id} : {post: props.id}), 
+              recipients: [props.author],
+              url: `${window.location.host}/notifications`,
+              notification_title: `${api.authStore.model.username} Just liked your post 🥳`,
+              notification_body: props.content,
+              message: props.content,
+              icon: `${api.authStore.model.avatar ? api.cdn.getUrl("users", api.authStore.model.id, api.authStore.model.avatar || "") : "/icons/usernotfound/image.png"}`,
+              image: `${api.cdn.getUrl("posts", props.id, props.files[0])}`
+            }
+          },
+          security: {
+            token: api.authStore.model.token
+          }
+        }))
+      }
     } else {
       setLikes(hasLiked
         ? currentLikes.filter(id => id !== userId)
@@ -309,15 +331,8 @@ export default function Post(props: Props) {
         })
       }
 
-      if (typeof props.setPosts === "function") {
-        props.setPosts((prev: any[]) =>
-          prev.map(post =>
-            post.id === props.id ? { ...post, pinned: pinned() } : post
-          )
-        );
-      }
-
-    } catch (error) {
+       
+    } catch (error) { 
       dispatchAlert({
         type: "error",
         message: error instanceof Error ? error.message : String(error)
@@ -391,22 +406,33 @@ export default function Post(props: Props) {
 
   onMount(() => {
     const handler = (event: MessageEvent) => {
-      const { data } = JSON.parse(event.data);
-      if ((data.action === "like" || data.action === "unlike") && data.targetId === props.id) {
+      let parsed;
+      try {
+        parsed = JSON.parse(event.data);
+      } catch {
+        return;
+      }
+      const data = parsed?.data;
+      if (!data) return;
+      if (data.action && (data.action === "like" || data.action === "unlike") && data.targetId === props.id) {
         const current = likes();
-        if (data.action === "like" && !current.includes(data.userId)) {
-          setLikes([...current, data.userId]);
+        if (data.action === "like" && !current.includes(data.res.author)) {
+          setLikes([...current, data.res.author]);
         }
         if (data.action === "unlike") {
-          setLikes(current.filter(id => id !== data.userId));
+          setLikes(current.filter(id => id !== data.res.author));
         }
       }
     };
 
-    api.ws.addEventListener("message", handler);
+    if (api.ws) {
+      api.ws.addEventListener("message", handler);
+    }
 
     onCleanup(() => {
-      api.ws.removeEventListener("message", handler);
+      if (api.ws) {
+        api.ws.removeEventListener("message", handler);
+      }
     });
   });
 
@@ -643,7 +669,7 @@ export default function Post(props: Props) {
       </Switch>
       <Show when={props.files && props.files.length > 0}>
 
-        <CardContent class="p-1   h-[300px]">
+        <CardContent class="p-1   ">
 
           <Carousel >
             <For each={props.files} fallback={<></>}>
@@ -651,13 +677,13 @@ export default function Post(props: Props) {
                 console.log(item, props.id),
                 <CarouselItem
 
-                 >
+                >
                   <Switch>
                     <Match when={getFileType(item) == "image"}>
                       <img
                         onClick={() => {
-                    window.open(api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item), "_blank");
-                  }}
+                          window.open(api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item), "_blank");
+                        }}
                         src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)}
                         class={joinClass(
                           "w-full   aspect-[16/9]  object-fill rounded-xl",
