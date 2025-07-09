@@ -34,7 +34,7 @@ async function openWs() {
     return;
   }
 
-  const ws = new WebSocket(`ws://localhost:8080/subscriptions?token=${encodeURIComponent(token)}`);
+  const ws = new WebSocket(`wss://api.postlyapp.com/subscriptions?token=${encodeURIComponent(token)}`);
 
   ws.onopen = () => console.log("✅ WS connected in SW");
 
