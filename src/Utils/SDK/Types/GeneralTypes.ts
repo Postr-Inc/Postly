@@ -7,4 +7,5 @@ export enum GeneralTypes {
     SUBSCRIBE = 'subscribe',
     DEEP_SEARCH = 'deep_search',
     AUTH_ROLL_TOKEN = 'auth_roll_token',
+    NOTIFY = 'notify'
 }
