@@ -96,17 +96,7 @@ class WSManager {
     // Don't reconnect if token was invalid
     if (!isTokenValid) return;
     
-    // Exponential backoff
-    const delay = Math.min(1000 * Math.pow(2, reconnectAttempts), 30000);
-    reconnectAttempts++;
     
-    if (reconnectAttempts <= MAX_RECONNECT_ATTEMPTS) {
-      console.log(`Reconnecting in ${delay}ms (attempt ${reconnectAttempts})`);
-      reconnectTimer = setTimeout(() => this.connect(), delay);
-    } else {
-      console.log('Max reconnection attempts reached');
-      isTokenValid = false;
-    }
   }
 
   static handleMessage(data) {
