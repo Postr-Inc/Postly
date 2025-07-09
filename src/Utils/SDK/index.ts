@@ -95,6 +95,19 @@ export default class SDK {
     this.statisticalData = JSON.parse(localStorage.getItem("postr_statistical") || "{}");
     this.notedMetrics = new Map();
 
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/serviceworker.js").catch((e) => {
+        console.log(e)
+      })
+      Notification.requestPermission().then(permission => {
+        if (permission === "granted") {
+          console.log("✅ Notification permission granted");
+        } else {
+          console.log("❌ Notification permission denied");
+        }
+      });
+
+    }
     this.metrics.initializeMetrics()
     // autoroll new token every hour
     setInterval(() => {
@@ -278,7 +291,8 @@ export default class SDK {
 
   wsReconnect = () => {
     if (!this.wsUrl) return;
-    this.ws = new WebSocket(`${this.wsUrl}/subscriptions`);
+    var token = JSON.parse(localStorage.getItem("postr_auth"))?.token
+    this.ws = new WebSocket(`${this.wsUrl}/subscriptions${token ? `?token=${encodeURIComponent(token)}` : ''}`);
 
     this.ws.onopen = () => {
       console.log("✅ WS connected");
@@ -616,7 +630,8 @@ export default class SDK {
       if (window.location.pathname !== "/auth/login") {
         localStorage.removeItem("postr_auth");
         window.location.href = "/auth/login";
-      }
+      } 
+
 
     },
     login: async (emailOrUsername: string, password: string) => {
@@ -656,6 +671,26 @@ export default class SDK {
       this.authStore.model = result.data;
       this.wsReconnect()
       localStorage.setItem("postr_auth", JSON.stringify({ ...result.data, wsUrl: this.wsUrl }));
+      this.ws?.close()
+      this.wsReconnect()
+      navigator.serviceWorker.controller?.postMessage({ type: "reconnect" });
+
+
+      // Store token in IndexedDB for service worker access
+      const dbRequest = indexedDB.open("postr_auth_db", 1);
+      dbRequest.onupgradeneeded = function (event) {
+        const db = dbRequest.result;
+        if (!db.objectStoreNames.contains("auth")) {
+          db.createObjectStore("auth", { keyPath: "id" });
+        }
+      };
+      dbRequest.onsuccess = function (event) {
+        const db = dbRequest.result;
+        const tx = db.transaction("auth", "readwrite");
+        const store = tx.objectStore("auth");
+        store.put({ id: "token", token: result.data.token });
+        tx.oncomplete = () => db.close();
+      };
 
       return result.data;
     },
@@ -747,9 +782,26 @@ export default class SDK {
             authData.token = newToken;
             localStorage.setItem("postr_auth", JSON.stringify(authData));
             this.authStore.model = authData;
+            // Update token in IndexedDB for service worker access
+            const dbRequest = indexedDB.open("postr_auth_db", 1);
+            dbRequest.onupgradeneeded = function (event) {
+              const db = dbRequest.result;
+              if (!db.objectStoreNames.contains("auth")) {
+                db.createObjectStore("auth", { keyPath: "id" });
+              }
+            };
+            dbRequest.onsuccess = function (event) {
+              const db = dbRequest.result;
+              const tx = db.transaction("auth", "readwrite");
+              const store = tx.objectStore("auth");
+              store.put({ id: "token", token: newToken });
+              tx.oncomplete = () => db.close();
+            };
             window.dispatchEvent(this.changeEvent);
+            
+            navigator.serviceWorker.controller?.postMessage({ type: "reconnect" });
           }
-        });
+        }); 
 
         msg.callback = cid;
         this.ws.send(JSON.stringify(msg));
@@ -770,7 +822,7 @@ export default class SDK {
         }
       }
 
-      const token = JSON.parse(localStorage.getItem("postr_auth") || "{}").token; 
+      const token = JSON.parse(localStorage.getItem("postr_auth") || "{}").token;
       let endpoint = "";
       let method = "POST";
       let body: BodyInit | undefined = undefined;
@@ -788,18 +840,18 @@ export default class SDK {
         endpoint = `${this.serverURL}/collection/${msg.payload.collection}`;
 
         const formData = new FormData();
-        const { files, ...restOfData } = msg.payload.data; 
+        const { files, ...restOfData } = msg.payload.data;
         // Append JSON payload (without files)
         const payloadWithoutFiles = {
           ...msg,
           payload: {
             ...msg.payload,
             data: restOfData,
-          } 
+          }
         };
         formData.append("payload", JSON.stringify(payloadWithoutFiles.payload));
         formData.append("type", msg.type);
-        formData.append("security",  JSON.stringify({
+        formData.append("security", JSON.stringify({
           token
         }));
         // Append files individually
