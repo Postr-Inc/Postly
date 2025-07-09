@@ -1,29 +1,29 @@
-// Service Worker (sw.js)
+// sw.js
 
 let wsConnection = null;
 let reconnectTimer = null;
-const MAX_RECONNECT_ATTEMPTS = 3; // Reduced from 5
+const MAX_RECONNECT_ATTEMPTS = 3;
 let reconnectAttempts = 0;
 let isTokenValid = false;
 
-// Improved connection manager
 class WSManager {
   static async connect(token) {
-    // Clean up any existing connection
     this.disconnect();
-    
+
     if (!token) {
       token = await this.getToken();
       if (!token) {
-        console.log('No token available, skipping connection');
+        console.warn('No token available, skipping WS connect');
         return;
       }
     }
 
+    console.log('🔌 Connecting WS with token:', token);
+
     wsConnection = new WebSocket(`wss://api.postlyapp.com/subscriptions?token=${encodeURIComponent(token)}`);
-    
+
     wsConnection.onopen = () => {
-      console.log('✅ WS connected in SW');
+      console.log('✅ WS connected');
       reconnectAttempts = 0;
       isTokenValid = true;
     };
@@ -33,18 +33,19 @@ class WSManager {
         const data = JSON.parse(event.data);
         this.handleMessage(data);
       } catch (e) {
-        console.error('Message parse error:', e);
+        console.error('WS message parse error:', e);
       }
     };
 
     wsConnection.onclose = (event) => {
-      console.log(`WS closed: ${event.code} ${event.reason}`);
+      console.warn(`WS closed: ${event.code} ${event.reason}`);
       this.handleClose(event);
     };
 
     wsConnection.onerror = (error) => {
       console.error('WS error:', error);
       this.disconnect();
+      this.scheduleReconnect();
     };
   }
 
@@ -60,53 +61,82 @@ class WSManager {
   }
 
   static async getToken() {
-    try {
-      return await new Promise((resolve, reject) => {
-        const dbRequest = indexedDB.open("postr_auth_db", 1);
-        
-        dbRequest.onsuccess = () => {
-          const db = dbRequest.result;
-          const tx = db.transaction("auth", "readonly");
-          const store = tx.objectStore("auth");
-          const request = store.get("token");
-          
-          request.onsuccess = () => {
-            db.close();
-            resolve(request.result?.token);
-          };
-          
-          request.onerror = () => {
-            db.close();
-            reject('Token read error');
-          };
+    return new Promise((resolve, reject) => {
+      const dbRequest = indexedDB.open("postr_auth_db", 2); // ✅ Use correct version!
+
+      dbRequest.onupgradeneeded = (event) => {
+        const db = dbRequest.result;
+        if (!db.objectStoreNames.contains("auth")) {
+          db.createObjectStore("auth", { keyPath: "id" });
+        }
+      };
+
+      dbRequest.onerror = () => reject('DB open error');
+
+      dbRequest.onsuccess = () => {
+        const db = dbRequest.result;
+
+        if (!db.objectStoreNames.contains("auth")) {
+          db.close();
+          reject('Object store missing');
+          return;
+        }
+
+        const tx = db.transaction("auth", "readonly");
+        const store = tx.objectStore("auth");
+        const request = store.get("token");
+
+        request.onsuccess = () => {
+          db.close();
+          resolve(request.result?.token || null);
         };
-        
-        dbRequest.onerror = () => reject('DB open error');
-      });
-    } catch (e) {
-      console.error('Token fetch failed:', e);
-      return null;
-    }
+
+        request.onerror = () => {
+          db.close();
+          reject('Token read error');
+        };
+      };
+    });
   }
 
   static handleClose(event) {
-    // Don't reconnect if closed normally
-    if (event.code === 1000) return;
-    
-    // Don't reconnect if token was invalid
-    if (!isTokenValid) return;
-    
-    
+    if (event.code === 1000) {
+      console.log('Normal WS close, not reconnecting.');
+      return;
+    }
+    if (!isTokenValid) {
+      console.warn('Token invalid, not reconnecting.');
+      return;
+    }
+    this.scheduleReconnect();
+  }
+
+  static scheduleReconnect() {
+    if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+      console.warn('Max reconnect attempts reached.');
+      return;
+    }
+
+    reconnectAttempts++;
+    const delay = reconnectAttempts * 2000;
+    console.log(`⏳ Scheduling reconnect in ${delay}ms...`);
+
+    reconnectTimer = setTimeout(async () => {
+      const token = await this.getToken().catch(() => null);
+      if (token) {
+        this.connect(token);
+      }
+    }, delay);
   }
 
   static handleMessage(data) {
     if (data.type === 'INVALID_TOKEN') {
-      console.warn('Token invalidated');
+      console.warn('Received INVALID_TOKEN');
       isTokenValid = false;
       this.disconnect();
       return;
     }
-    
+
     if (data.notification_data) {
       this.showNotification(data.notification_data);
     }
@@ -124,25 +154,27 @@ class WSManager {
   }
 }
 
-// Event listeners
+// SW lifecycle events
+
 self.addEventListener('install', (event) => {
-  self.skipWaiting(); // Force activate new SW immediately
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    WSManager.getToken().then(token => {
+    (async () => {
+      const token = await WSManager.getToken().catch(() => null);
       if (token) {
-        return WSManager.connect(token);
+        await WSManager.connect(token);
       }
-      return Promise.resolve();
-    })
+      self.clients.claim();
+    })()
   );
 });
 
 self.addEventListener('message', (event) => {
-  if (event.data.type === 'reconnect') {
-    WSManager.connect(event.data.token);
+  if (event.data?.type === 'reconnect') {
+    event.waitUntil(WSManager.connect(event.data.token));
   }
 });
 
