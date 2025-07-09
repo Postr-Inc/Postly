@@ -782,7 +782,7 @@ export default class SDK {
             return;
         }
 
-        const dbRequest = indexedDB.open("postr_auth_db", 1);
+        const dbRequest = indexedDB.open("postr_auth_db", 2);
 
         // Timeout for database operations (5 seconds)
         const timeoutId = setTimeout(() => {
@@ -798,19 +798,19 @@ export default class SDK {
             reject(new Error(`Database error: ${dbRequest.error?.message || 'Unknown error'}`));
         };
 
-        dbRequest.onupgradeneeded = (event) => {
-            try {
-                const db = (event.target as IDBOpenDBRequest).result;
-                if (!db.objectStoreNames.contains("auth")) {
-                    const store = db.createObjectStore("auth", { keyPath: "id" });
-                    console.log('Created new object store "auth"');
-                }
-            } catch (error) {
-                clearTimeout(timeoutId);
-                console.error('Database upgrade error:', error);
-                reject(new Error('Failed to upgrade database'));
-            }
-        };
+       dbRequest.onupgradeneeded = (event) => {
+    console.log('UPGRADE NEEDED');
+    const db = (event.target as IDBOpenDBRequest).result;
+    console.log('Existing stores:', db.objectStoreNames);
+
+    if (!db.objectStoreNames.contains("auth")) {
+        db.createObjectStore("auth", { keyPath: "id" });
+        console.log('Created "auth" store');
+    } else {
+        console.log('"auth" store already exists');
+    }
+};
+
 
         dbRequest.onsuccess = (event) => {
             const db = (event.target as IDBOpenDBRequest).result;
