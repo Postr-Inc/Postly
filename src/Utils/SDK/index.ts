@@ -563,7 +563,7 @@ export default class SDK {
 
         const { status, token, message, id } = await response.json();
 
-        let wsUrl = response.headers.get("Server") || "";
+        let wsUrl = response.headers.get("Server");
 
         if (!wsUrl || wsUrl.trim() === "") {
           wsUrl = this.serverURL; // fallback
