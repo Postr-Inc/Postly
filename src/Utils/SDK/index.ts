@@ -711,7 +711,8 @@ export default class SDK {
 
 
 
-    
+  
+  }
 
   connectToWS = () => {
     this.ws = new WebSocket(`${this.wsUrl}/subscriptions`);
