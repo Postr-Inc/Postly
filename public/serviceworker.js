@@ -20,7 +20,7 @@ class WSManager {
       }
     }
 
-    wsConnection = new WebSocket(`wss://your-server.com/subscriptions?token=${encodeURIComponent(token)}`);
+    wsConnection = new WebSocket(`wss://api.postlyapp.com/subscriptions?token=${encodeURIComponent(token)}`);
     
     wsConnection.onopen = () => {
       console.log('✅ WS connected in SW');
