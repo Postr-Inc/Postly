@@ -143,15 +143,7 @@ export default function SettingsPage() {
         ))}
       </div>
 
-      {/* Reset Cache Button */}
-      <div class="px-4 py-6">
-        <button
-          onClick={resetCache}
-          class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-full transition-colors"
-        >
-          Reset Cache
-        </button>
-      </div>
+       
 
        
     </div>
