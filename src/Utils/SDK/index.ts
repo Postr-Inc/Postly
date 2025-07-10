@@ -1,5 +1,5 @@
 import useCache from "../Hooks/useCache";
-import { openPostrDB } from "./helpter";
+import { openPostrDB } from "./helper";
 import isTokenExpired from "./jwt";
 import { ErrorCodes, HttpCodes } from "./opCodes";
 import { authStore } from "./Types/AuthStore";
