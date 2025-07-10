@@ -48,8 +48,7 @@ import Share from "../Icons/Share";
 import { dispatchAlert, haptic } from "@/src/Utils/SDK";
 import useCache from "@/src/Utils/Hooks/useCache";
 import BlockUserModal from "../Modals/BlockedModal";
-import { GeneralTypes } from "@/src/Utils/SDK/Types/GeneralTypes";
-import DeletePostModal from "../Modals/DeletePostModal";
+import { GeneralTypes } from "@/src/Utils/SDK/Types/GeneralTypes"; 
 const created = (created: any) => {
   let date = new Date(created);
   let now = new Date();
@@ -118,8 +117,7 @@ function getFileType(file: string) {
   }
 }
 
-export default function Post(props: Props) {
-  console.log(props.comments?.length, props.expand)
+export default function Post(props: Props) { 
   let { theme } = useTheme();
   let [likes, setLikes] = createSignal<any[]>(props.likes || [], { equals: false });
   let [bookmarks, setBookmarks] = createSignal(props.bookmarked || [])
