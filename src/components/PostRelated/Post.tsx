@@ -280,8 +280,7 @@ export default function Post(props: Props) {
       api.metrics.trackUserMetric("posts_liked", props.id)
       api.metrics.uploadUserMetrics()
       haptic()
-      if (api.ws) {
-        api.ws.send(JSON.stringify({
+      api.worker.ws.send({
           payload: {
             type: GeneralTypes.NOTIFY,
             notification_data: {
@@ -299,8 +298,8 @@ export default function Post(props: Props) {
           security: {
             token: api.authStore.model.token
           }
-        }))
-      }
+        })
+
     } else {
       setLikes(hasLiked
         ? currentLikes.filter(id => id !== userId)
@@ -315,8 +314,7 @@ export default function Post(props: Props) {
       });
 
       // Assuming res.likes is the updated likes array from backend
-      if (res && Array.isArray(res.likes)) {
-        setLikes(res.likes);
+      if (res && Array.isArray(res.likes)) { 
         api.updateCache(isComment ? "comments" : "posts", props.id, {
           likes: likes(),
         })
@@ -405,14 +403,16 @@ export default function Post(props: Props) {
 
 
   onMount(() => {
-    const handler = (event: MessageEvent) => {
+    const handler = (event: MessageEvent) => { 
+   
       let parsed;
       try {
-        parsed = JSON.parse(event.data);
-      } catch {
+        parsed = JSON.parse(event.data.data);
+      } catch (e) {
+        console.log(e)
         return;
       }
-      const data = parsed?.data;
+      const data = parsed?.data; 
       if (!data) return;
       if (data.action && (data.action === "like" || data.action === "unlike") && data.targetId === props.id) {
         const current = likes();
@@ -425,13 +425,12 @@ export default function Post(props: Props) {
       }
     };
 
-    if (api.ws) {
-      api.ws.addEventListener("message", handler);
-    }
+     
+    api.worker.ws.addEventListener(handler)
 
     onCleanup(() => {
       if (api.ws) {
-        api.ws.removeEventListener("message", handler);
+        api.worker.ws.removeEventListener(handler)
       }
     });
   });
