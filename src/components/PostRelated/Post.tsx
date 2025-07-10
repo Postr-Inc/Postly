@@ -49,7 +49,7 @@ import { dispatchAlert, haptic } from "@/src/Utils/SDK";
 import useCache from "@/src/Utils/Hooks/useCache";
 import BlockUserModal from "../Modals/BlockedModal";
 import { GeneralTypes } from "@/src/Utils/SDK/Types/GeneralTypes";
-import DeletePostModal from "../Modals/DeletePostModal";
+import DeletePostModal from "../Modals/DeletePostModal"; 
 const created = (created: any) => {
   let date = new Date(created);
   let now = new Date();
