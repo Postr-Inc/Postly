@@ -12,9 +12,9 @@ import ForgotPassword from './Pages/auth/ForgotPassword';
 import Registration from './Pages/auth/Registration';
 import Settings from './Pages/settings';
 import profileSettings from './Pages/settings/profile-settings';
-import AccountManagement from './Pages/settings/account-management';
+import AccountManagement from './Pages/settings/account-management'; 
 
-import Notifications from './Pages/settings/notification';
+import notifications from "./Pages/settings/notifications"
 
 import Privacy from './Pages/settings/privacy';
 import PrivacyPolicy from './Pages/settings/privacy/privacy-policy';
@@ -63,7 +63,7 @@ render(() =>  (
     <Route path={"/settings/device-management"} component={deviceManagement} />
     <Route path={"/settings/application-updates"} component={applicationUpdates} />
     <Route path={"/settings/my-feed"} component={myFeed} /> 
-    <Route path={"/settings/notifications"} component={Notifications} />
+    <Route path={"/settings/notifications"} component={notifications} />
     <Route path={"/settings/privacy"} component={Privacy} />
     <Route path={"/settings/privacy/privacy-policy"} component={PrivacyPolicy} />
     <Route path={"/settings/privacy/request-data"} component={RequestData} />
