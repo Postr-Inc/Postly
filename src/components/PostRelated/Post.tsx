@@ -114,6 +114,7 @@ function getFileType(file: string) {
     case file.endsWith(".avif"):
       return "image"
     case file.endsWith(".mp4"):
+    case file.endsWith(".mov"):
       return "video"
   }
 }
