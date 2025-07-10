@@ -278,8 +278,8 @@ export default function User() {
         }
       });
 
-      if (type == "follow" && api.ws) {
-        api.ws.send(JSON.stringify({
+      if(type == "follow"){
+        api.worker.ws.send({
           payload: {
             type: GeneralTypes.NOTIFY,
             notification_data: {
@@ -289,16 +289,14 @@ export default function User() {
               notification_title: `${api.authStore.model.username} started following you`,
               notification_body: ``,
               message: ``,
-              icon: `${api.authStore.model.avatar ? api.cdn.getUrl("users", api.authStore.model.id, api.authStore.model.avatar || "") : "/icons/usernotfound/image.png"}`,
-              image: `${api.cdn.getUrl("posts", props.id, props.files[0])}`
+              icon: `${api.authStore.model.avatar ? api.cdn.getUrl("users", api.authStore.model.id, api.authStore.model.avatar || "") : "/icons/usernotfound/image.png"}`, 
             }
           },
           security: {
             token: api.authStore.model.token
           }
-        }))
-
-      }
+        })
+      } 
 
       // Optionally update local UI (after server confirms)
       // Fetch fresh state or update safely
