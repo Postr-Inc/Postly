@@ -49,7 +49,7 @@ import { dispatchAlert, haptic } from "@/src/Utils/SDK";
 import useCache from "@/src/Utils/Hooks/useCache";
 import BlockUserModal from "../Modals/BlockedModal";
 import { GeneralTypes } from "@/src/Utils/SDK/Types/GeneralTypes";
-import DeletePostModal from "../Modals/DeletePostModal"; 
+import DeletePostModal from "../Modals/DeletePostModal";
 const created = (created: any) => {
   let date = new Date(created);
   let now = new Date();
@@ -708,14 +708,17 @@ export default function Post(props: Props) {
                         )}
                       />
                     </Match>
-                    <Match when={getFileType(item) == "video"}> <VideoWithCleanup
-                      src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)}
-                      class={joinClass(
-                        "w-full   aspect-[16/9]  object-fill  rounded-xl cursor-pointer",
-                        theme() === "dark" ? "border-[#121212] border" : "border-[#cacaca] border"
-                      )}
-                    />
+                    <Match when={getFileType(item) == "video"}>
+                      <div class="w-full aspect-video overflow-hidden rounded-xl border 
+    cursor-pointer 
+    {theme() === 'dark' ? 'border-[#121212]' : 'border-[#cacaca]'}">
+                        <VideoWithCleanup
+                          src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)}
+                          class="w-full h-full object-cover"
+                        />
+                      </div>
                     </Match>
+
                   </Switch>
                 </CarouselItem>
               )}
