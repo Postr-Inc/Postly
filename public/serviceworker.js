@@ -82,7 +82,7 @@ const WSManager = {
     if (this.ws) this.ws.close();
 
     // Open the WebSocket connection
-    this.ws = new WebSocket(`ws://api.postlyapp.com/subscriptions?token=${encodeURIComponent(token)}`);
+    this.ws = new WebSocket(`wss://api.postlyapp.com/subscriptions?token=${encodeURIComponent(token)}`);
 
     // When WebSocket connection opens
     this.ws.onopen = () => {
