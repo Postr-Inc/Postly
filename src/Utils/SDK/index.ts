@@ -1,4 +1,5 @@
 import useCache from "../Hooks/useCache";
+import { openPostrDB } from "./helpter";
 import isTokenExpired from "./jwt";
 import { ErrorCodes, HttpCodes } from "./opCodes";
 import { authStore } from "./Types/AuthStore";
@@ -86,15 +87,16 @@ export default class SDK {
   wsUrl: string;
   statisticalData: any[];
   callbacks: Map<string, (data: any) => void>;
-  subscriptions: Map<string, (data: any) => void>;
+  subscriptions: Map<string, (data: any) => void>; 
   notedMetrics: Map<string, any>;
   constructor(data: { serverURL: string }) {
     this.serverURL = data.serverURL;
     this.ip = sessionStorage.getItem("ip") as string;
     this.callbacks = new Map();
     this.changeEvent = new CustomEvent("authChange");
-    this.subscriptions = new Map();
-    this.wsUrl = this.serverURL
+    this.subscriptions = new Map(); 
+    openPostrDB()
+    this.wsUrl = this.serverURL  
     /**
      * @description data metrics used to track user activity - this is stored locally
      */
@@ -168,11 +170,7 @@ export default class SDK {
     }
 
     // check if logged in and check if ws is closed periodically
-    setInterval(() => {
-      if (this.ws === null || this.ws.readyState === WebSocket.CLOSED && localStorage.getItem("postr_auth") && this.authStore.model.id) {
-        this.wsReconnect();
-      }
-    }, 0) // check every 5 minutes
+     
   }
 
   on = (type: "authChange" | string, cb: (data: any) => void) => {
@@ -182,6 +180,42 @@ export default class SDK {
   };
 
   // Define the type for the metrics store
+
+
+  worker = {
+  ws: {
+    send: (msg: any) => {
+      console.log(msg);
+
+      // Check if the service worker is available and controlling
+      if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage(msg);
+      } else {
+        console.warn('No active service worker controller found.');
+      }
+    },
+
+    addEventListener: (cb: (ev: MessageEvent) => void) => {
+      // Ensure the service worker controller is available
+      if (navigator.serviceWorker.controller) {
+        // Add event listener to the service worker controller
+        navigator.serviceWorker.addEventListener("message",cb)
+      } else {
+        console.warn('No active service worker controller found.');
+      }
+    },
+
+    removeEventListener: (cb: (ev: MessageEvent) => void) => {
+      // Ensure the service worker controller is available
+      if (navigator.serviceWorker.controller) {
+        // Remove event listener from the service worker controller
+        navigator.serviceWorker.removeEventListener("message", cb)
+      } else {
+        console.warn('No active service worker controller found.');
+      }
+    }
+  }
+};
 
 
   metrics = {
@@ -296,25 +330,7 @@ export default class SDK {
   }
 
   wsReconnect = () => {
-    if (!this.wsUrl) return;
-    var token = JSON.parse(localStorage.getItem("postr_auth"))?.token
-    this.ws = new WebSocket(`${this.serverURL}/subscriptions${token ? `?token=${encodeURIComponent(token)}` : ''}`);
-
-    this.ws.onopen = () => {
-      console.log("✅ WS connected");
-    };
-
-    this.ws.onerror = (err) => {
-      console.log("❌ WS error", err);
-    };
-
-    this.ws.onclose = (ev) => {
-      console.log(`⚠️ WS closed: ${ev.code} ${ev.reason}`);
-    };
-
-    this.ws.onmessage = (event) => {
-      this.handleMessages(event.data);
-    };
+    
   };
 
   convertToBase64(file: Blob): Promise<string> {
@@ -518,7 +534,7 @@ export default class SDK {
         localStorage.removeItem("postr_auth")
         return;
       }
-      if (this.ws === null) this.connectToWS();
+      
     }
 
 
@@ -591,7 +607,6 @@ export default class SDK {
           this.authStore.model.token = token
 
           this.authStore.model.id = id
-          this.storeTokenInIndexedDB(token)
           resolve(true)
         }
       })
@@ -642,99 +657,96 @@ export default class SDK {
 
     },
     login: async (emailOrUsername: string, password: string) => {
+  try {
+    const response = await fetch(`${this.serverURL}/auth/login`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        emailOrUsername,
+        password,
+        deviceInfo: {
+          userAgent: navigator.userAgent,
+        },
+      }),
+    });
+
+    // Handle WebSocket URL from headers or fallback
+    let wsUrl = response.headers.get("Server") || this.serverURL;
+    
+    // Ensure proper URL format
+    wsUrl = wsUrl.trim();
+    if (wsUrl.startsWith("localhost")) {
+      wsUrl = `http://${wsUrl}`;
+    }
+
+    // Convert http(s) to ws(s)
+    if (!wsUrl.startsWith("ws://") && !wsUrl.startsWith("wss://")) {
+      wsUrl = wsUrl.replace(/^https?:\/\//, (match) => 
+        match === "https://" ? "wss://" : "ws://"
+      );
+    }
+
+    this.wsUrl = wsUrl;
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw result;
+    }
+
+    // Update auth state
+    this.authStore.model = result.data;
+    const authData = { ...result.data, wsUrl: this.wsUrl };
+    localStorage.setItem("postr_auth", JSON.stringify(authData));
+
+    // Handle WebSocket connection
+    if (this.ws) {
+      this.ws.close();
+    }
+    this.wsReconnect();
+
+    // Store token in IndexedDB with proper error handling
+    try {
+      await this.storeTokenInIndexedDB(result.data.token);
+    } catch (error) {
+      console.error("Failed to store token in IndexedDB:", error);
+      // Don't fail login if IndexedDB fails, but log it
+    }
+
+    // Notify service worker if available
+    if (navigator.serviceWorker?.controller) {
       try {
-        const response = await fetch(`${this.serverURL}/auth/login`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            emailOrUsername,
-            password,
-            deviceInfo: {
-              userAgent: navigator.userAgent,
-            },
-          }),
+        navigator.serviceWorker.controller.postMessage({
+          type: "reconnect",
+          token: result.data.token
         });
-
-        // Handle WebSocket URL from headers or fallback
-        let wsUrl = response.headers.get("Server") || this.serverURL;
-
-        // Ensure proper URL format
-        wsUrl = wsUrl.trim();
-        if (wsUrl.startsWith("localhost")) {
-          wsUrl = `http://${wsUrl}`;
-        }
-
-        // Convert http(s) to ws(s)
-        if (!wsUrl.startsWith("ws://") && !wsUrl.startsWith("wss://")) {
-          wsUrl = wsUrl.replace(/^https?:\/\//, (match) =>
-            match === "https://" ? "wss://" : "ws://"
-          );
-        }
-
-        this.wsUrl = wsUrl;
-        const result = await response.json();
-
-        if (!response.ok) {
-          throw result;
-        }
-
-        // Update auth state
-        this.authStore.model = result.data;
-        const authData = { ...result.data, wsUrl: this.wsUrl };
-        localStorage.setItem("postr_auth", JSON.stringify(authData));
-
-        // Handle WebSocket connection
-        if (this.ws) {
-          this.ws.close();
-        }
-        this.wsReconnect();
-
-        // Store token in IndexedDB with proper error handling
-        try {
-          await this.storeTokenInIndexedDB(result.data.token);
-        } catch (error) {
-          console.error("Failed to store token in IndexedDB:", error);
-          // Don't fail login if IndexedDB fails, but log it
-        }
-
-        // Notify service worker if available
-        if (navigator.serviceWorker?.controller) {
-          try {
-            navigator.serviceWorker.controller.postMessage({
-              type: "reconnect",
-              token: result.data.token
-            });
-          } catch (swError) {
-            console.error("Failed to notify service worker:", swError);
-          }
-        }
-
-        return result.data;
-      } catch (error) {
-        console.error("Login failed:", error);
-        // Clear any partial auth state on failure
-        this.authStore.model = {};
-        localStorage.removeItem("postr_auth");
-        throw error;
+      } catch (swError) {
+        console.error("Failed to notify service worker:", swError);
       }
-    },
+    }
 
+    return result.data;
+  } catch (error) {
+    console.error("Login failed:", error);
+    // Clear any partial auth state on failure
+    this.authStore.model = {};
+    localStorage.removeItem("postr_auth");
+    throw error;
+  }
+},
 
+ 
 
     // Helper method for IndexedDB token storage
 
 
 
-
+  
   }
 
   connectToWS = () => {
-    this.ws = new WebSocket(`${this.wsUrl}/subscriptions`);
-    this.ws.onmessage = (event) => {
-      this.handleMessages(event.data);
-    };
+    this.workerChannel.postMessage({"type": "connect"})
   }
 
   cdn = {
@@ -776,83 +788,84 @@ export default class SDK {
 
 
   private storeTokenInIndexedDB = (token: string): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      if (!token || typeof token !== 'string') {
-        reject(new Error('Invalid token provided'));
+  return new Promise((resolve, reject) => {
+    if (!token || typeof token !== "string") {
+      reject(new Error("Invalid token provided"));
+      return;
+    }
+
+    const DB_NAME = "postr_auth_db";
+    const DB_VERSION = 2;
+    const STORE_NAME = "auth";
+
+    const dbRequest = indexedDB.open(DB_NAME, DB_VERSION);
+
+    // Timeout for safety (5 seconds)
+    const timeoutId = setTimeout(() => {
+      reject(new Error("IndexedDB operation timed out"));
+      if (dbRequest.result) {
+        dbRequest.result.close();
+      }
+    }, 5000);
+
+    dbRequest.onerror = () => {
+      clearTimeout(timeoutId);
+      console.error("IndexedDB open error:", dbRequest.error);
+      reject(new Error(`Database error: ${dbRequest.error?.message || "Unknown error"}`));
+    };
+
+    dbRequest.onblocked = () => {
+      clearTimeout(timeoutId);
+      console.warn("Database upgrade blocked");
+      reject(new Error("Database upgrade blocked by another connection"));
+    };
+
+    dbRequest.onupgradeneeded = (event) => {
+      const db = (event.target as IDBOpenDBRequest).result;
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        db.createObjectStore(STORE_NAME, { keyPath: "id" });
+        console.log(`Created object store "${STORE_NAME}"`);
+      }
+    };
+
+    dbRequest.onsuccess = (event) => {
+      const db = (event.target as IDBOpenDBRequest).result;
+
+      if (!db.objectStoreNames.contains(STORE_NAME)) {
+        clearTimeout(timeoutId);
+        db.close();
+        reject(new Error(`Object store "${STORE_NAME}" not found`));
         return;
       }
 
-      const dbRequest = indexedDB.open("postr_auth_db", 2);
-
-      // Timeout for database operations (5 seconds)
-      const timeoutId = setTimeout(() => {
-        reject(new Error('IndexedDB operation timed out'));
-      }, 5000);
-
-      dbRequest.onerror = (event) => {
+      const tx = db.transaction(STORE_NAME, "readwrite");
+      tx.onerror = () => {
         clearTimeout(timeoutId);
-        console.error('IndexedDB open error:', dbRequest.error);
-        reject(new Error(`Database error: ${dbRequest.error?.message || 'Unknown error'}`));
+        console.error("Transaction error:", tx.error);
+        db.close();
+        reject(new Error(`Transaction failed: ${tx.error?.message || "Unknown error"}`));
       };
 
-      dbRequest.onupgradeneeded = (event) => {
-        console.log('UPGRADE NEEDED');
-        const db = (event.target as IDBOpenDBRequest).result;
-        console.log('Existing stores:', db.objectStoreNames);
+      const store = tx.objectStore(STORE_NAME);
+      const putRequest = store.put({ id: "token", token });
 
-        if (!db.objectStoreNames.contains("auth")) {
-          db.createObjectStore("auth", { keyPath: "id" });
-          console.log('Created "auth" store');
-        } else {
-          console.log('"auth" store already exists');
-        }
-      };
-
-
-      dbRequest.onsuccess = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-
-        // Verify the object store exists
-        if (!db.objectStoreNames.contains("auth")) {
-          clearTimeout(timeoutId);
-          db.close();
-          reject(new Error('Object store "auth" not found'));
-          return;
-        }
-
-        const tx = db.transaction("auth", "readwrite");
-        tx.onerror = (event) => {
-          clearTimeout(timeoutId);
-          console.error('Transaction error:', tx.error);
-          db.close();
-          reject(new Error(`Transaction failed: ${tx.error?.message || 'Unknown error'}`));
-        };
-
-        const store = tx.objectStore("auth");
-        const putRequest = store.put({ id: "token", token });
-
-        putRequest.onerror = (event) => {
-          clearTimeout(timeoutId);
-          console.error('Put operation error:', putRequest.error);
-          db.close();
-          reject(new Error(`Failed to store token: ${putRequest.error?.message || 'Unknown error'}`));
-        };
-
-        tx.oncomplete = () => {
-          clearTimeout(timeoutId);
-          db.close();
-          console.log('Token successfully stored in IndexedDB');
-          resolve();
-        };
-      };
-
-      dbRequest.onblocked = () => {
+      putRequest.onerror = () => {
         clearTimeout(timeoutId);
-        console.warn('Database upgrade blocked');
-        reject(new Error('Database upgrade blocked by another connection'));
+        console.error("Put operation error:", putRequest.error);
+        db.close();
+        reject(new Error(`Failed to store token: ${putRequest.error?.message || "Unknown error"}`));
       };
-    });
-  };
+
+      tx.oncomplete = () => {
+        clearTimeout(timeoutId);
+        db.close();
+        console.log("Token successfully stored in IndexedDB");
+        resolve();
+      };
+    };
+  });
+};
+
 
 
   sendMsg = async (msg: any, type: any) => {
