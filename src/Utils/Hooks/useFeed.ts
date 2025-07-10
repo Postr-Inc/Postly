@@ -8,11 +8,17 @@ async function list(
   feed: () => string,
   options: { filter?: string; sort?: string; limit?: number; _for?: any } = {}
 ) {
-
+ if (!collection) throw new Error("collection parameter is required");
+  if (!page || page < 1) page = 1;
+  const feedValue = feed();
+  if (!feedValue) throw new Error("feed() signal must return a valid string");
   if (feed() === "following") {
     options.filter = `author.followers ~"${api.authStore.model.id}" && author.deactivated=false`
   } else if (feed() === "trending") {
-    options.filter = `author.deactivated=false  && likes:length > 0 && repost.likes:length > 0 && author.id != "${api.authStore.model.id}"`
+   options.filter = `
+  author.deactivated = false 
+  && author.id != "${api.authStore.model.id}"
+`;
   }
   return api
     .collection(collection)
