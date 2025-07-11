@@ -485,7 +485,7 @@ export default function SnippetReels() {
                           </div>
 
                           <Show when={post.content}>
-                            <div class="bg-gradient-to-r from-black/50 via-black/30 to-transparent backdrop-blur-md p-4 rounded-xl shadow-lg mb-2">
+                            <div class="bg-gradient-to-r from-black/50 via-black/30 to-transparent backdrop-blur-md p-5 rounded-xl shadow-lg mb-2">
                               <p class="text-sm leading-relaxed font-medium break-words max-w-full text-white drop-shadow">
                                 {post.content}
                               </p>
@@ -494,7 +494,7 @@ export default function SnippetReels() {
                         </div>
 
                         {/* Enhanced Right side - Action buttons without borders */}
-                        <div class="flex flex-col items-center gap-4 pointer-events-auto">
+                        <div class="flex flex-col items-center gap-4 pointer-events-auto p-5">
                           {/* Enhanced Like button */}
                           <div class="flex flex-col items-center gap-1">
                             <div
