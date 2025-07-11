@@ -478,7 +478,7 @@ export default function SnippetReels() {
                           </div>
 
                           <Show when={post.content}>
-                            <div class="bg-black/40 p-3 rounded-lg mb-2">
+                            <div class="bg-black/40 p-3 rounded-xl mb-2">
                               <p class="text-sm leading-tight font-medium break-words max-w-full text-white">
                                 {post.content}
                               </p>
