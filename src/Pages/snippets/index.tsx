@@ -415,9 +415,9 @@ export default function SnippetReels() {
                     <div class="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-black/20 pointer-events-none z-[2]" />
 
                     {/* Enhanced Header - Smaller Snippets watermark */}
-                    <div class="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-20 bg-gradient-to-b from-black/60 via-black/30 to-transparent">
-                      <div class="bg-black/40 backdrop-blur-md px-3 py-1 rounded-full shadow-lg">
-                        <h1 class="font-semibold text-sm text-white drop-shadow-lg opacity-80">Snippets</h1>
+                    <div class="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-20 ">
+                      <div class="bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-lg">
+                        <h1 class="font-bold text-xl text-white drop-shadow-lg">✨ Snippets</h1>
                       </div>
                       <div class="flex gap-3">
                         <Show when={isCurrentVideo && !userInteracted()}>
@@ -448,12 +448,12 @@ export default function SnippetReels() {
                     </Show>
 
                     {/* Enhanced Bottom content with gradients */}
-                    <div class="absolute bottom-0 sm:bottom-[120px] left-0 right-0 text-white p-4 pointer-events-none z-10">
+                    <div class="absolute bottom-0 sm:bottom-[120px] left-0 right-0 text-white  pointer-events-none z-10">
                       <div class="flex justify-between items-end">
                         {/* Enhanced Left side with gradient background */}
                         <div class="flex-1 mr-4">
                           <div
-                            class="flex items-center gap-3 mb-4 cursor-pointer pointer-events-auto group p-3 rounded-xl bg-gradient-to-r from-black/50 via-black/30 to-transparent backdrop-blur-md"
+                            class="flex items-center gap-3 mb-4 cursor-pointer pointer-events-auto group p-3 rounded-xl"
                             onClick={() => navigate(`/u/${author.username}`)}
                           >
                             <div class="relative">
@@ -590,7 +590,7 @@ export default function SnippetReels() {
                   style="animation-direction: reverse;"
                 ></div>
               </div>
-              <div class="text-xl font-semibold animate-pulse drop-shadow-lg">Loading amazing snippets...</div>
+              <div class="text-xl font-semibold animate-pulse drop-shadow-lg">Loading snippets...</div>
             </div>
           </div>
         </Show>
