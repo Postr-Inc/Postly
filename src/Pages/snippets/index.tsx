@@ -10,23 +10,23 @@ import StringJoin from "@/src/Utils/StringJoin"
 
 function VideoWithCleanup(props: { src: string; index: number; onCanPlay: () => void }) {
   let videoRef: HTMLVideoElement | undefined
-  // REMOVE onCleanup: it's not needed here
-  // Browsers already pause & unload video when removed
+
   return (
     <video
       ref={(el) => {
         videoRef = el!
         videoRefs[props.index] = el!
       }}
-      class="h-full w-full object-cover z-0 transition-all duration-500 ease-out"
+      class="h-full w-full object-cover z-0"
       muted
       loop
       playsinline
       src={props.src}
-      preload={props.index < 3 ? "auto" : "metadata"}
+      preload="metadata"
       controls={false}
       onCanPlay={props.onCanPlay}
       onLoadedData={props.onCanPlay}
+      onLoadedMetadata={props.onCanPlay}
     />
   )
 }
@@ -187,12 +187,14 @@ export default function SnippetReels() {
   let containerRef: HTMLDivElement | undefined
   let observer: IntersectionObserver | null = null
 
+  // Fixed video refs management
   createEffect(() => {
     const currentPosts = posts()
-    if (currentPosts && currentPosts.length > 0 && videoRefs.length !== currentPosts.length) {
-      // initialize with nulls only if lengths differ
+    if (currentPosts && currentPosts.length > 0) {
+      // Always reinitialize to ensure proper length
       videoRefs = new Array(currentPosts.length).fill(null)
       setVideoLoaded(new Array(currentPosts.length).fill(false))
+      console.log(`Initialized ${currentPosts.length} video slots`)
     }
   })
 
@@ -222,6 +224,7 @@ export default function SnippetReels() {
   }
 
   const handleVideoLoaded = (index: number) => {
+    console.log(`Video ${index} loaded`)
     setVideoLoaded((prev) => {
       const newLoaded = [...prev]
       newLoaded[index] = true
@@ -233,21 +236,17 @@ export default function SnippetReels() {
     if (!containerRef || observer) return
     console.log("Setting up observer...")
 
-    const debounceTimer: number | null = null
-
     observer = new IntersectionObserver(
       (entries) => {
-        console.log("Observer triggered with entries:", entries.length)
-        if (debounceTimer) clearTimeout(debounceTimer)
-
         let bestMatch = { index: -1, ratio: 0 }
 
         entries.forEach((entry) => {
           const index = Number(entry.target.getAttribute("data-index"))
-          console.log(`Entry ${index}: intersecting=${entry.isIntersecting}, ratio=${entry.intersectionRatio}`)
           if (entry.isIntersecting && !isNaN(index)) {
             const ratio = entry.intersectionRatio
-            if (ratio > bestMatch.ratio) bestMatch = { index, ratio }
+            if (ratio > bestMatch.ratio) {
+              bestMatch = { index, ratio }
+            }
           }
         })
 
@@ -255,7 +254,7 @@ export default function SnippetReels() {
           console.log("Setting active index to:", bestMatch.index)
           setActiveIndex(bestMatch.index)
           setIsPlaying(true)
-          setCurrentPost(posts()[activeIndex()])
+          setCurrentPost(posts()[bestMatch.index])
         }
       },
       {
@@ -268,17 +267,20 @@ export default function SnippetReels() {
 
   const observeElements = () => {
     if (!observer || !containerRef) return
+
+    // Clear previous observations
+    observer.disconnect()
+
     const containers = containerRef.querySelectorAll("[data-index]")
     console.log("Found elements to observe:", containers.length)
-    containers.forEach((element, idx) => {
-      const dataIndex = element.getAttribute("data-index")
-      console.log(`Observing element ${idx} with data-index: ${dataIndex}`)
+
+    containers.forEach((element) => {
       observer?.observe(element)
     })
   }
 
   onMount(() => {
-    console.log("Component mounted, containerRef:", !!containerRef)
+    console.log("Component mounted")
     setupObserver()
   })
 
@@ -287,30 +289,32 @@ export default function SnippetReels() {
     const isLoading = loading()
     if (!isLoading && currentPosts && currentPosts.length > 0 && containerRef) {
       console.log("Posts loaded, setting up observation...")
+      // Use a shorter timeout for better responsiveness
       setTimeout(() => {
         observeElements()
-      }, 200)
+      }, 100)
     }
   })
 
   createEffect(() => {
     const currentIndex = activeIndex()
     const loaded = videoLoaded()
-    if (!loaded[currentIndex]) return
+    const currentPosts = posts()
 
-    setCurrentPost(posts()[currentIndex])
+    if (!currentPosts || !currentPosts[currentIndex]) return
+
+    setCurrentPost(currentPosts[currentIndex])
 
     videoRefs.forEach((video, i) => {
-      if (!video || !loaded[i]) return
+      if (!video) return
 
       if (i === currentIndex) {
-        // Sync playing state exactly
+        // Current video logic
         if (isPlaying()) {
           video.play().catch(() => {})
         } else {
           video.pause()
         }
-        // Mute logic stays here, but only mute if not userInteracted
         video.muted = !userInteracted()
       } else {
         // Other videos always paused and muted
@@ -376,18 +380,14 @@ export default function SnippetReels() {
     <Page {...{ params, route, navigate, id: "reels" }}>
       <div
         ref={containerRef}
-        class="snap-y snap-mandatory h-screen overflow-y-scroll scroll-smooth no-scrollbar relative"
+        class="snap-y snap-mandatory h-screen overflow-y-scroll scroll-smooth no-scrollbar"
         id="reel-container"
         onClick={handleUserInteraction}
         onTouchStart={handleUserInteraction}
       >
-        {/* Gradient overlay for better visual depth */}
-        <div class="fixed inset-0   pointer-events-none z-[1]" />
-
         <Show when={!loading() && posts()?.length > 0}>
           <For each={posts()}>
             {(post, index) => {
-              console.log(index())
               const author = post.expand?.author
               const videoUrl = post.files?.[0] ? api.cdn.getUrl("posts", post.id, post.files[0]) : null
               const isLiked = post.likes?.includes(api.authStore.model?.id)
@@ -398,86 +398,79 @@ export default function SnippetReels() {
                   <div
                     data-index={index()}
                     class={joinClass(
-                      "relative snap-start h-screen w-full bg-gradient-to-br from-gray-900 via-black to-gray-800 flex items-center justify-center transition-all duration-700 ease-out",
+                      "relative snap-start h-screen w-full bg-black flex items-center justify-center",
                       index() === posts().length - 1 ? "mb-24" : "",
-                      isCurrentVideo ? "scale-100 brightness-100" : "scale-95 brightness-75",
                     )}
                   >
-                    {/* Enhanced video container with subtle glow */}
+                    {/* Video container */}
                     <div class="absolute inset-0 overflow-hidden">
                       <VideoWithCleanup src={videoUrl} index={index()} onCanPlay={() => handleVideoLoaded(index())} />
-                      {/* Subtle inner shadow for depth */}
-                      <div class="absolute inset-0 shadow-inner shadow-black/30 pointer-events-none" />
                     </div>
 
-                    {/* Enhanced gradient overlays */}
-                    <div class="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-black/30 pointer-events-none z-[2]" />
-                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-black/20 pointer-events-none z-[2]" />
+                    {/* Simple gradient overlays for readability */}
+                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20 pointer-events-none z-[2]" />
 
-                    {/* Enhanced Header - Smaller Snippets watermark */}
-                    <div class="absolute top-0 left-0 right-0 p-4 flex justify-between items-center z-20 ">
-                      <div class="bg-black/40 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 shadow-lg">
-                        <h1 class="font-bold text-xl text-white drop-shadow-lg">✨ Snippets</h1>
+                    {/* Header - Minimal */}
+                    <div class="absolute top-4 left-4 right-4 flex justify-between items-center z-20">
+                      <div class="bg-black/50 px-3 py-1 rounded-full">
+                        <h1 class="font-semibold text-sm text-white opacity-80">Snippets</h1>
                       </div>
-                      <div class="flex gap-3">
+                      <div class="flex gap-2">
                         <Show when={isCurrentVideo && !userInteracted()}>
                           <div
-                            class="bg-black/40 backdrop-blur-md px-3 py-2 rounded-full text-white text-sm flex items-center gap-2 hover:bg-black/60 transition-all duration-300 cursor-pointer shadow-lg animate-pulse"
+                            class="bg-black/50 px-3 py-2 rounded-full text-white text-sm flex items-center gap-2 cursor-pointer animate-pulse"
                             onClick={() => setUserInteracted(true)}
                           >
                             <Icons.VolumeOff class="w-4 h-4" />
                             Tap to unmute
                           </div>
                         </Show>
-                        <div class="bg-black/40 backdrop-blur-md p-2 rounded-full hover:bg-black/60 transition-all duration-300 cursor-pointer shadow-lg hover:scale-110">
+                        <div class="bg-black/50 p-2 rounded-full cursor-pointer">
                           <Icons.DotsVertical class="w-5 h-5 text-white" />
                         </div>
                       </div>
                     </div>
 
-                    {/* Enhanced Play/Pause overlay */}
+                    {/* Play/Pause overlay */}
                     <Show when={isCurrentVideo && !isPlaying()}>
                       <div
                         class="absolute inset-0 flex items-center justify-center z-10 cursor-pointer"
                         onClick={togglePlayPause}
                       >
-                        <div class="bg-black/50 backdrop-blur-md p-6 rounded-full hover:bg-black/70 transition-all duration-300 hover:scale-110 shadow-2xl">
-                          <Icons.Play class="w-16 h-16 text-white ml-1 drop-shadow-lg" />
+                        <div class="bg-black/60 p-6 rounded-full">
+                          <Icons.Play class="w-16 h-16 text-white ml-1" />
                         </div>
                       </div>
                     </Show>
 
-                    {/* Enhanced Bottom content with gradients */}
-                    <div class="absolute bottom-0 sm:bottom-[120px] left-0 right-0 text-white  pointer-events-none z-10">
+                    {/* Bottom content - Simplified */}
+                    <div class="absolute bottom-0 sm:bottom-[120px] left-0 right-0 text-white p-4 pointer-events-none z-10">
                       <div class="flex justify-between items-end">
-                        {/* Enhanced Left side with gradient background */}
+                        {/* Left side - Clean user info */}
                         <div class="flex-1 mr-4">
                           <div
-                            class="flex items-center gap-3 mb-4 cursor-pointer pointer-events-auto group p-3 rounded-xl"
+                            class="flex items-center gap-3 mb-3 cursor-pointer pointer-events-auto"
                             onClick={() => navigate(`/u/${author.username}`)}
                           >
                             <div class="relative">
                               <Show
                                 when={author?.avatar}
                                 fallback={
-                                  <div class="h-12 w-12 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center shadow-lg group-hover:scale-110 transition-all duration-300">
-                                    <Icons.User class="w-6 h-6 text-white" />
+                                  <div class="h-10 w-10 rounded-full bg-gray-600 flex items-center justify-center">
+                                    <Icons.User class="w-6 h-6 text-gray-300" />
                                   </div>
                                 }
                               >
                                 <img
                                   src={api.cdn.getUrl("users", author.id, author.avatar) || "/placeholder.svg"}
                                   alt="avatar"
-                                  class="h-12 w-12 rounded-full object-cover shadow-lg group-hover:scale-110 transition-all duration-300"
+                                  class="h-10 w-10 rounded-full object-cover"
                                 />
-                              </Show>
-                               
+                              </Show> 
                             </div>
                             <div>
-                              <div class="font-bold text-lg text-white drop-shadow-lg group-hover:text-purple-300 transition-colors duration-300">
-                                {author?.username || "Unknown"}
-                              </div>
-                              <div class="text-sm text-gray-300 flex items-center gap-1 drop-shadow">
+                              <div class="font-semibold text-lg text-white">{author?.username || "Unknown"}</div>
+                              <div class="text-sm text-gray-300 flex items-center gap-1">
                                 <Icons.User class="w-3 h-3" />
                                 {(author?.followers?.length || 0).toLocaleString()} followers
                               </div>
@@ -485,83 +478,78 @@ export default function SnippetReels() {
                           </div>
 
                           <Show when={post.content}>
-                            <div class="bg-gradient-to-r from-black/50 via-black/30 to-transparent backdrop-blur-md p-5 rounded-xl shadow-lg mb-2">
-                              <p class="text-sm leading-relaxed font-medium break-words max-w-full text-white drop-shadow">
+                            <div class="bg-black/40 p-3 rounded-lg mb-2">
+                              <p class="text-sm leading-tight font-medium break-words max-w-full text-white">
                                 {post.content}
                               </p>
                             </div>
                           </Show>
                         </div>
 
-                        {/* Enhanced Right side - Action buttons without borders */}
-                        <div class="flex flex-col items-center gap-4 pointer-events-auto p-5">
-                          {/* Enhanced Like button */}
+                        {/* Right side - Action buttons */}
+                        <div class="flex flex-col items-center gap-4 pointer-events-auto">
+                          {/* Like button */}
                           <div class="flex flex-col items-center gap-1">
                             <div
-                              class="bg-black/40 backdrop-blur-md p-3 rounded-full cursor-pointer hover:bg-black/60 transition-all duration-300 shadow-lg hover:scale-110 active:scale-95"
+                              class="bg-black/50 p-3 rounded-full cursor-pointer hover:bg-black/70 transition-colors duration-200"
                               onClick={() => handleLike(post)}
                             >
-                              <Show
-                                when={isLiked}
-                                fallback={<Icons.HeartOutline class="w-7 h-7 text-white drop-shadow-lg" />}
-                              >
+                              <Show when={isLiked} fallback={<Icons.HeartOutline class="w-7 h-7 text-white" />}>
                                 <Icons.Heart
                                   class={joinClass(
-                                    "w-7 h-7 drop-shadow-lg transition-all duration-300",
-                                    currentPost() && currentPost().likes?.length
-                                      ? "text-red-500 animate-pulse"
-                                      : "text-white",
+                                    "w-7 h-7 transition-colors duration-200",
+                                    currentPost() && currentPost().likes?.length ? "text-red-500" : "text-white",
                                   )}
                                 />
                               </Show>
                             </div>
-                            <span class="text-xs font-bold text-white drop-shadow bg-gradient-to-r from-black/40 to-black/20 px-2 py-1 rounded-full backdrop-blur-sm">
+                            <span class="text-xs font-semibold text-white bg-black/30 px-2 py-1 rounded-full">
                               {((currentPost() && currentPost().likes?.length) || 0) > 999
                                 ? `${(((currentPost() && currentPost().likes?.length) || 0) / 1000).toFixed(1)}k`
                                 : (currentPost() && currentPost().likes?.length) || 0}
                             </span>
                           </div>
 
-                          {/* Enhanced Comment button */}
+                          {/* Comment button */}
                           <div class="flex flex-col items-center gap-1">
                             <div
-                              class="bg-black/40 backdrop-blur-md p-3 rounded-full cursor-pointer hover:bg-black/60 transition-all duration-300 shadow-lg hover:scale-110 active:scale-95"
+                              class="bg-black/50 p-3 rounded-full cursor-pointer hover:bg-black/70 transition-colors duration-200"
                               onClick={() => navigate(StringJoin("/view/", "posts/", post.id))}
                             >
-                              <Icons.Chat class="w-7 h-7 text-white drop-shadow-lg" />
+                              <Icons.Chat class="w-7 h-7 text-white" />
                             </div>
-                            <span class="text-xs font-bold text-white drop-shadow bg-gradient-to-r from-black/40 to-black/20 px-2 py-1 rounded-full backdrop-blur-sm">
+                            <span class="text-xs font-semibold text-white bg-black/30 px-2 py-1 rounded-full">
                               {post.comments?.length || 0}
                             </span>
                           </div>
 
-                          {/* Enhanced Share button */}
+                          {/* Share button */}
                           <div class="flex flex-col items-center gap-1">
                             <div
-                              class="bg-black/40 backdrop-blur-md p-3 rounded-full cursor-pointer hover:bg-black/60 transition-all duration-300 shadow-lg hover:scale-110 active:scale-95"
+                              class="bg-black/50 p-3 rounded-full cursor-pointer hover:bg-black/70 transition-colors duration-200"
                               onClick={() => handleShare(post)}
                             >
-                              <Icons.Share class="w-7 h-7 text-white drop-shadow-lg" />
+                              <Icons.Share class="w-7 h-7 text-white" />
                             </div>
                           </div>
 
-                          {/* Enhanced Bookmark button */}
+                          {/* Bookmark button */}
                           <div class="flex flex-col items-center gap-1">
-                            <div class="bg-black/40 backdrop-blur-md p-3 rounded-full cursor-pointer hover:bg-black/60 transition-all duration-300 shadow-lg hover:scale-110 active:scale-95">
-                              <Icons.BookmarkOutline class="w-7 h-7 text-white drop-shadow-lg" />
+                            <div class="bg-black/50 p-3 rounded-full cursor-pointer hover:bg-black/70 transition-colors duration-200">
+                              <Icons.BookmarkOutline class="w-7 h-7 text-white" />
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
 
-                    {/* Enhanced Loading indicator */}
+                    {/* Loading indicator */}
                     <Show when={!videoLoaded()[index()]}>
-                      <div class="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-20">
+                      <div class="absolute inset-0 flex items-center justify-center bg-black/50 z-20">
                         <div class="relative">
-                          <div class="w-16 h-16 border-4 border-white/20 border-t-white rounded-full animate-spin shadow-lg"></div>
+                          <div class="w-12 h-12 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
                           <div
-                            class="absolute inset-0 w-16 h-16 border-4 border-transparent border-r-purple-400 rounded-full animate-spin"
+                            class="absolute inset-0 w-12 h-12 border-2 border-transparent border-r-purple-400 rounded-full animate-spin"
                             style="animation-direction: reverse;"
                           ></div>
                         </div>
@@ -579,37 +567,37 @@ export default function SnippetReels() {
           </For>
         </Show>
 
-        {/* Enhanced Loading state */}
+        {/* Loading state */}
         <Show when={loading()}>
           <div class="h-screen flex items-center justify-center bg-gradient-to-br from-purple-900 via-black to-indigo-900 text-white text-lg">
             <div class="flex flex-col items-center gap-6">
               <div class="relative">
-                <div class="w-20 h-20 border-4 border-white/20 border-t-white rounded-full animate-spin shadow-2xl"></div>
+                <div class="w-20 h-20 border-4 border-white/20 border-t-white rounded-full animate-spin"></div>
                 <div
                   class="absolute inset-0 w-20 h-20 border-4 border-transparent border-r-purple-400 rounded-full animate-spin"
                   style="animation-direction: reverse;"
                 ></div>
               </div>
-              <div class="text-xl font-semibold animate-pulse drop-shadow-lg">Loading snippets...</div>
+              <div class="text-xl font-semibold animate-pulse">Loading amazing snippets...</div>
             </div>
           </div>
         </Show>
 
-        {/* Enhanced Empty state */}
+        {/* Empty state */}
         <Show when={!loading() && (!posts() || posts().length === 0)}>
           <div class="h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 to-black text-white text-lg">
             <div class="flex flex-col items-center gap-6 text-center">
-              <div class="p-6 bg-gray-800/50 rounded-full backdrop-blur-sm">
+              <div class="p-6 bg-gray-800/50 rounded-full">
                 <Icons.Chat class="w-20 h-20 text-gray-500" />
               </div>
-              <div class="text-xl font-semibold drop-shadow-lg">No snippets available</div>
-              <div class="text-gray-400 drop-shadow">Check back later for new content!</div>
+              <div class="text-xl font-semibold">No snippets available</div>
+              <div class="text-gray-400">Check back later for new content!</div>
             </div>
           </div>
         </Show>
       </div>
 
-      {/* Custom styles for enhanced animations */}
+      {/* Custom styles */}
       <style>{`
         .no-scrollbar {
           -ms-overflow-style: none;
