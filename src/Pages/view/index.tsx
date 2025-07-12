@@ -209,7 +209,7 @@ export default function View(props: any) {
               </For>
             </Match>
             <Match when={post() && !loading() && comments().length < 1}>
-              <div class="p-5 text-xl text-center">
+              <div class="p-5 text-xl text-center mb-6">
                 ✨ Nobody has commented, be the first to comment
               </div>
             </Match>
