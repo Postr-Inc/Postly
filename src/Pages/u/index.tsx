@@ -154,7 +154,7 @@ export default function User() {
     createEffect(() => {
       if (currentPage() <= 1) return;
 
-      
+      setLoading(false)
 
       const common = { page: currentPage(), user: u };
 
