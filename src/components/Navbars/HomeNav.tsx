@@ -52,7 +52,7 @@ const ChevronDownIcon = () => (
   </svg>
 )
 
-const PlusIcon = () => (
+const PlusIcon = (props: any) => (
   <svg
     viewBox="0 0 24 24"
     fill="none"
@@ -60,25 +60,29 @@ const PlusIcon = () => (
     stroke-width="2.5"
     stroke-linecap="round"
     stroke-linejoin="round"
+    {...props}
   >
     <path d="M12 5v14m-7-7h14" />
   </svg>
 )
 
-const SparkleIcon = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" stroke-width="0">
-    <path d="M12 0L14.59 8.41L23 11L14.59 13.59L12 22L9.41 13.59L1 11L9.41 8.41L12 0Z" />
-  </svg>
+const SparkleIcon = (props: any) => (
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" {...props}>
+  <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904 9 18.75l-.813-2.846a4.5 4.5 0 0 0-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 0 0 3.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 0 0 3.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 0 0-3.09 3.09ZM18.259 8.715 18 9.75l-.259-1.035a3.375 3.375 0 0 0-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 0 0 2.455-2.456L18 2.25l.259 1.035a3.375 3.375 0 0 0 2.456 2.456L21.75 6l-1.035.259a3.375 3.375 0 0 0-2.456 2.456ZM16.894 20.567 16.5 21.75l-.394-1.183a2.25 2.25 0 0 0-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 0 0 1.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 0 0 1.423 1.423l1.183.394-1.183.394a2.25 2.25 0 0 0-1.423 1.423Z" />
+</svg>
+
 )
 
-const FireIcon = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" stroke-width="0">
-    <path d="M12 2C13.1 2 14 2.9 14 4C14 5.3 13.3 6.3 12.4 6.7C12.1 5.8 11.1 5.1 10 5.1C8.9 5.1 7.9 5.8 7.6 6.7C6.7 6.3 6 5.3 6 4C6 2.9 6.9 2 8 2C9.3 2 10.3 2.7 10.7 3.6C11.1 2.7 11.7 2 12 2M12 22C8.7 22 6 19.3 6 16C6 13 8.7 10 12 10S18 13 18 16C18 19.3 15.3 22 12 22Z" />
-  </svg>
+const FireIcon = (props: any) => (
+<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"  {...props}>
+  <path stroke-linecap="round" stroke-linejoin="round" d="M15.362 5.214A8.252 8.252 0 0 1 12 21 8.25 8.25 0 0 1 6.038 7.047 8.287 8.287 0 0 0 9 9.601a8.983 8.983 0 0 1 3.361-6.867 8.21 8.21 0 0 0 3 2.48Z" />
+  <path stroke-linecap="round" stroke-linejoin="round" d="M12 18a3.75 3.75 0 0 0 .495-7.468 5.99 5.99 0 0 0-1.925 3.547 5.975 5.975 0 0 1-2.133-1.001A3.75 3.75 0 0 0 12 18Z" />
+</svg>
+
 )
 
-const HeartIcon = () => (
-  <svg viewBox="0 0 24 24" fill="currentColor" stroke-width="0">
+const HeartIcon = (props: any) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" stroke-width="0" {...props}>
     <path d="M12 21.35L10.55 20.03C5.4 15.36 2 12.27 2 8.5C2 5.41 4.42 3 7.5 3C9.24 3 10.91 3.81 12 5.08C13.09 3.81 14.76 3 16.5 3C19.58 3 22 5.41 22 8.5C22 12.27 18.6 15.36 13.45 20.03L12 21.35Z" />
   </svg>
 )
@@ -221,7 +225,7 @@ export default function HomeNav({
                 <button
                   onClick={() => swapFeed(tab.key, 0)}
                   class={joinClass(
-                    "flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 whitespace-nowrap flex-shrink-0",
+                    "flex items-center gap-2 btn btn-sm rounded-xl font-medium text-sm transition-all duration-200 whitespace-nowrap flex-shrink-0",
                     "border border-gray-200 dark:border-gray-600",
                     getTabClasses(page() === tab.key),
                   )}
@@ -244,7 +248,7 @@ export default function HomeNav({
                 <button
                   onClick={() => swapFeed(`topic-${topic.slug}`, 0)}
                   class={joinClass(
-                    "flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 whitespace-nowrap flex-shrink-0",
+                    "flex items-center gap-2 btn btn-sm rounded-xl  font-medium text-sm transition-all duration-200 whitespace-nowrap flex-shrink-0",
                     "border border-gray-200 dark:border-gray-600",
                     page() === `topic-${topic.slug}`
                       ? "bg-purple-600 dark:bg-purple-500 text-white shadow-lg shadow-purple-500/25"
@@ -266,7 +270,7 @@ export default function HomeNav({
             <button
               onClick={() => navigate("/explore")}
               class={joinClass(
-                "flex items-center gap-2 px-4 py-2.5 rounded-xl font-medium text-sm transition-all duration-200 whitespace-nowrap group flex-shrink-0",
+                " flex items-center gap-2 btn btn-sm rounded-xl  font-medium text-sm transition-all duration-200 whitespace-nowrap group flex-shrink-0",
                 "bg-indigo-50 dark:bg-indigo-900/20 hover:bg-indigo-100 dark:hover:bg-indigo-800/30",
                 "text-indigo-600 dark:text-indigo-400 hover:text-indigo-700 dark:hover:text-indigo-300",
                 "border border-indigo-200 dark:border-indigo-700",
