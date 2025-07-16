@@ -1,5 +1,5 @@
 /* @refresh reload */
-import { render } from 'solid-js/web'; 
+import { render } from 'solid-js/web';
 
 import './index.css';
 import App from './App';
@@ -12,40 +12,24 @@ import ForgotPassword from './Pages/auth/ForgotPassword';
 import Registration from './Pages/auth/Registration';
 import Settings from './Pages/settings';
 import profileSettings from './Pages/settings/profile-settings';
-import AccountManagement from './Pages/settings/account-management'; 
-
-import notifications from "./Pages/settings/notifications"
-
-import Privacy from './Pages/settings/privacy';
-import PrivacyPolicy from './Pages/settings/privacy/privacy-policy';
-import RequestData from './Pages/settings/privacy/request-data';
-
-import Premium from './Pages/settings/premium';
-import Subscription from './Pages/settings/premium/subscription';
-import Credits from './Pages/settings/premium/credits';
-import Billing from './Pages/settings/premium/billing';
-import PremiumFeatures from './Pages/settings/premium/features';
-
-import AccountSecurity from './Pages/settings/account-security';
-import Monetization from './Pages/settings/monetization';
-import MonetizationMetrics from './Pages/settings/monetization/metrics';
-import MonetizationCashout from './Pages/settings/monetization/cashout';
-
+import AccountManagement from './Pages/settings/account-management';
 import deviceManagement from './Pages/settings/device-management';
-import applicationUpdates from './Pages/settings/application-updates'; 
-import Snippets from './Pages/snippets';
+import applicationUpdates from './Pages/settings/application-updates';
 import Account from './Pages/settings/account-management/account';
-import Password from './Pages/settings/account-management/password'; 
-import bookmarks from './Pages/bookmarks';
+import Password from './Pages/settings/account-management/password';
 import myFeed from './Pages/settings/my-feed';
-const root = document.getElementById('root');
-export const api = new SDK({serverURL:'https://api.postlyapp.com'});  
+import Snippets from './Pages/snippets';
+import bookmarks from './Pages/bookmarks';
+import notifications from "./Pages/settings/notifications"
+import remove from './Pages/settings/account-management/account/remove';
+const root = document.getElementById('root'); 
+export const api = new SDK({serverURL:"http://localhost:8080"}); 
+ 
 if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
   throw new Error(
     'Root element not found. Did you forget to add it to your index.html? Or maybe the id attribute got misspelled?',
   );
-}
-
+} 
 render(() =>  (
   <Router>
     <Route path="/auth/login" component={Login} />
@@ -61,22 +45,11 @@ render(() =>  (
     <Route path={"/settings/account-management/account"} component={Account} />
     <Route path={"/settings/account-management/password"}component={Password}/>
     <Route path={"/settings/device-management"} component={deviceManagement} />
-    <Route path={"/settings/application-updates"} component={applicationUpdates} />
-    <Route path={"/settings/my-feed"} component={myFeed} /> 
     <Route path={"/settings/notifications"} component={notifications} />
-    <Route path={"/settings/privacy"} component={Privacy} />
-    <Route path={"/settings/privacy/privacy-policy"} component={PrivacyPolicy} />
-    <Route path={"/settings/privacy/request-data"} component={RequestData} />
-    <Route path={"/settings/premium"} component={Premium} />
-    <Route path={"/settings/premium/subscription"} component={Subscription} />
-    <Route path={"/settings/premium/credits"} component={Credits} />
-    <Route path={"/settings/premium/billing"} component={Billing} />
-    <Route path={"/settings/premium/features"} component={PremiumFeatures} />
-    <Route path={"/settings/security"} component={AccountSecurity} />
-    <Route path={"/settings/monetization"} component={Monetization} />
-    <Route path={"/settings/monetization/metrics"} component={MonetizationMetrics} />
-    <Route path={"/settings/monetization/cashout"} component={MonetizationCashout} />
-    <Route path={"/snippets"} component={Snippets}/> 
-    <Route path="/bookmarks" component={bookmarks} />
+    <Route path={"/settings/application-updates"} component={applicationUpdates} />
+    <Route path={"/settings/account/remove"} component={remove} />
+    <Route path={"/settings/my-feed"} component={myFeed} />
+    <Route path={"/snippets"} component={Snippets}/>
+    <Route path="/bookmarks" component={bookmarks} /> 
   </Router>
 ), root);
