@@ -12,7 +12,7 @@ import ForgotPassword from './Pages/auth/ForgotPassword';
 import Registration from './Pages/auth/Registration';
 import Settings from './Pages/settings';
 import profileSettings from './Pages/settings/profile-settings';
-import AccountManagement from './Pages/settings/account-management';
+import AccountManagement from './Pages/settings/account-management/index';
 import deviceManagement from './Pages/settings/device-management';
 import applicationUpdates from './Pages/settings/application-updates';
 import Account from './Pages/settings/account-management/account';
@@ -23,6 +23,8 @@ import bookmarks from './Pages/bookmarks';
 import notifications from "./Pages/settings/notifications"
 import remove from './Pages/settings/account-management/account/remove';
 import SafetyCenter from './Pages/safety';
+import Privacy from './Pages/settings/privacy';
+import Status from './Pages/status';
 const root = document.getElementById('root'); 
 export const api = new SDK({serverURL:"https://api.postlyapp.com"}); 
  
@@ -50,8 +52,10 @@ render(() =>  (
     <Route path={"/settings/application-updates"} component={applicationUpdates} />
     <Route path={"/settings/account/remove"} component={remove} />
     <Route path={"/settings/my-feed"} component={myFeed} />
+    <Route path={"/settings/privacy"} component={Privacy} />
     <Route path={"/snippets"} component={Snippets}/>
     <Route path="/bookmarks" component={bookmarks} /> 
     <Route path={"/safety"}  component={SafetyCenter} />
+    <Route path={"/status"} component={Status} />
   </Router>
 ), root);
