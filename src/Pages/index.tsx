@@ -86,7 +86,7 @@ export default function Home() {
 
       <Switch>
         <Match when={!loading()}>
-          <div class="flex flex-col    gap-5 ">
+          <div class="flex flex-col     ">
 
 
             <Show when={posts()}>
