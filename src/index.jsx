@@ -23,7 +23,7 @@ import bookmarks from './Pages/bookmarks';
 import notifications from "./Pages/settings/notifications"
 import remove from './Pages/settings/account-management/account/remove';
 const root = document.getElementById('root'); 
-export const api = new SDK({serverURL:"http://localhost:8080"}); 
+export const api = new SDK({serverURL:"https://api.postlyapp.com"}); 
  
 if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
   throw new Error(
