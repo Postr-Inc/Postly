@@ -22,6 +22,7 @@ import Snippets from './Pages/snippets';
 import bookmarks from './Pages/bookmarks';
 import notifications from "./Pages/settings/notifications"
 import remove from './Pages/settings/account-management/account/remove';
+import SafetyCenter from './Pages/safety';
 const root = document.getElementById('root'); 
 export const api = new SDK({serverURL:"https://api.postlyapp.com"}); 
  
@@ -51,5 +52,6 @@ render(() =>  (
     <Route path={"/settings/my-feed"} component={myFeed} />
     <Route path={"/snippets"} component={Snippets}/>
     <Route path="/bookmarks" component={bookmarks} /> 
+    <Route path={"/safety"}  component={SafetyCenter} />
   </Router>
 ), root);
