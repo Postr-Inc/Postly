@@ -127,9 +127,9 @@ export default function HomeNav({
     },
   ]
 
-  const getTabClasses = (isActive: boolean) => {
+  const getTabClasses = (isActive: boolean, tab: any) => {
     if (isActive) {
-      return "bg-blue-500 dark:bg-blue-500 text-white    "
+      return  joinClass(" text-white    ", tab.key === "trending" ? "bg-red-400 dark:bg-red-500" : "bg-blue-500 dark:bg-blue-500" )
     }
     return "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800"
   }
@@ -226,8 +226,8 @@ export default function HomeNav({
                   onClick={() => swapFeed(tab.key, 0)}
                   class={joinClass(
                     "flex items-center gap-2 btn btn-sm rounded-xl font-medium text-sm transition-all duration-200 whitespace-nowrap flex-shrink-0",
-                    "border border-gray-200 dark:border-gray-600",
-                    getTabClasses(page() === tab.key),
+                    "border border-gray-200 dark:border-gray-600",   
+                    getTabClasses(page() === tab.key, tab),
                   )}
                 >
                   <tab.icon class="w-4 h-4 flex-shrink-0" />
