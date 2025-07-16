@@ -2,7 +2,7 @@ import { createSignal, onMount, For, Show } from 'solid-js';
 
 function Status() {
   const [services, setServices] = createSignal([
-    { name: 'Hapta Backend', url: 'https://api.postlyapp.com', status: 'checking', lastChecked: null }, 
+    { name: 'Hapta Backend', url: 'https://api.postlyapp.com/health', status: 'checking', lastChecked: null }, 
   ]);
   const [alerts, setAlerts] = createSignal([]);
 
