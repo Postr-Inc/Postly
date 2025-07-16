@@ -180,52 +180,93 @@ export function SideBarRight(props:  {
                   </div>
                   </div>
               </li>
-               <Show when={RelevantPeople() && RelevantPeople().length > 0}>
-               <li class={`
-                ${
-                  theme() == 'dark' ? 'xl:border xl:border-[#121212]' : 'xl:border xl:border-[#d3d3d3d8]'
-                }  p-5 rounded-xl`}>
-                <a class="w-full relative">
-                  <h1 class="font-bold text-lg">{RelevantText()}</h1>
-                  <div class="flex flex-col mt-5 gap-5">
-                  <For each={RelevantPeople()} >
-                    {(item) => (
-                      <div class="flex flex-row gap-5">
-                       <Switch fallback={<></>}>
-                       <Match when={!item.avatar}>
-                        <div class="w-10 h-10 border  text-center p-2 rounded">
-                          {item.username.slice(0, 1).charAt(0).toUpperCase()}
-                        </div>
-                       </Match>
-                       <Match when={item.avatar}>
-                       <img
-                          class="w-10 h-10 rounded"
-                          src={api.cdn.getUrl("users", item.id, item.avatar)}
-                          alt={item.username}
-                        />
-                        </Match>
-                       </Switch>
-                        <div class="flex flex-col cursor-pointer" onClick={()=>  navigate(`/u/${item.username}`, {id: item.username})}>
-                          <a class="font-bold">{item.username}</a> 
-                          <p class="text-sm">@{item.username}</p>
-                        </div>
-                      </div>
-                    )}
-                  </For>
-                  </div>
-                </a>
-              </li>
-               </Show>
+                <Switch>
+  {/* ✅ 1️⃣ Loading state */}
+  <Match when={!RelevantPeople() || RelevantPeople().length === 0}>
+    <li
+      class={`
+        ${
+          theme() === 'dark'
+            ? 'xl:border xl:border-[#121212]'
+            : 'xl:border xl:border-[#d3d3d3d8]'
+        } p-5 rounded-xl
+      `}
+    >
+      <h1 class="font-bold text-lg">{RelevantText()}</h1>
+      <div class="flex flex-col mt-5 gap-4">
+        <div class="animate-pulse flex flex-col gap-4">
+          {/* Example shimmer placeholders */}
+          <div class="flex gap-4">
+            <div class="w-10 h-10 rounded bg-base-200"></div>
+            <div class="flex-1 h-4 bg-base-200 rounded"></div>
+          </div>
+          <div class="flex gap-4">
+            <div class="w-10 h-10 rounded bg-base-200"></div>
+            <div class="flex-1 h-4 bg-base-200 rounded"></div>
+          </div>
+        </div>
+      </div>
+    </li>
+  </Match>
+
+  {/* ✅ 2️⃣ Populated state */}
+  <Match when={RelevantPeople() && RelevantPeople().length > 0}>
+    <li
+      class={`
+        ${
+          theme() === 'dark'
+            ? 'xl:border xl:border-[#121212]'
+            : 'xl:border xl:border-[#d3d3d3d8]'
+        } p-5 rounded-xl
+      `}
+    >
+      <a class="w-full relative">
+        <h1 class="font-bold text-lg">{RelevantText()}</h1>
+        <div class="flex flex-col mt-5 gap-5">
+          <For each={RelevantPeople()}>
+            {(item) => (
+              <div class="flex flex-row gap-5">
+                <Switch>
+                  <Match when={!item.avatar}>
+                    <div class="w-10 h-10 border text-center p-2 rounded">
+                      {item.username.slice(0, 1).toUpperCase()}
+                    </div>
+                  </Match>
+                  <Match when={item.avatar}>
+                    <img
+                      class="w-10 h-10 rounded"
+                      src={api.cdn.getUrl("users", item.id, item.avatar)}
+                      alt={item.username}
+                    />
+                  </Match>
+                </Switch>
+                <div
+                  class="flex flex-col cursor-pointer"
+                  onClick={() =>
+                    navigate(`/u/${item.username}`, { id: item.username })
+                  }
+                >
+                  <span class="font-bold">{item.username}</span>
+                  <p class="text-sm">@{item.username}</p>
+                </div>
+              </div>
+            )}
+          </For>
+        </div>
+      </a>
+    </li>
+  </Match>
+</Switch>
+
 
                <a href="https://www.producthunt.com/products/postly-5?embed=true&utm_source=badge-featured&utm_medium=badge&utm_source=badge-postly&#0045;7" target="_blank"><img src="https://api.producthunt.com/widgets/embed-image/v1/featured.svg?post_id=981494&theme=light&t=1750508772558" alt="Postly - Open&#0045;source&#0032;social&#0032;media&#0046;&#0032;No&#0032;ads&#0044;&#0032;no&#0032;tracking | Product Hunt" style="width: 250px; height: 54px;" width="250" height="54" /></a>
               <div class="flex flex-col gap-5 mt-2 p-2 text-sm">
                 <li class="flex flex-row gap-5">
-                  <a class="cursor-pointer hover:underline" href="/information/terms.pdf" target="_blank">
+                  <a class="cursor-pointer hover:underline">
                     Terms of service
                   </a>
                   <a
                     href="/information/privacy.pdf"
-                    target="_blank"
                     class="cursor-pointer hover:underline"
                   >
                     Privacy Policy

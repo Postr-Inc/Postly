@@ -251,7 +251,7 @@ export default function EditProfileModal({
     <dialog id="editProfileModal" class="modal rounded-none overflow-y-scroll scroll-smooth no-scrollbar">
       <div
         class={joinClass(
-          "modal-content sm:h-full max-w-lg w-full mx-4   shadow-2xl   ",
+          "modal-content max-w-lg w-full mx-4   shadow-2xl   ",
           theme() === "dark" ? "bg-gray-900 text-white" : "bg-white text-gray-900",
         )}
       >

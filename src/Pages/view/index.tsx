@@ -47,7 +47,7 @@ export default function View(props: any) {
   function fetchP() {
     let { params } = useNavigation("/view/:collection/:id");
     let { id, collection } = params();
-    console.log(collection)
+    if(!id || !collection) return;
     api
       .collection(collection)
       .get(id, {
@@ -109,40 +109,43 @@ export default function View(props: any) {
   }
 
   // CreateEffect to trigger refetching when the `id` changes
-  onMount(() => {
-    const listener = (e) =>{
-        const newComment = e.detail;
-        console.log("New comment received via event:", newComment);
-        // Update your comments state here
-        setComments((comments) => [newComment, ...comments]);
+   onMount(() => {
+  const listener = (e) => {
+    const newComment = e.detail;
+    setComments((comments) => [newComment, ...comments]);
+    setPost((post) => ({
+      ...post,
+      comments: [...(post.comments || []), newComment.id],
+    }));
+  };
 
-        // If you want to update the post's comment count locally:
-        setPost((post) => ({
-          ...post,
-          comments: [...(post.comments || []), newComment.id], 
-        }));
-    }
+  // Add event listeners once
+  window.addEventListener("popstate", () => {
+    setPost(null);
+    setLoading(true);
+  });
+  window.addEventListener("commentCreated", listener);
 
-    createEffect(() => {
-      api.checkAuth();
+  // Initial fetch when component mounts
+  fetchP();
 
-      window.addEventListener("popstate", () => {
-        setPost(null)
-        setLoading(true)
-      });
-      window.addEventListener("commentCreated",  listener)
- 
-      fetchP();
-    }); // Depend on the `id` parameter
-
-
-    // if user is not in author's followers we want to set a metric if the user follows after viewing this post we track it
-
-      onCleanup(() => {
+  onCleanup(() => {
     window.removeEventListener("commentCreated", listener);
   });
+});
 
-  })
+// Track id param change explicitly for fetchP re-run
+createEffect(() => {
+  const { id } = useParams(); // get reactive param signal
+  // When id changes, reset and fetch new post
+  if (id) {
+    setLoading(true);
+    setPost(null);
+    setComments([]);
+    fetchP();
+  }
+});
+
 
 
 
@@ -209,7 +212,7 @@ export default function View(props: any) {
               </For>
             </Match>
             <Match when={post() && !loading() && comments().length < 1}>
-              <div class="p-5 text-xl text-center mb-6">
+              <div class="p-5 text-xl text-center">
                 ✨ Nobody has commented, be the first to comment
               </div>
             </Match>

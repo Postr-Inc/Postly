@@ -1,29 +1,56 @@
 import useTheme from "@/src/Utils/Hooks/useTheme";
-import Modal, { ModalContent } from "../Modal";
 import { joinClass } from "@/src/Utils/Joinclass";
 import { api } from "@/src";
-export default function DeleteAccountModal() {
-    const { theme } = useTheme()
 
-    function deleteAccount(){
-        api.authStore.deleteAccount()
-        window.location.href = "/"
-        localStorage.removeItem("postr_auth")
-    }
-    return (
-        <dialog id="deleteModalConfirm" class="modal overflow-scroll  flex flex-col gap-12 ">
-            <div class={joinClass("modal-content   w-[22rem]  p-12   mt-12    rounded-xl", theme() === "dark" ? "bg-black" : "bg-white")}> 
-            <div class="flex flex-col gap-12"> 
-                 <p> Are you sure you want to delete your account? <br></br > <br></br>We recommend deactivating your account via your profile, it is a better alternative to hiding your account from everyone!
-                Going forward and deleting your account is irreversable and can not be altered.</p>
-                 <div class="flex "> 
-                 <button class="btn bg-blue-500 text-white" onClick={()=> document.getElementById("deleteModalConfirm").close()}>Cancel</button>
-                 
-                    <button class="btn bg-red-500 text-white"onClick={deleteAccount}>Confirm Deletion</button>
-                 </div>
-            </div>
-            
-            </div>
-        </dialog>
-    )
+export default function DeleteAccountModal() {
+  const { theme } = useTheme();
+
+  function deleteAccount() {
+    api.authStore.deleteAccount();
+    localStorage.removeItem("postr_auth");
+    window.location.href = "/";
+  }
+
+  function closeModal() {
+    (document.getElementById("deleteModalConfirm") as HTMLDialogElement)?.close();
+  }
+
+  return (
+    <dialog
+      id="deleteModalConfirm"
+      class="modal flex items-center justify-center p-4"
+    >
+      <div
+        class={joinClass(
+          "modal-content w-full max-w-md rounded-2xl p-6 shadow-lg",
+          theme() === "dark" ? "bg-[#121212] text-white" : "bg-white text-black"
+        )}
+      >
+        <h2 class="text-xl font-semibold mb-2">Delete your account</h2>
+        <p class="text-sm mb-6 leading-relaxed text-gray-500 dark:text-gray-400">
+          Are you sure you want to delete your account? We recommend deactivating
+          your account instead — it’s a safer way to hide your profile from others.
+          <br />
+          <br />
+          Deleting your account is <span class="font-bold">permanent</span> and
+          cannot be undone.
+        </p>
+
+        <div class="flex justify-end gap-3">
+          <button
+            class="px-4 py-2 rounded-xl text-sm font-medium border border-gray-300 hover:bg-gray-100 dark:border-gray-700 dark:hover:bg-gray-800 transition"
+            onClick={closeModal}
+          >
+            Cancel
+          </button>
+          <button
+            class="px-4 py-2 rounded-xl text-sm font-medium bg-red-500 text-white hover:bg-red-600 transition"
+            onClick={deleteAccount}
+          >
+            Delete Account
+          </button>
+        </div>
+      </div>
+    </dialog>
+  );
 }

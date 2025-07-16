@@ -68,7 +68,7 @@ export default function BottomNav() {
             class={joinClass(" size-6", theme() == "dark" ? "fill-black" : "fill-white")}
             onClick={() => {
               //@ts-ignore
-              if (api.authStore.model.id) {
+              if (api.authStore.model.username) {
                 document.getElementById("createPostModal")?.showModal()
                 //@ts-ignore
                 window.resetCreatePost()

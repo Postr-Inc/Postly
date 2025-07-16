@@ -1,7 +1,8 @@
 // @ts-nocheck
 import { api } from "@/src";
-import logo from "@/src/assets/icon.jpg"
+import logo from "@/src/assets/icon_transparent.png"
 import useTheme from "../Hooks/useTheme";
+import { joinClass } from "../Joinclass";
 export default function LogoutModal(props: any) {
     let { theme } = useTheme();
   return (
@@ -12,7 +13,7 @@ export default function LogoutModal(props: any) {
           borderRadius: "10px",
         }}
         id="logout-modal"
-        className={` rounded-box   modal-middle 
+        className={` rounded-xl   modal-middle 
             
             `}
       >
@@ -21,9 +22,9 @@ export default function LogoutModal(props: any) {
             borderRadius: "10px",
             border: theme() == "dark" ? "1px solid #2d2d2d" : "1px solid #f9f9f9",
           }}
-          className={`flex p-5 xl:w-[23vw] h-[45vh] xl:h-[45vh] rounded-box items-center 
+          className={`flex p-2 xl:w-[23vw] h-[45vh] xl:h-[45vh] rounded-xl items-center 
              ${
-               theme() === "dark" ? "bg-black text-white" : "bg-white text-black "
+               theme() === "dark" ? "bg-base-300 text-white" : "bg-white text-black "
              }
             justify-center flex-col mx-auto`}
         >
@@ -31,29 +32,24 @@ export default function LogoutModal(props: any) {
             src={logo}
             className="rounded"
             alt="postr logo"
-            width={40}
-            height={40}
+            width={60}
+            class={joinClass(theme() == "dark" ? "" : "black")}
+            height={60}
           ></img>
           <p className="font-bold text-xl mt-2">Loging out of Postr?</p>
           <p className="text-sm mt-2">
             You can always log back in at any time.
           </p>
           <button
-            className={`btn btn-ghost rounded-full w-full  
-                ${
-                  theme() === "dark"
-                    ? "bg-white text-black"
-                    : "bg-black text-white"
-                }
-                mt-5`}
+            className={`btn btn-ghost rounded-full w-full text-white  bg-red-500 mt-5`}
             onClick={() => { 
-              api.authStore.logout();
+              api.authStore.logout(true);
             }}
           >
             Logout
           </button>
           <form method="dialog" className="w-full">
-            <button className="btn btn-ghost mt-5 w-full rounded-full bg-base-200 ">
+            <button className="btn btn-ghost    mt-5 w-full rounded-full bg-base-300 ">
               Cancel
             </button>
           </form>

@@ -9,19 +9,19 @@ export default function Dropdown({ children, direction , point}: { children: any
       <div tabindex="0" role="button">
         {children[0]}
       </div>
-      <ul
+      <li
         tabindex="0"
         class={joinClass("dropdown-content justify-center flex flex-col menu bg-base-100 rounded-[.4rem] z-[99999] w-64  h-fit p-2 shadow-lg", theme() === "dark" ? "border-[#1c1c1c] border" : "border-[#d7d6d6] border")}
       >
         {children.slice(1)}
-      </ul>
+      </li>
     </div>
   );
 }
 
 
-function DropdownItem({ children }: { children: any }) {
-  return <span class="p-2 flex hero gap-2 cursor-pointer">{children}</span>;
+function DropdownItem({ children, onClick }: { children: any, onClick: ()=> void}) {
+  return <span onClick={onClick} class="p-2 flex hero gap-2 cursor-pointer">{children}</span>;
 }
 
 Dropdown.Item = DropdownItem;

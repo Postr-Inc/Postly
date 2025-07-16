@@ -31,7 +31,7 @@ export default function () {
                 </div>
                 </Match>
                 <Match when={posts()  && posts().length >= 1  && !loading() }>
-                 <For each={posts()}>
+ <For each={posts()}>
                     {(p) => {
                         return <Post {...p} navigate={navigate} />
                     }}

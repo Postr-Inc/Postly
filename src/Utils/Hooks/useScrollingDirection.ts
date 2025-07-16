@@ -26,7 +26,7 @@ export default function useScrollingDirection() {
     };
 
     window.onscrollend = () => {
-        var t = setTimeout(()=>{
+        var t = setTimeout(()=>{ 
            setScrollingDirection("up")
            clearTimeout(t)
         }, 1000)

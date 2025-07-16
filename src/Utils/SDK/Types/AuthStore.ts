@@ -1,4 +1,5 @@
 export type authStore = {
+    getBasicAuthToken: ()=> Promise<boolean>;
     model: {
         token: string,
         id: string,
@@ -12,10 +13,15 @@ export type authStore = {
         postr_plus: boolean,
         followers: string[],
         following: string[],
-        ActiveDevices: string[], 
+        ActiveDevices: string[],
+        smartDataCollection:boolean,
+        deactivated: boolean,
+        social: string[],
+        account_links: string[]
     },
     login: (emailOrUsername: string, password: string) => Promise<authStore["model"]>,
-    logout: () => void,
+    deleteAccount: () => boolean,
+    logout: (userNavigated? : boolean) => void,
     requestPasswordReset: (email: string) => Promise<void>,
     resetPassword: (password: string, token: string) => Promise<void>,  
     isValid: () => boolean,

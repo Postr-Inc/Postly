@@ -6,103 +6,98 @@ import ArrowLeft from "../Icons/ArrowLeft";
 import useNavigation from "@/src/Utils/Hooks/useNavigation";
 
 export default function FollowingListModal({
-    user,
-    show,
-    setFollowing,
-    setShow,
-    setUser,
+  user,
+  show,
+  setFollowing,
+  setShow,
+  setUser,
 }: {
-    user: any;
-    show: () => boolean;
-    setFollowing: (followers: any[]) => void;
-    setShow: (b: boolean) => void;
-    setUser: (user: any) => void;
+  user: any;
+  show: () => boolean;
+  setFollowing: (followers: any[]) => void;
+  setShow: (b: boolean) => void;
+  setUser: (user: any) => void;
 }) {
-    const { theme } = useTheme();
-    const { navigate } = useNavigation();
+  const { theme } = useTheme();
+  const { navigate } = useNavigation();
 
-    createEffect(() => {
-        if (show()) {
-            window.dispatchEvent(new CustomEvent("hide-post-button"));
-        }
-    });
+  createEffect(() => {
+    if (show()) {
+      window.dispatchEvent(new CustomEvent("hide-post-button"));
+    }
+  });
 
-  
+  const handleClose = () => setShow(false);
 
-    return (
-        <Show when={show()}>
-            <dialog
-                id="following-list-modal"
-                class="modal modal-open"
-                aria-label="Following list"
-            >
-                <div
-                    class={joinClass(
-                        "modal-content overflow-y-scroll  sm:w-[24rem] sm:h-[30vh] p-5 w-[27rem] rounded-xl",
-                        theme() === "dark" ? "bg-base-300 text-white" : "bg-white text-black"
-                    )}
-                >
-                    <div class="flex justify-between items-center mb-4">
-                        <ArrowLeft
-                            class="w-5 h-5 cursor-pointer"
-                            onClick={() => setShow(false)}
+  const handleNavigate = (username: string) => {
+    navigate(`/u/${username}`);
+    handleClose();
+  };
+
+  return (
+    <Show when={show()}>
+      <dialog
+        id="following-list-modal"
+        class="modal modal-open"
+        aria-label="Following list"
+      >
+        <div
+          class={joinClass(
+            "modal-content overflow-y-auto sm:w-[24rem] sm:max-h-[70vh] w-[27rem] rounded-xl p-5",
+            theme() === "dark" ? "bg-base-300 text-white" : "bg-white text-black"
+          )}
+        >
+          <div class="flex justify-between items-center mb-4">
+            <ArrowLeft
+              class="w-5 h-5 cursor-pointer"
+              onClick={handleClose}
+            />
+            <p class="flex-1 text-center text-lg font-medium">
+              {user().id === api.authStore.model.id
+                ? `${api.authStore.model.username}'s Following`
+                : `Who ${user().username} Follows`}
+            </p>
+            <div class="w-5" /> {/* Spacer to balance the ArrowLeft */}
+          </div>
+
+          <div class="flex flex-col gap-4 mt-2">
+            <Show when={user().expand.following?.length > 0} fallback={
+              <p class="text-center text-lg mt-16 opacity-70">
+                {user().username} doesn’t follow anyone yet.
+              </p>
+            }>
+              <For each={user().expand.following}>
+                {(following) => (
+                  <button
+                    type="button"
+                    class="flex w-full justify-between items-center gap-4 px-2 py-2 rounded-lg hover:bg-base-200 transition"
+                    onClick={() => handleNavigate(following.username)}
+                  >
+                    <div class="flex items-center gap-4">
+                      <Show when={following.avatar} fallback={
+                        <div class="w-12 h-12 rounded-full bg-base-200 flex items-center justify-center text-lg font-semibold">
+                          <span class={theme() === "dark" ? "text-white" : "text-black"}>
+                            {following.username[0].toUpperCase()}
+                          </span>
+                        </div>
+                      }>
+                        <img
+                          src={api.cdn.getUrl("users", following.id, following.avatar)}
+                          alt={`${following.username}'s avatar`}
+                          class="w-12 h-12 rounded-full object-cover"
                         />
-                        <p class="text-center flex-1 text-lg font-medium">
-                            {user().id === api.authStore.model.id
-                                ? `${api.authStore.model.username}`
-                                : `See who ${user().username} is following`}
-                        </p>
-                        <div class="w-5" /> {/* empty spacer */}
+                      </Show>
+                      <div class="text-left">
+                        <p class="font-medium">{following.username}</p>
+                      </div>
                     </div>
-
-                    <div class="flex flex-col gap-5 mt-4">
-                        <Show when={user().following.length > 0}>
-                            <For each={user().expand.following}>
-                            {(following) => {
-                                const isOwnProfile = user().id === api.authStore.model.id;
-                                const isFollowing = api.authStore.model.following?.some(
-                                    (f: any) => f === following.id
-                                );
-
-                                return (
-                                    <div class="flex justify-between items-center gap-5">
-                                        <div
-                                            class="flex gap-4 items-center cursor-pointer"
-                                            onClick={() => {
-                                                navigate(`/u/${following.username}`)
-                                                 setShow(false)
-                                            }}
-                                        >
-                                             <Show when={following.avatar}> 
-                                                <img
-                                                src={api.cdn.getUrl("users", following.id, following.avatar)}
-                                                alt="avatar"
-                                                class="rounded-full w-12 h-12 object-cover"
-                                            />
-                                             </Show>
-                                             <Show when={!following.avatar}>
-                                                 <div class="rounded-full w-12 h-12    bg-base-200 text-white flex items-center justify-center">
-                                                                    <p class={theme() == "dark" ? "text-white" : "text-black"}>{following.username[0]}</p>
-                                                </div>
-                                                                 
-                                             </Show>
-                                            <p class="hover:underline">{following.username}</p>
-                                        </div>
- 
-                                    </div>
-                                );
-                            }}
-                        </For>
-
-                        </Show>
-                        <Show when={user().following.length < 1}>
-                            <p class="text-2xl mt-12 text-center">
-                                {user().username} Does not follow anyone
-                            </p>
-                        </Show>
-                    </div>
-                </div>
-            </dialog>
-        </Show>
-    );
+                  </button>
+                )}
+              </For>
+            </Show>
+          </div>
+        </div>
+      </dialog>
+    </Show>
+  );
 }

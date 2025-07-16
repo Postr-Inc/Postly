@@ -61,7 +61,7 @@ export default function User() {
     // One-time scroll handler
     const handleScroll = () => {
       if (
-        window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - (window.innerWidth > 768 ? 300 : 50) &&
+        window.scrollY + window.innerHeight >= document.documentElement.scrollHeight - (window.innerWidth > 768 ? 100 : 50) &&
         !feedLoading() &&
         currentPage() < totalPages()
       ) {
@@ -154,7 +154,7 @@ export default function User() {
     createEffect(() => {
       if (currentPage() <= 1) return;
 
-      setLoading(false)
+      setLoading(true);
 
       const common = { page: currentPage(), user: u };
 

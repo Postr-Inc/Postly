@@ -15,6 +15,7 @@ import Alert from "../Alerts/Alert";
 import EditProfileModal from "@/src/components/Modals/EditProfileModal";
 import EditAccountModal from "@/src/components/Modals/EditAccountModal";
 import JoinPostlyModal from "../Modals/JoinPostlyModal";
+import BlockUserModal from "@/src/components/Modals/BlockedModal";
 export default function Page(props: { children: any , params: ()=> any, route: () => string, navigate: any, id: string, hide?: string[] }) {
      
        const [checkedAuth, setCheckedAuth] = createSignal(false);
@@ -31,8 +32,14 @@ export default function Page(props: { children: any , params: ()=> any, route: (
          }  
        });
     return <>
+     
     
    <div id={props.id} class={joinClass("relative xl:flex xl:w-[30vw] w-[100vw]     xl:p-0  lg:flex   2xl:w-[79rem]    justify-center xl:mx-auto ", )}>
+      <Portal>
+        <Alert />
+        
+    <RegisterModal />
+      </Portal>
          <Show when={props.route() !== "/auth/login" && props.route() !== "/auth/signup" && props.route() !== "/auth/forgot"}>
          <SideBarLeft {...{
              params: props.params,
@@ -61,16 +68,15 @@ export default function Page(props: { children: any , params: ()=> any, route: (
                <BottomNav />
           )
        }
-    </div> 
-      <Alert />
+    </div>  
     <Portal>
      
     <Browser />
-    
-    <RegisterModal />
+     
     <CreatePostModal />
     <DeleteAccountModal />   
     <EditAccountModal/>
+         <BlockUserModal />
     <JoinPostlyModal />
     </Portal>
     

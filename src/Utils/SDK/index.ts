@@ -107,15 +107,13 @@ export default class SDK {
       navigator.serviceWorker.register("/serviceworker.js").catch((e) => {
         console.log(e)
       })
-      if('Notification' in window){
-        Notification.requestPermission().then(permission => {
+      Notification.requestPermission().then(permission => {
         if (permission === "granted") {
           console.log("✅ Notification permission granted");
         } else {
           console.log("❌ Notification permission denied");
         }
       });
-      }
 
     }
     this.metrics.initializeMetrics()

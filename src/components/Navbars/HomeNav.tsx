@@ -152,16 +152,16 @@ export default function HomeNav({
           {/* User Section */}
           <div class="flex items-center gap-3 min-w-0 flex-1">
             <div class="relative">
-              <div class="dropdown">
+              <div class="dropdown focus:outline-none">
                 <div tabindex="0" role="button" class={joinClass(
-                  "flex items-center gap-3 p-2.5 rounded-xl transition-all duration-200",
+                  "flex items-center gap-3 p-2.5 focus:outline-none rounded-xl transition-all duration-200",
                   theme() === "dark" ? "border-gray-700" : "border-gray-300",
                 )}> <img
                     src={getUserAvatar() || "/placeholder.svg"}
                     alt={api.authStore.model?.username || "User"}
-                    class="w-12 h-12 rounded-xl  object-cover"
+                    class="w-12 h-12  focus:outline-none rounded-xl  object-cover"
                   /></div>
-                <ul tabindex="0" class="dropdown-content menu bg-base-100 border rounded-box rounded-xl z-1 w-52 p-2 shadow-sm">
+                <ul tabindex="0" class="dropdown-content focus:outline-none  menu bg-base-100 border rounded-box rounded-xl z-1 w-52 p-2 shadow-sm">
                  <Show when={api.authStore.model?.username}>
                    <li><a onClick={()=> navigate(`/u/${api.authStore.model?.username}`)}>Profile</a></li>
                    {api.authStore.model?.postr_plus && ( <li><a>Postly Plus Benefits</a></li>)}

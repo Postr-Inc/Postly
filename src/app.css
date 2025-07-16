@@ -107,6 +107,50 @@
   }
 }
 
+@keyframes borderGradient {
+  0% {
+    border-color: #ff6ec4;
+  }
+  25% {
+    border-color: #7873f5;
+  }
+  50% {
+    border-color: #4fd1c5;
+  }
+  75% {
+    border-color: #f6d365;
+  }
+  100% {
+    border-color: #ff6ec4;
+  }
+}
+
+.animate-border-overlay {
+  animation: borderGradient 6s linear infinite;
+  border-width: 4px;
+  border-style: solid;
+  border-radius: 1rem;
+}
+
+@keyframes gradientBackground {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.animate-gradient-border {
+  background: linear-gradient(270deg, #ff6ec4, #7873f5, #4fd1c5, #f6d365);
+  background-size: 800% 800%;
+  animation: gradientBackground 15s ease infinite;
+}
+
+
 @media (max-width: 640px) {
   .container {
     @apply px-4;

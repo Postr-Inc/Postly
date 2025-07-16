@@ -60,7 +60,7 @@ export default function SettingsPage() {
 </svg>
 
       ),
-      path: "/settings/premium",
+      path: "/settings/account/remove",
     },
      
   ]

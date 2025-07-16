@@ -5,12 +5,15 @@ import useNavigation from "@/src/Utils/Hooks/useNavigation"
 import useTheme from "@/src/Utils/Hooks/useTheme"
 import { joinClass } from "@/src/Utils/Joinclass"
 import Page from "@/src/Utils/Shared/Page"
+import { createSignal } from "solid-js"
 
 
 export default function Password() { 
  
   const { params, route, navigate, goBack } = useNavigation("/settings");
   const { theme } = useTheme()
+  let [newpassword, setNewPassword]= createSignal("")
+  let [oldPassword, setOldPassword] = createSignal("")
 
   const resetCache = () => {
     api.resetCache()
