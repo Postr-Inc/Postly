@@ -16,8 +16,7 @@
 - [ ] Search
 - [ ] Improve the use of collections
 - [ ] Selective updates
-- [ ] Private Creator Dashboards & analytics
-- [ ] Embedding outside content from different platforms
+- [ ] Private Creator Dashboards & analytics 
 - [ ] Developer Dashboards 
 - [ ] Messaging 
 - [ ] Embedding content within other applications 
@@ -25,7 +24,8 @@
 
 
 ## Features that are finished
-- [x] Reposting & Replies
+- [x] Reposting & Replies 
+- [x] Embedding outside content from different platforms
 - [x] Create content with images
 - [x] View user profiles 
 - [x] Polls 
