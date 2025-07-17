@@ -123,6 +123,12 @@ export default function ExplorePage() {
   let [trendingHashtags, setTrendingHashtags] = createSignal([])
   let [TOPICS, setTopics] = createSignal([])
   const { theme } = useTheme()
+  const [search, setSearch] = createSignal("");
+
+  const filteredTopics = () =>
+    TOPICS().filter(topic =>
+    topic.name.toLowerCase().includes(search().toLowerCase())
+  );
   async function getTrendingHashTags() {
     const tags = await api.collection("Hashtags").list(1, 15, {
       filter: `posts:length > 0`,
@@ -202,7 +208,11 @@ export default function ExplorePage() {
   const isSubscribed = (slug: string) =>
     subscribedTopics().some(t => t.slug === slug);
 
-
+const [expanded, setExpanded] = createSignal(false);
+const visibleTopics = () => {
+  const all = filteredTopics();
+  return expanded() ? all : all.slice(0, 6);
+};
   return (
     <Page {...{ route, navigate }}>
       <div class="w-full    my-8">
@@ -214,7 +224,14 @@ export default function ExplorePage() {
           <div class={joinClass(
             "max-h-[70vh] overflow-y-auto scrollbar-hide",
           )}>
-            <For each={TOPICS()}>
+          <input
+  type="text"
+  placeholder="Search topics..."
+  value={search()}
+  onInput={(e) => setSearch(e.currentTarget.value)}
+  class={joinClass("mb-4 px-4 py-2 w-full border rounded-full focus:outline-none   dark:bg-gray-900 text-sm dark:text-white", theme() == "dark" && "bg-base-300 border-none")}
+/>
+            <For each={visibleTopics()}>
               {(topic) => (
                 <div
                   key={topic.slug}
@@ -302,6 +319,14 @@ export default function ExplorePage() {
               )}
             </For>
           </div>
+          <Show when={filteredTopics().length > 6}>
+  <button
+    onClick={() => setExpanded(!expanded())}
+    class="mt-4 text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
+  >
+    {expanded() ? "Show Less" : "Show More"}
+  </button>
+</Show>
         </div>
 
         {/* Trending Section */}
@@ -317,8 +342,7 @@ export default function ExplorePage() {
           </h2>
 
           <div class={joinClass(
-            "max-h-[70vh] overflow-y-auto scrollbar-hide",
-            theme() === "dark" ? "bg-gray-900" : "bg-white"
+            "max-h-[70vh] overflow-y-auto scrollbar-hide", 
           )}>
             <For each={trendingHashtags()}>
               {(tag) => (
