@@ -18,7 +18,60 @@ import useNavigation from "@/src/Utils/Hooks/useNavigation";
 import { getFileType, getDynamicImageQuality, compressImage, prepareFile } from "@/src/Utils/BetterHandling";
 import { dispatchAlert } from "@/src/Utils/SDK";
 import { GeneralTypes } from "@/src/Utils/SDK/Types/GeneralTypes";
-
+const getTopicIcon = (icon: string) => {
+  switch (icon) {
+    case "technology":
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 0 0 2.25-2.25V6.75a2.25 2.25 0 0 0-2.25-2.25H6.75A2.25 2.25 0 0 0 4.5 6.75v10.5a2.25 2.25 0 0 0 2.25 2.25Zm.75-12h9v9h-9v-9Z" />
+        </svg>
+      )
+    case "science":
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25L12 3 4.5 14.25M12 3v18" />
+        </svg>
+      )
+    case "gaming":
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v3m0 12v3m9-9h-3m-12 0H3m15.364-6.364l-2.121 2.121M6.757 6.757l2.121 2.121M6.757 17.243l2.121-2.121m10.486 0l-2.121 2.121" />
+        </svg>
+      )
+    case "health":
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 21c-4.5-2-9-6.5-9-11.25C3 6.269 5.269 4 8.25 4c1.45 0 2.794.81 3.75 2.057C13.956 4.81 15.3 4 16.75 4 19.731 4 22 6.269 22 9.75c0 4.75-4.5 9.25-10 11.25Z" />
+        </svg>
+      )
+    case "art":
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 3L12 8.25M12 8.25L8.25 3M12 8.25v12" />
+        </svg>
+      )
+    case "sports":
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 0 1-6 0M12 3v9m0 0v9" />
+        </svg>
+      )
+    case "business":
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 17V9.75a2.25 2.25 0 0 1 2.25-2.25h1.5A2.25 2.25 0 0 1 15 9.75V17m0 0v-4.5m-6 4.5v-3" />
+        </svg>
+      )
+    case "entertainment":
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25m0 0L12 3m3.75 2.25L21 3m-5.25 5.25L12 21m0 0l-3.75-8.25M12 21l3.75-8.25" />
+        </svg>
+      )
+    default:
+      return null
+  }
+}
 function extractFirstURL(text: string): string | null {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const matches = text.match(urlRegex);
@@ -43,6 +96,7 @@ export default function CreatePostModal() {
   let [replyRule, setReplyRule] = createSignal("public")
   let [hasError, setHasError] = createSignal(false, { equals: false })
   let [error, setError] = createSignal(null)
+  let [topics, setTopics] = createSignal<any[]>([])
   const [collection, setCollection] = createSignal(window.location.pathname.split("/")[2] === "posts" && window.location.pathname.includes("view") ? "comments" : window.location.pathname.split("/")[2] === "comments" && window.location.pathname.includes("view") ? "comments" : "posts")
   let [postData, setPostData] = createSignal<any>({
     content: "",
@@ -52,6 +106,7 @@ export default function CreatePostModal() {
     isRepost: false,
     isPoll: false,
     repost: "",
+    topic: null,
     whoCanSee: "public",
     embedded_link: null,
     _preview_meta: null,
@@ -91,6 +146,9 @@ export default function CreatePostModal() {
 
 
     const data = { ...postData(), author: JSON.parse(localStorage.getItem("postr_auth") || "{}").id };
+    if(data.topic){
+      data.topic = data.topic.id
+    }
     if (!data.author) {
       document.getElementById("createPostModal")?.close();
       dispatchAlert({ type: "error", "message": "Author missing can not create post" })
@@ -130,35 +188,43 @@ export default function CreatePostModal() {
         ],
       }) as any;
 
+      if(data.topic){
+        await api.collection("topics").update(data.topic, {
+          posts: [...topics().find((i)=> i.id === data.topic).posts, res.id]
+        }, {
+          invalidateCache: ["topics", "topic-get", `topic-${topics().find((i)=> i.id === data.topic).name}_feed`]
+        })
+      }
 
       setPostData({
         content: "", links: [], tags: [],
         isRepost: false, isPoll: false,
         hashtags: [], whoCanSee: "public",
         _preview_meta: null, embedded_link: null,
+        topic: null
       });
 
-       if (api.ws) {
-          api.ws.send(JSON.stringify({  
-            payload: {
-              type: GeneralTypes.NOTIFY,
-              notification_data: {
-                author: api.authStore.model.id,
-                post: res.id,
-                comment: "",
-                recipients: api.authStore.model.followers, 
-                url: `${window.location.host}/view/${res.id}`,
-                notification_title: `${api.authStore.model.username} Has Posted Click to View New Post`,
-                notification_body: res.content,
-                message: res.content,
-                icon: `${api.cdn.getUrl("users", api.authStore.model.id, api.authStore.model.avatar || "")}`
-              }
-            },
-            security: {
-              token: api.authStore.model.token
+      if (api.ws) {
+        api.ws.send(JSON.stringify({
+          payload: {
+            type: GeneralTypes.NOTIFY,
+            notification_data: {
+              author: api.authStore.model.id,
+              post: res.id,
+              comment: "",
+              recipients: api.authStore.model.followers,
+              url: `${window.location.host}/view/${res.id}`,
+              notification_title: `${api.authStore.model.username} Has Posted Click to View New Post`,
+              notification_body: res.content,
+              message: res.content,
+              icon: `${api.cdn.getUrl("users", api.authStore.model.id, api.authStore.model.avatar || "")}`
             }
-          }))
-        }
+          },
+          security: {
+            token: api.authStore.model.token
+          }
+        }))
+      }
       setFiles([]);
       setIsPosting(false);
 
@@ -191,6 +257,14 @@ export default function CreatePostModal() {
   }
 
 
+  async function draft() {
+    if (localStorage.getItem("postDrafts")) {
+      var _drafts = Drafts()
+      _drafts.push(postData())
+      localStorage.setItem("postDrafts", JSON.stringify(_drafts))
+    }
+  }
+
   const postMessages = [
     "We’re creating your post. This might take a few seconds if you added images or videos.",
     "Compressing media and optimizing your content...",
@@ -201,13 +275,20 @@ export default function CreatePostModal() {
 
   const [currentMessage, setCurrentMessage] = createSignal(postMessages[0]);
 
-  onMount(() => {
+  onMount(async () => {
     const interval = setInterval(() => {
       const randomIndex = Math.floor(Math.random() * postMessages.length);
       setCurrentMessage(postMessages[randomIndex]);
     }, 3000); // Change every 3 seconds
 
     onCleanup(() => clearInterval(interval));
+    let topics = await api.collection("topics").list(1, 20, {
+      cacheKey: `topics`,
+      filter: ``,
+      expand: ["Users_Subscribed"]
+    })
+
+    setTopics(topics.items)
   });
 
   //@ts-ignore
@@ -248,6 +329,7 @@ export default function CreatePostModal() {
       author: JSON.parse(localStorage.getItem("postr_auth") || "{}").id,
       isRepost: false,
       isPoll: false,
+      topic: null,
       repost: "",
       whoCanSee: "public",
       embedded_link: null,
@@ -256,6 +338,8 @@ export default function CreatePostModal() {
     document.getElementById("createPostModal")?.close();
   }
 
+
+  console.log(postData())
   return (
     <dialog id="createPostModal" class="modal w-screen h-screen z-[-1f]">
       <Switch>
@@ -286,6 +370,7 @@ export default function CreatePostModal() {
             )}>
 
               <div class="flex flex-col w-full h-full gap-2 overflow-hidden  ">
+
                 <textarea
                   value={postData().content}
                   maxLength={400}
@@ -377,25 +462,40 @@ export default function CreatePostModal() {
               </Carousel>
             </Show>
 
-            <div
-              class="flex flex-row fill-blue-500 hero text-blue-500 font-semibold gap-2 hover:bg-base-200  w-fit cursor-pointer p-2 rounded-full"
-              onClick={() => document.getElementById("visibility")?.showModal()}
-            >
-              <Switch>
-                <Match when={postData().whoCanSee === "public"}>
-                  <World class="w-5 h-5" />
-                  <p>Everyone can reply</p>
-                </Match>
-                <Match when={postData().whoCanSee === "following"}>
-                  <Users class="w-5 h-5" />
-                  <p>Accounts you follow</p>
-                </Match>
-                <Match when={postData().whoCanSee === "private"}>
-                  <User class="w-5 h-5" />
-                  <p>Only you</p>
-                </Match>
-              </Switch>
+            <div class="flex">
+              <div
+                class="flex flex-row fill-blue-500 hero text-blue-500 font-semibold gap-2 hover:bg-base-200  w-fit cursor-pointer p-2 rounded-full"
+                onClick={() => document.getElementById("visibility")?.showModal()}
+              >
+                <Switch>
+                  <Match when={postData().whoCanSee === "public"}>
+                    <World class="w-5 h-5" />
+                    <p>Everyone can reply</p>
+                  </Match>
+                  <Match when={postData().whoCanSee === "following"}>
+                    <Users class="w-5 h-5" />
+                    <p>Accounts you follow</p>
+                  </Match>
+                  <Match when={postData().whoCanSee === "private"}>
+                    <User class="w-5 h-5" />
+                    <p>Only you</p>
+                  </Match>
+                </Switch>
+              </div>
+              <div
+                class="flex flex-row fill-purple-500 hero text-sm  font-semibold gap-2 hover:bg-base-200 w-fit cursor-pointer p-2 rounded-full"
+                onClick={() => document.getElementById("topicPicker")?.showModal()}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 8.25h15m-16.5 7.5h15m-1.8-13.5-3.9 19.5m-2.1-19.5-3.9 19.5" />
+                </svg>
+
+                <p>{console.log("rendered with", postData().topic?.name) || postData().topic?.name || "Topic"}</p>
+
+              </div>
+
             </div>
+
             <Portal>
               <dialog
                 id="visibility"
@@ -456,6 +556,39 @@ export default function CreatePostModal() {
                 </div>
               </dialog>
             </Portal>
+            <Portal>
+              <dialog id="topicPicker" class="modal sm:modal-bottom xl:modal-middle md:modal-middle">
+                <div class="modal-box">
+                  <div class="flex flex-col gap-2">
+                    <p class="font-bold text-lg">Choose a topic</p>
+                    <p class="text-sm text-gray-500">Pick a topic that matches your post.</p>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-5 max-h-80 overflow-y-auto">
+                    <For each={topics()}>
+                      {(topic) => (
+                        <div
+                          class="flex items-center gap-4 p-3 rounded-lg cursor-pointer hover:bg-base-200 transition"
+                          onClick={() => {
+                            setPostData(prev => ({ ...prev, topic }));
+                            document.getElementById("topicPicker")?.close();
+                          }}
+                        >
+                          <div class="p-2 bg-purple-100 rounded-full">
+                            {getTopicIcon(topic.icon)}
+                          </div>
+                          <p class="font-medium">{topic.name}</p>
+                          {postData().topic?.id === topic.id && (
+                            <CheckMark class="w-5 h-5 text-purple-600 ml-auto" />
+                          )}
+                        </div>
+                      )}
+                    </For>
+                  </div>
+                </div>
+              </dialog>
+            </Portal>
+
             <div class="divider  rounded-full h-1"></div>
             <div class="flex flex-row  relative justify-between ">
               <input
