@@ -443,7 +443,8 @@ export default function Post(props: Props) {
   return (
     <Card
       class={joinClass(
-        "border-b border",
+        props.wasReposted ? "border" :
+        "border-b ",
         theme() === "dark" && !props.page ? "hover:bg-[#121212]" : theme() === "light" && !props.page ? "hover:bg-[#faf9f9]" : "",
         " h-fit z-10",
         "p-2 text-md shadow-none ",
