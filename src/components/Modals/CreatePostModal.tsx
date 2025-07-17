@@ -532,7 +532,7 @@ export default function CreatePostModal() {
             <Portal>
               <dialog
                 id="visibility"
-                class="modal sm:modal-bottom xl:modal-middle md:modal-middle  "
+                class="modal sm:modal-bottom rounded-xl xl:modal-middle md:modal-middle  "
               >
                 <div class="modal-box w-32 gap-1">
                   <div class="flex flex-col gap-2">
@@ -590,7 +590,7 @@ export default function CreatePostModal() {
               </dialog>
             </Portal>
             <Portal>
-              <dialog id="topicPicker" class="modal sm:modal-bottom xl:modal-middle md:modal-middle">
+              <dialog id="topicPicker" class="modal sm:modal-bottom rounded-xl xl:modal-middle md:modal-middle">
                 <div class="modal-box">
                   <div class="flex flex-col gap-2">
                     <p class="font-bold text-lg">Choose a topic</p>
