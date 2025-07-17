@@ -127,8 +127,8 @@ export default function ExplorePage() {
 
   const filteredTopics = () =>
     TOPICS().filter(topic =>
-    topic.name.toLowerCase().includes(search().toLowerCase())
-  );
+      topic.name.toLowerCase().includes(search().toLowerCase())
+    );
   async function getTrendingHashTags() {
     const tags = await api.collection("Hashtags").list(1, 15, {
       filter: `posts:length > 0`,
@@ -208,29 +208,29 @@ export default function ExplorePage() {
   const isSubscribed = (slug: string) =>
     subscribedTopics().some(t => t.slug === slug);
 
-const [expanded, setExpanded] = createSignal(false);
-const visibleTopics = () => {
-  const all = filteredTopics();
-  return expanded() ? all : all.slice(0, 6);
-};
+  const [expanded, setExpanded] = createSignal(false);
+  const visibleTopics = () => {
+    const all = filteredTopics();
+    return expanded() ? all : all.slice(0, 6);
+  };
   return (
     <Page {...{ route, navigate }}>
-      <div class="w-full    my-8">
+      <div class="w-full p-2   my-8">
         {/* Topics Section */}
-        <div class="  rounded-2xl  ">
+        <div class="   rounded-2xl  ">
           <h2 class="text-3xl font-bold mb-8   tracking-tight">
             Topics to Subscribe
           </h2>
           <div class={joinClass(
             "max-h-[70vh] overflow-y-auto scrollbar-hide",
           )}>
-          <input
-  type="text"
-  placeholder="Search topics..."
-  value={search()}
-  onInput={(e) => setSearch(e.currentTarget.value)}
-  class={joinClass("mb-4 px-4 py-2 w-full border rounded-full focus:outline-none   dark:bg-gray-900 text-sm dark:text-white", theme() == "dark" && "bg-base-300 border-none")}
-/>
+            <input
+              type="text"
+              placeholder="Search topics..."
+              value={search()}
+              onInput={(e) => setSearch(e.currentTarget.value)}
+              class={joinClass("mb-4 px-4 py-2 w-full border rounded-full focus:outline-none   dark:bg-gray-900 text-sm dark:text-white", theme() == "dark" && "bg-base-300 border-none")}
+            />
             <For each={visibleTopics()}>
               {(topic) => (
                 <div
@@ -320,18 +320,18 @@ const visibleTopics = () => {
             </For>
           </div>
           <Show when={filteredTopics().length > 6}>
-  <button
-    onClick={() => setExpanded(!expanded())}
-    class="mt-4 text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
-  >
-    {expanded() ? "Show Less" : "Show More"}
-  </button>
-</Show>
+            <button
+              onClick={() => setExpanded(!expanded())}
+              class="mt-4 text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
+            >
+              {expanded() ? "Show Less" : "Show More"}
+            </button>
+          </Show>
         </div>
 
         {/* Trending Section */}
         <div class={joinClass(
-          "mt-5",
+          "mt-5 mb-12  ",
           theme() === "dark" ? "border-gray-800" : "border-slate-200"
         )}>
           <h2 class={joinClass(
@@ -342,7 +342,7 @@ const visibleTopics = () => {
           </h2>
 
           <div class={joinClass(
-            "max-h-[70vh] overflow-y-auto scrollbar-hide", 
+            "max-h-[70vh] overflow-y-auto scrollbar-hide",
           )}>
             <For each={trendingHashtags()}>
               {(tag) => (
