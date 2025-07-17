@@ -13,8 +13,7 @@ export function SideBarLeft(props: {
 }) {
   const error = false;
   let { theme } = useTheme();
-  const { route, navigate } = useNavigation()
-  console.log(route());
+  const { route, navigate } = useNavigation() 
   return (
     <>
       <div class="xl:drawer xl:w-[auto]  md:p-2  mr-5   xl:drawer-open lg:drawer-open  ">
@@ -106,7 +105,9 @@ export function SideBarLeft(props: {
               </a>
             </li>
             <li>
-              <a class="text-lg  rounded-full">
+              <a   class={joinClass("text-lg  rounded-full ",   route() === "/explore" ? "fill-blue-500 stroke-blue-500 text-blue-500 font-bold" : 
+                theme() === "dark" ? "fill-white stroke-white text-white" : "  stroke-black"
+                )} onClick={()=> navigate("/explore")}>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
