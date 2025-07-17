@@ -1,451 +1,265 @@
 "use client"
 
-import { createSignal, createMemo } from "solid-js"
+import { api } from "@/src"
+import useNavigation from "@/src/Utils/Hooks/useNavigation"
+import Page from "@/src/Utils/Shared/Page"
+import { createSignal, createMemo, onMount, For } from "solid-js"
 
-function TopicsGrid(props) {
-  const [subscribedTopics, setSubscribedTopics] = createSignal(new Set([1, 3, 7]))
 
-  // Sample topics data
-  const topics = [
-    {
-      id: 1,
-      title: "Web Development",
-      description: "Latest trends, frameworks, and best practices in web development",
-      category: "tech",
-      subscribers: 125400,
-      posts: 2340,
-      trending: true,
-      color: "#3b82f6",
-      icon: "code",
-    },
-    {
-      id: 2,
-      title: "Digital Art",
-      description: "Showcase your digital artwork and discover amazing creations",
-      category: "art",
-      subscribers: 89200,
-      posts: 5670,
-      trending: true,
-      color: "#f59e0b",
-      icon: "palette",
-    },
-    {
-      id: 3,
-      title: "Machine Learning",
-      description: "AI, ML algorithms, research papers, and practical applications",
-      category: "tech",
-      subscribers: 156700,
-      posts: 1890,
-      trending: false,
-      color: "#10b981",
-      icon: "brain",
-    },
-    {
-      id: 4,
-      title: "Photography",
-      description: "Share your photos and learn from professional photographers",
-      category: "art",
-      subscribers: 203500,
-      posts: 8920,
-      trending: false,
-      color: "#8b5cf6",
-      icon: "camera",
-    },
-    {
-      id: 5,
-      title: "Startup Life",
-      description: "Entrepreneurship, startup stories, and business insights",
-      category: "business",
-      subscribers: 67800,
-      posts: 1230,
-      trending: true,
-      color: "#ef4444",
-      icon: "rocket",
-    },
-    {
-      id: 6,
-      title: "Cooking & Recipes",
-      description: "Delicious recipes, cooking tips, and food photography",
-      category: "lifestyle",
-      subscribers: 178900,
-      posts: 4560,
-      trending: false,
-      color: "#f97316",
-      icon: "chef",
-    },
-    {
-      id: 7,
-      title: "Mental Health",
-      description: "Support, resources, and discussions about mental wellness",
-      category: "health",
-      subscribers: 94300,
-      posts: 2780,
-      trending: false,
-      color: "#06b6d4",
-      icon: "heart",
-    },
-    {
-      id: 8,
-      title: "Gaming",
-      description: "Game reviews, streaming, esports, and gaming community",
-      category: "entertainment",
-      subscribers: 234600,
-      posts: 6780,
-      trending: true,
-      color: "#a855f7",
-      icon: "gamepad",
-    },
-    {
-      id: 9,
-      title: "Travel Stories",
-      description: "Share your adventures and discover new destinations",
-      category: "lifestyle",
-      subscribers: 145200,
-      posts: 3450,
-      trending: false,
-      color: "#14b8a6",
-      icon: "map",
-    },
-    {
-      id: 10,
-      title: "Fitness & Wellness",
-      description: "Workout routines, nutrition tips, and healthy lifestyle",
-      category: "health",
-      subscribers: 112800,
-      posts: 2890,
-      trending: true,
-      color: "#84cc16",
-      icon: "dumbbell",
-    },
-    {
-      id: 11,
-      title: "Book Club",
-      description: "Book recommendations, reviews, and literary discussions",
-      category: "education",
-      subscribers: 76500,
-      posts: 1670,
-      trending: false,
-      color: "#f43f5e",
-      icon: "book",
-    },
-    {
-      id: 12,
-      title: "Climate Action",
-      description: "Environmental awareness, sustainability, and climate solutions",
-      category: "environment",
-      subscribers: 58900,
-      posts: 890,
-      trending: true,
-      color: "#22c55e",
-      icon: "leaf",
-    },
-  ]
+const getTopicIcon = (icon: string) => {
+  switch (icon) {
+    case "biology":
+      return (
 
-  // Filter topics based on search and category
-  const filteredTopics = createMemo(() => {
-    return topics.filter((topic) => {
-      const matchesSearch =
-        props.searchQuery === "" ||
-        topic.title.toLowerCase().includes(props.searchQuery.toLowerCase()) ||
-        topic.description.toLowerCase().includes(props.searchQuery.toLowerCase())
+        <svg xmlns="http://www.w3.org/2000/svg" class="size-6" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M200-120v-80h200v-80q-83 0-141.5-58.5T200-480q0-61 33.5-111t90.5-73q8-34 35.5-55t62.5-21l-22-62 38-14-14-36 76-28 12 38 38-14 110 300-38 14 14 38-76 28-12-38-38 14-24-66q-15 14-34.5 21t-39.5 5q-22-2-41-13.5T338-582q-27 16-42.5 43T280-480q0 50 35 85t85 35h320v80H520v80h240v80H200Zm346-458 36-14-68-188-38 14 70 188Zm-126-22q17 0 28.5-11.5T460-640q0-17-11.5-28.5T420-680q-17 0-28.5 11.5T380-640q0 17 11.5 28.5T420-600Zm126 22Zm-126-62Zm0 0Z" /></svg>
+      )
+    case "technology":
+      return (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 0 0 2.25-2.25V6.75a2.25 2.25 0 0 0-2.25-2.25H6.75A2.25 2.25 0 0 0 4.5 6.75v10.5a2.25 2.25 0 0 0 2.25 2.25Zm.75-12h9v9h-9v-9Z" />
+        </svg>
+      )
+    case "engineering":
+      return (
 
-      let matchesCategory = true
-      if (props.selectedCategory === "trending") {
-        matchesCategory = topic.trending
-      } else if (props.selectedCategory === "new") {
-        matchesCategory = topic.id > 8 // Simulate new topics
-      } else if (props.selectedCategory === "popular") {
-        matchesCategory = topic.subscribers > 100000
-      }
+        <svg xmlns="http://www.w3.org/2000/svg" class="size-6" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M42-120v-112q0-33 17-62t47-44q51-26 115-44t141-18q77 0 141 18t115 44q30 15 47 44t17 62v112H42Zm80-80h480v-32q0-11-5.5-20T582-266q-36-18-92.5-36T362-320q-71 0-127.5 18T142-266q-9 5-14.5 14t-5.5 20v32Zm240-240q-66 0-113-47t-47-113h-10q-9 0-14.5-5.5T172-620q0-9 5.5-14.5T192-640h10q0-45 22-81t58-57v38q0 9 5.5 14.5T302-720q9 0 14.5-5.5T322-740v-54q9-3 19-4.5t21-1.5q11 0 21 1.5t19 4.5v54q0 9 5.5 14.5T422-720q9 0 14.5-5.5T442-740v-38q36 21 58 57t22 81h10q9 0 14.5 5.5T552-620q0 9-5.5 14.5T532-600h-10q0 66-47 113t-113 47Zm0-80q33 0 56.5-23.5T442-600H282q0 33 23.5 56.5T362-520Zm300 160-6-30q-6-2-11.5-4.5T634-402l-28 10-20-36 22-20v-24l-22-20 20-36 28 10q4-4 10-7t12-5l6-30h40l6 30q6 2 12 5t10 7l28-10 20 36-22 20v24l22 20-20 36-28-10q-5 5-10.5 7.5T708-390l-6 30h-40Zm20-70q12 0 21-9t9-21q0-12-9-21t-21-9q-12 0-21 9t-9 21q0 12 9 21t21 9Zm72-130-8-42q-9-3-16.5-7.5T716-620l-42 14-28-48 34-30q-2-5-2-8v-16q0-3 2-8l-34-30 28-48 42 14q6-6 13.5-10.5T746-798l8-42h56l8 42q9 3 16.5 7.5T848-780l42-14 28 48-34 30q2 5 2 8v16q0 3-2 8l34 30-28 48-42-14q-6 6-13.5 10.5T818-602l-8 42h-56Zm28-90q21 0 35.5-14.5T832-700q0-21-14.5-35.5T782-750q-21 0-35.5 14.5T732-700q0 21 14.5 35.5T782-650ZM362-200Z" /></svg>
+      )
+    case "science":
+      return (
 
-      return matchesSearch && matchesCategory
-    })
-  })
+        <svg xmlns="http://www.w3.org/2000/svg" class="size-6" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M200-120q-51 0-72.5-45.5T138-250l222-270v-240h-40q-17 0-28.5-11.5T280-800q0-17 11.5-28.5T320-840h320q17 0 28.5 11.5T680-800q0 17-11.5 28.5T640-760h-40v240l222 270q32 39 10.5 84.5T760-120H200Zm0-80h560L520-492v-268h-80v268L200-200Zm280-280Z" /></svg>
+      )
+    case "gaming":
+      return (
 
-  const toggleSubscription = (topicId) => {
-    setSubscribedTopics((prev) => {
-      const newSet = new Set(prev)
-      if (newSet.has(topicId)) {
-        newSet.delete(topicId)
-      } else {
-        newSet.add(topicId)
-      }
-      return newSet
-    })
+        <svg xmlns="http://www.w3.org/2000/svg" class="size-6" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="m272-440 208 120 208-120-168-97v137h-80v-137l-168 97Zm168-189v-17q-44-13-72-49.5T340-780q0-58 41-99t99-41q58 0 99 41t41 99q0 48-28 84.5T520-646v17l280 161q19 11 29.5 29.5T840-398v76q0 22-10.5 40.5T800-252L520-91q-19 11-40 11t-40-11L160-252q-19-11-29.5-29.5T120-322v-76q0-22 10.5-40.5T160-468l280-161Zm0 378L200-389v67l280 162 280-162v-67L520-251q-19 11-40 11t-40-11Zm40-469q25 0 42.5-17.5T540-780q0-25-17.5-42.5T480-840q-25 0-42.5 17.5T420-780q0 25 17.5 42.5T480-720Zm0 560Z" /></svg>
+      )
+    case "software":
+      return (
+
+        <svg xmlns="http://www.w3.org/2000/svg" class="size-6" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M320-240 80-480l240-240 57 57-184 184 183 183-56 56Zm320 0-57-57 184-184-183-183 56-56 240 240-240 240Z" /></svg>
+      )
+    case "cooking":
+      return (
+
+        <svg xmlns="http://www.w3.org/2000/svg" class="size-6" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M360-120v-120H80v-80h280q33 0 56.5 23.5T440-240v120h-80Zm160 0v-120q0-33 23.5-56.5T600-320h280v80H600v120h-80ZM240-360q-50 0-85-35t-35-85v-160h720v160q0 50-35 85t-85 35H240Zm0-80h480q17 0 28.5-11.5T760-480v-80H200v80q0 17 11.5 28.5T240-440ZM120-680v-80h240v-40q0-17 11.5-28.5T400-840h160q17 0 28.5 11.5T600-800v40h240v80H120Zm80 240v-120 120Z" /></svg>
+      )
+    case "anime":
+      return (
+
+        <svg xmlns="http://www.w3.org/2000/svg" class="size-6" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="m440-803-83 83H240v117l-83 83 83 83v117h117l83 83 100-100 168 85-86-167 101-101-83-83v-117H523l-83-83Zm0-113 116 116h164v164l116 116-116 116 115 226q7 13 4 25.5T828-132q-8 8-20.5 11t-25.5-4L556-240 440-124 324-240H160v-164L44-520l116-116v-164h164l116-116Zm0 396Z" /></svg>
+      )
+    case "health":
+      return (
+
+        <svg xmlns="http://www.w3.org/2000/svg" class="size-6" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="m480-120-58-52q-101-91-167-157T150-447.5Q111-500 95.5-544T80-634q0-94 63-157t157-63q52 0 99 22t81 62q34-40 81-62t99-22q94 0 157 63t63 157q0 46-15.5 90T810-447.5Q771-395 705-329T538-172l-58 52Zm0-108q96-86 158-147.5t98-107q36-45.5 50-81t14-70.5q0-60-40-100t-100-40q-47 0-87 26.5T518-680h-76q-15-41-55-67.5T300-774q-60 0-100 40t-40 100q0 35 14 70.5t50 81q36 45.5 98 107T480-228Zm0-273Z" /></svg>
+      )
+    case "art":
+      return (
+
+        <svg xmlns="http://www.w3.org/2000/svg" class="size-6" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M160-80q-33 0-56.5-23.5T80-160v-480q0-33 23.5-56.5T160-720h160l160-160 160 160h160q33 0 56.5 23.5T880-640v480q0 33-23.5 56.5T800-80H160Zm0-80h640v-480H160v480Zm80-80h480L570-440 450-280l-90-120-120 160Zm460-200q25 0 42.5-17.5T760-500q0-25-17.5-42.5T700-560q-25 0-42.5 17.5T640-500q0 25 17.5 42.5T700-440ZM404-720h152l-76-76-76 76ZM160-160v-480 480Z" /></svg>
+      )
+    case "sports":
+      return (
+
+        <svg xmlns="http://www.w3.org/2000/svg" class="size-6" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M440-200q-100 0-170-70t-70-170q0-11 1-22t3-22q-5 2-12 3t-12 1q-42 0-71-29t-29-71q0-42 27.5-71t69.5-29q33 0 59.5 18.5T274-614q33-30 75.5-48t90.5-18h440v160H680v80q0 100-70 170t-170 70ZM180-540q17 0 28.5-11.5T220-580q0-17-11.5-28.5T180-620q-17 0-28.5 11.5T140-580q0 17 11.5 28.5T180-540Zm260 240q58 0 99-41t41-99q0-58-41-99t-99-41q-58 0-99 41t-41 99q0 58 41 99t99 41Zm0-60q33 0 56.5-23.5T520-440q0-33-23.5-56.5T440-520q-33 0-56.5 23.5T360-440q0 33 23.5 56.5T440-360Zm0-80Z" /></svg>
+      )
+    case "business":
+      return (
+
+        <svg xmlns="http://www.w3.org/2000/svg" class="size-6" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M160-120q-33 0-56.5-23.5T80-200v-440q0-33 23.5-56.5T160-720h160v-80q0-33 23.5-56.5T400-880h160q33 0 56.5 23.5T640-800v80h160q33 0 56.5 23.5T880-640v440q0 33-23.5 56.5T800-120H160Zm240-600h160v-80H400v80Zm400 360H600v80H360v-80H160v160h640v-160Zm-360 0h80v-80h-80v80Zm-280-80h200v-80h240v80h200v-200H160v200Zm320 40Z" /></svg>
+      )
+    case "entertainment":
+      return (
+
+        <svg xmlns="http://www.w3.org/2000/svg" class="size-6" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="m233-80 54-122q-14-11-27-21.5T235-246q-8 3-15.5 4.5T203-240q-33 0-56.5-23.5T123-320q0-20 8.5-36.5T155-384q-8-23-11-46.5t-3-49.5q0-26 3-49.5t11-46.5q-15-11-23.5-27.5T123-640q0-33 23.5-56.5T203-720q9 0 16.5 1.5T235-714q33-36 75.5-60t90.5-36q5-30 27.5-50t52.5-20q30 0 52.5 20.5T561-810q48 12 90.5 35.5T727-716q8-3 15-4.5t15-1.5q33 0 56.5 23.5T837-642q0 20-8 35.5T807-580q8 24 11 49t3 51q0 26-3 50.5T807-382q14 11 22 26.5t8 35.5q0 33-23.5 56.5T757-240q-8 0-15-1.5t-15-4.5q-12 12-24.5 23.5T675-200l52 120h-74l-38-88q-14 6-27 10.5t-27 7.5q-5 29-27.5 49.5T481-80q-30 0-52.5-20T401-150q-15-3-28.5-7.5T345-168l-38 88h-74Zm76-174 62-140q-14-18-22-40t-8-46q0-57 41.5-98.5T481-620q57 0 98.5 41.5T621-480q0 24-8.5 47T589-392l62 138q9-8 17.5-14.5T685-284q-5-8-6.5-17.5T677-320q0-32 22-55t54-25q6-20 9-39.5t3-40.5q0-21-3-41.5t-9-40.5q-32-2-54-25t-22-55q0-9 2.5-17.5T685-676q-29-29-64-49t-74-31q-11 17-28 26.5t-38 9.5q-21 0-38-9.5T415-756q-41 11-76 31.5T275-674q3 8 5.5 16.5T283-640q0 32-21 54.5T209-560q-6 20-9 39.5t-3 40.5q0 21 3 40.5t9 39.5q32 2 53 25t21 55q0 9-1.5 17.5T275-286q8 9 16.5 16.5T309-254Zm60 34q11 5 22.5 9t23.5 7q11-17 28-26.5t38-9.5q21 0 38 9.5t28 26.5q12-3 22.5-7t21.5-9l-58-130q-12 5-25 7.5t-27 2.5q-15 0-28.5-3t-25.5-9l-58 132Zm112-200q24 0 42-17t18-43q0-24-18-42t-42-18q-26 0-43 18t-17 42q0 26 17 43t43 17Zm0-60Z" /></svg>
+      )
+    case "politics":
+      return (
+
+        <svg xmlns="http://www.w3.org/2000/svg" class="size-6" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M160-120v-80h480v80H160Zm226-194L160-540l84-86 228 226-86 86Zm254-254L414-796l86-84 226 226-86 86Zm184 408L302-682l56-56 522 522-56 56Z" /></svg>
+      )
+    case "music":
+      return (
+
+        <svg xmlns="http://www.w3.org/2000/svg" class="size-6" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M400-120q-66 0-113-47t-47-113q0-66 47-113t113-47q23 0 42.5 5.5T480-418v-422h240v160H560v400q0 66-47 113t-113 47Z" /></svg>
+      )
+    case "education":
+      return (
+
+        <svg xmlns="http://www.w3.org/2000/svg" class="size-6" height="24px" viewBox="0 -960 960 960" width="24px" fill="#1f1f1f"><path d="M300-80q-58 0-99-41t-41-99v-520q0-58 41-99t99-41h500v600q-25 0-42.5 17.5T740-220q0 25 17.5 42.5T800-160v80H300Zm-60-267q14-7 29-10t31-3h20v-440h-20q-25 0-42.5 17.5T240-740v393Zm160-13h320v-440H400v440Zm-160 13v-453 453Zm60 187h373q-6-14-9.5-28.5T660-220q0-16 3-31t10-29H300q-26 0-43 17.5T240-220q0 26 17 43t43 17Z" /></svg>
+      )
+    default:
+      return null
   }
-
-  const formatNumber = (num) => {
-    if (num >= 1000000) {
-      return (num / 1000000).toFixed(1) + "M"
-    } else if (num >= 1000) {
-      return (num / 1000).toFixed(1) + "K"
-    }
-    return num.toString()
-  }
-
-  const renderIcon = (iconName, color) => {
-    const iconProps = {
-      width: "24",
-      height: "24",
-      viewBox: "0 0 24 24",
-      fill: "none",
-      stroke: color,
-      strokeWidth: "2",
-      strokeLinecap: "round",
-      strokeLinejoin: "round",
-    }
-
-    switch (iconName) {
-      case "code":
-        return (
-          <svg {...iconProps}>
-            <polyline points="16 18 22 12 16 6"></polyline>
-            <polyline points="8 6 2 12 8 18"></polyline>
-          </svg>
-        )
-      case "palette":
-        return (
-          <svg {...iconProps}>
-            <circle cx="13.5" cy="6.5" r=".5"></circle>
-            <circle cx="17.5" cy="10.5" r=".5"></circle>
-            <circle cx="8.5" cy="7.5" r=".5"></circle>
-            <circle cx="6.5" cy="12.5" r=".5"></circle>
-            <path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10c.926 0 1.648-.746 1.648-1.688 0-.437-.18-.835-.437-1.125-.29-.289-.438-.652-.438-1.125a1.64 1.64 0 0 1 1.668-1.668h1.996c3.051 0 5.555-2.503 5.555-5.554C21.965 6.012 17.461 2 12 2z"></path>
-          </svg>
-        )
-      case "brain":
-        return (
-          <svg {...iconProps}>
-            <path d="M12 5a3 3 0 1 0-5.997.125 4 4 0 0 0-2.526 5.77 4 4 0 0 0 .556 6.588A4 4 0 1 0 12 18Z"></path>
-            <path d="M12 5a3 3 0 1 1 5.997.125 4 4 0 0 1 2.526 5.77 4 4 0 0 1-.556 6.588A4 4 0 1 1 12 18Z"></path>
-            <path d="M15 13a4.5 4.5 0 0 1-3-4 4.5 4.5 0 0 1-3 4"></path>
-            <path d="M17.599 6.5a3 3 0 0 0 .399-1.375"></path>
-            <path d="M6.003 5.125A3 3 0 0 0 6.401 6.5"></path>
-            <path d="M3.477 10.896a4 4 0 0 1 .585-.396"></path>
-            <path d="M19.938 10.5a4 4 0 0 1 .585.396"></path>
-            <path d="M6 18a4 4 0 0 1-1.967-.516"></path>
-            <path d="M19.967 17.484A4 4 0 0 1 18 18"></path>
-          </svg>
-        )
-      case "camera":
-        return (
-          <svg {...iconProps}>
-            <path d="M14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3l-2.5-3z"></path>
-            <circle cx="12" cy="13" r="3"></circle>
-          </svg>
-        )
-      case "rocket":
-        return (
-          <svg {...iconProps}>
-            <path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"></path>
-            <path d="M12 15l-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"></path>
-            <path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"></path>
-            <path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"></path>
-          </svg>
-        )
-      case "chef":
-        return (
-          <svg {...iconProps}>
-            <path d="M6 2c1.306 0 2.418.835 2.83 2H14a2 2 0 0 1 2 2v1a2 2 0 0 1-2 2H8.83A3.001 3.001 0 0 1 6 11a3 3 0 0 1-2.83-2H2a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h1.17A3.001 3.001 0 0 1 6 2z"></path>
-            <path d="M6 15v7"></path>
-            <path d="M21 15v7"></path>
-            <path d="M21 11V8a2 2 0 0 0-2-2h-5.17A3.001 3.001 0 0 0 11 4a3 3 0 0 0-2.83 2H3a2 2 0 0 0-2 2v3"></path>
-          </svg>
-        )
-      case "heart":
-        return (
-          <svg {...iconProps}>
-            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"></path>
-          </svg>
-        )
-      case "gamepad":
-        return (
-          <svg {...iconProps}>
-            <line x1="6" y1="12" x2="10" y2="12"></line>
-            <line x1="8" y1="10" x2="8" y2="14"></line>
-            <line x1="15" y1="13" x2="15.01" y2="13"></line>
-            <line x1="18" y1="11" x2="18.01" y2="11"></line>
-            <rect x="2" y="6" width="20" height="12" rx="2"></rect>
-          </svg>
-        )
-      case "map":
-        return (
-          <svg {...iconProps}>
-            <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"></polygon>
-            <line x1="8" y1="2" x2="8" y2="18"></line>
-            <line x1="16" y1="6" x2="16" y2="22"></line>
-          </svg>
-        )
-      case "dumbbell":
-        return (
-          <svg {...iconProps}>
-            <path d="M14.4 14.4 9.6 9.6"></path>
-            <path d="M18.657 21.485a2 2 0 1 1-2.829-2.828l-1.767 1.768a2 2 0 1 1-2.829-2.829l6.364-6.364a2 2 0 1 1 2.829 2.829l-1.768 1.767a2 2 0 1 1 2.828 2.829l-2.828 2.828z"></path>
-            <path d="M21.5 21.5l-1.4-1.4"></path>
-            <path d="M3.9 3.9l1.4 1.4"></path>
-            <path d="M6.404 12.768a2 2 0 1 1-2.829-2.829l1.768-1.767a2 2 0 1 1-2.828-2.829l2.828-2.828a2 2 0 1 1 2.829 2.828l1.767-1.768a2 2 0 1 1 2.829 2.829l-6.364 6.364z"></path>
-          </svg>
-        )
-      case "book":
-        return (
-          <svg {...iconProps}>
-            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-          </svg>
-        )
-      case "leaf":
-        return (
-          <svg {...iconProps}>
-            <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z"></path>
-            <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12"></path>
-          </svg>
-        )
-      default:
-        return (
-          <svg {...iconProps}>
-            <circle cx="12" cy="12" r="10"></circle>
-          </svg>
-        )
-    }
-  }
-
-  return (
-    <div class="topics-container">
-      {filteredTopics().length > 0 ? (
-        <div class="topics-grid">
-          {filteredTopics().map((topic) => (
-            <div class="topic-card" key={topic.id}>
-              <div class="topic-header">
-                <div class="topic-icon" style={`background-color: ${topic.color}20`}>
-                  {renderIcon(topic.icon, topic.color)}
-                </div>
-                {topic.trending && (
-                  <div class="trending-badge">
-                    <svg
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
-                      <polyline points="17 6 23 6 23 12"></polyline>
-                    </svg>
-                    Trending
-                  </div>
-                )}
-              </div>
-
-              <div class="topic-content">
-                <h3 class="topic-title">{topic.title}</h3>
-                <p class="topic-description">{topic.description}</p>
-
-                <div class="topic-stats">
-                  <div class="stat">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
-                      <circle cx="9" cy="7" r="4"></circle>
-                      <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
-                      <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
-                    </svg>
-                    <span>{formatNumber(topic.subscribers)} subscribers</span>
-                  </div>
-                  <div class="stat">
-                    <svg
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                    </svg>
-                    <span>{formatNumber(topic.posts)} posts</span>
-                  </div>
-                </div>
-              </div>
-
-              <div class="topic-actions">
-                <button
-                  class={subscribedTopics().has(topic.id) ? "subscribe-btn subscribed" : "subscribe-btn"}
-                  onClick={() => toggleSubscription(topic.id)}
-                >
-                  {subscribedTopics().has(topic.id) ? (
-                    <>
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                      </svg>
-                      Subscribed
-                    </>
-                  ) : (
-                    <>
-                      <svg
-                        width="18"
-                        height="18"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke="currentColor"
-                        strokeWidth="2"
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                      >
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                      </svg>
-                      Subscribe
-                    </>
-                  )}
-                </button>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : (
-        <div class="no-results">
-          <svg
-            width="64"
-            height="64"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="11" cy="11" r="8"></circle>
-            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-            <line x1="8" y1="11" x2="14" y2="11"></line>
-          </svg>
-          <h3>No topics found</h3>
-          <p>Try adjusting your search or browse different categories.</p>
-        </div>
-      )}
-    </div>
-  )
 }
 
-export default TopicsGrid
+const MoreHorizontalIcon = (props: any) => (
+  <svg
+    {...props}
+    xmlns="http://www.w3.org/2000/svg"
+    width="24"
+    height="24"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <circle cx="12" cy="12" r="1" />
+    <circle cx="19" cy="12" r="1" />
+    <circle cx="5" cy="12" r="1" />
+  </svg>
+)
+
+const LOCAL_STORAGE_KEY = 'subscribedTopics'
+
+export default function ExplorePage() {
+  const { route, navigate } = useNavigation()
+  const [subscribedTopics, setSubscribedTopics] = createSignal<[{ name: string, slug: string, icon: string }]>([])
+  let [trendingHashtags, setTrendingHashtags] = createSignal([])
+  let [TOPICS, setTopics] = createSignal([])
+  async function getTrendingHashTags() {
+    const tags = await api.collection("Hashtags").list(1, 15, {
+      filter: `posts:length > 0`,
+      cacheKey: `tending-hashtags-${new Date().getDate()}`,
+      expand: ["posts", "posts.author"],
+    }) as { items: [] }
+    setTrendingHashtags(tags.items)
+  }
+  // Load from localStorage on mount
+  onMount(async () => {
+    const stored = localStorage.getItem(LOCAL_STORAGE_KEY)
+    let topics = await api.collection("topics").list(1, 20, {
+      cacheKey: `topics`,
+      filter: ``,
+      expand: ["Users_Subscribed"]
+    })
+    console.log(topics)
+    setTopics(topics.items)
+    if (stored) {
+      try {
+        setSubscribedTopics(JSON.parse(stored))
+      } catch {
+        setSubscribedTopics([])
+      }
+    }
+
+    getTrendingHashTags()
+  })
+
+  // Toggle subscription for a topic
+  const toggleSubscription = async (topic: { id: string; slug: string;[key: string]: any }) => {
+    let current = subscribedTopics() || [];
+
+    const isSubscribed = current.some(t => t.slug === topic.slug);
+    let updated;
+
+    if (isSubscribed) {
+      updated = current.filter(t => t.slug !== topic.slug);
+    } else {
+      updated = [...current, topic];
+    }
+
+    setSubscribedTopics(updated);
+    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updated));
+
+    // Pass both the current topic and the new state
+    await updateUserSubscription(topic, !isSubscribed);
+  };
+  async function updateUserSubscription(
+    topic: { id: string },
+    shouldSubscribe: boolean
+  ) {
+    const userId = api.authStore.model.id;
+
+    // Fetch fresh topic to get current users
+    const fullTopic = await api.collection("topics").get(topic.id, { expand: ["Users_Subscribed"], cacheKey: `topics-get` })
+    const currentUsers: string[] = fullTopic.expand?.Users_Subscribed ?? [];
+
+    let updatedUsers: string[];
+
+    if (shouldSubscribe) {
+      updatedUsers = Array.from(new Set([...currentUsers, userId]));
+    } else {
+      updatedUsers = currentUsers.filter(uid => uid !== userId);
+    }
+
+    await api.collection("topics").update(topic.id, {
+      Users_Subscribed: updatedUsers,
+    }, {
+      invalidateCache: ["topics", "topics-get"],
+    });
+  }
+
+
+
+
+  const isSubscribed = (slug: string) =>
+    subscribedTopics().some(t => t.slug === slug);
+
+
+  return (
+    <Page {...{ route, navigate }}>
+      <div class="w-full max-w-sm md:max-w-2xl lg:max-w-4xl xl:max-w-6xl mx-auto bg-white   overflow-hidden my-8">
+        {/* Topics Section */}
+        <div class="p-6 md:p-8 border-b border-gray-100">
+          <h2 class="text-2xl font-bold mb-6 text-gray-900">Topics to Subscribe</h2>
+
+          <div
+            class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 max-h-[60vh] overflow-y-auto scroll px-1 sm:px-0"
+          >
+            <For each={TOPICS()}>
+              {(topic) => (
+                <div
+                  key={topic.slug}
+                  class="flex flex-col items-center justify-between p-5 w-24 h-24 border border-gray-200 rounded-xl shadow-sm bg-white text-center transition-all duration-300 hover:shadow-md hover:scale-[1.02] min-h-[140px]"
+                >
+                  {getTopicIcon(topic.icon)}
+                  <span class="font-semibold text-sm text-gray-800 mb-2">{topic.name}</span>
+                  <button
+                    onClick={() => toggleSubscription(topic)}
+                    class={`${isSubscribed(topic.slug)
+                      ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      : "bg-blue-600 text-white hover:bg-blue-700"
+                      } px-4 py-1.5 rounded-full text-xs font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${isSubscribed(topic.slug) ? "focus:ring-gray-400" : "focus:ring-blue-500"
+                      }`}
+                  >
+                    {isSubscribed(topic.slug) ? "Subscribed" : "Subscribe"}
+                  </button>
+                </div>
+              )}
+            </For>
+          </div>
+        </div>
+
+
+        {/* Trending Section */}
+        <div class="p-6 md:p-8 border-b border-gray-100 sm:mb-24">
+          <h2 class="text-2xl font-bold mb-6 text-gray-900">Trending Hashtags</h2>
+          <For each={trendingHashtags()}>
+            {(tag) => (
+              <div>
+                <div class="flex items-center justify-between py-3 px-2 -mx-2 rounded-lg hover:bg-gray-50 transition-colors duration-200 cursor-pointer">
+                  <div>
+                    <p class="text-xs text-gray-500">{tag.name.charAt(0).toUpperCase() + tag.name.slice(1)}</p>
+                    <p class="font-medium text-gray-900">{tag.expand.posts[0].content}</p>
+                  </div>
+                  <button class="p-2 rounded-full hover:bg-gray-100 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-gray-300">
+                    <MoreHorizontalIcon class="w-5 h-5 text-gray-500" />
+                  </button>
+
+                </div>
+                <span class="text-sm text-gray-500">Posts {tag.expand.posts.length}</span>
+              </div>
+            )}
+          </For>
+
+        </div>
+
+
+      </div>
+    </Page>
+  )
+}
