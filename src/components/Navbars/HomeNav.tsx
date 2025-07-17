@@ -144,7 +144,7 @@ export default function HomeNav({
   return (
     <div
       class={joinClass(
-        "sticky top-0 z-[99999] w-full transition-all duration-300", 
+        "sticky top-0 z-[99999] border border-t-0 border-b-0 w-full transition-all duration-300", 
         "shadow-sm",
         theme() === "dark" ? "dark bg-black text-white" : "bg-white/80 dark:bg-gray-900/80 ",
         hide() && mobile() ? "hidden" : "",
