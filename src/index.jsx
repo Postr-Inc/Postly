@@ -24,7 +24,8 @@ import notifications from "./Pages/settings/notifications"
 import remove from './Pages/settings/account-management/account/remove';
 import SafetyCenter from './Pages/safety';
 import Privacy from './Pages/settings/privacy';
-import Status from './Pages/status';
+import Status from './Pages/status'; 
+import ExplorePage from './Pages/explore';
 const root = document.getElementById('root'); 
 export const api = new SDK({serverURL:"https://api.postlyapp.com"}); 
  
@@ -56,6 +57,7 @@ render(() =>  (
     <Route path={"/snippets"} component={Snippets}/>
     <Route path="/bookmarks" component={bookmarks} /> 
     <Route path={"/safety"}  component={SafetyCenter} />
-    <Route path={"/status"} component={Status} />
+    <Route path={"/status"} component={Status} /> 
+    <Route path={"/explore"} component={ExplorePage} />
   </Router>
 ), root);
