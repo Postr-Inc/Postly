@@ -111,9 +111,13 @@ export default function BottomNav() {
         </li>
         <li class="flex mb-5 ">
           <Search
+          onClick={() => {
+              navigate("/explore")
+              haptic()
+            }}
             class={joinClass(
               "w-7 h-7",
-              route() === "/explore" ? (theme() == "dark" ? "fill-white" : "fill-black") : "opacity-50",
+              route() === "/explore" ? (theme() == "dark" ? "text-white" : "fill-black") : "opacity-50",
             )}
           />
         </li>
