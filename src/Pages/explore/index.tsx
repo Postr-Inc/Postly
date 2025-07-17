@@ -202,13 +202,13 @@ export default function ExplorePage() {
 
   return (
     <Page {...{ route, navigate }}>
-      <div class="w-full max-w-sm md:max-w-2xl lg:max-w-4xl xl:max-w-6xl mx-auto bg-white   overflow-hidden my-8">
+      <div class="w-full max-w-sm md:max-w-2xl lg:max-w-4xl xl:max-w-6xl mx-auto   overflow-hidden my-8">
         {/* Topics Section */}
-        <div class="p-6 md:p-8 border-b border-gray-100">
+        <div class="   border-b border-gray-100">
           <h2 class="text-2xl font-bold mb-6 text-gray-900">Topics to Subscribe</h2>
 
           <div
-            class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 max-h-[60vh] overflow-y-auto scroll px-1 sm:px-0"
+            class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-4 max-h-[70vh] overflow-y-auto scroll px-1 sm:px-0"
           >
             <For each={TOPICS()}>
               {(topic) => (
