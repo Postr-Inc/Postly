@@ -12,6 +12,7 @@ export default function EditAccountModal(props) {
     const [bio, setBio] = createSignal(api.authStore.model.bio); 
     const [modalFor, setModalFor] = createSignal("")
     let [isSaving, setIsSaving] = createSignal(false)
+    let [user, setUser] = createSignal(api.authStore.model)
     
     
     async function save() {
@@ -19,6 +20,7 @@ export default function EditAccountModal(props) {
              
             ...(username() !== api.authStore.model.username && { username: username() }), 
         }  
+        console.log(data)
         if (Object.keys(data).length === 0) return;
         setIsSaving(true);
         try {
@@ -33,7 +35,11 @@ export default function EditAccountModal(props) {
             api.authStore.model = newUser;
             newUser.token = oldUser.token;
             localStorage.setItem("postr_auth", JSON.stringify(newUser));
+            document.getElementById("editAccountModal").close()
+            dispatchEvent(new CustomEvent("authChange"))
+            setUser(newUser)
         } catch (error) {
+            console.log(error)
             setIsSaving(false);
         } 
     }
@@ -47,7 +53,7 @@ export default function EditAccountModal(props) {
         <dialog id="editAccountModal" class="modal xl:overflow-scroll   sm:h-screen sm:w-screen ">
             <div class={joinClass("modal-content   sm:w-screen sm:h-screen     w-[27rem]  xl:rounded-xl", theme() === "dark" ? "bg-black" : "bg-white")}>
                 <div class="modal-header p-3 flex justify-between">
-                    <p onClick={()=> document.getElementById("editAccountModal").close() && setUsername(api.authStore.model.username)}>Cancel</p>
+                    <p class="cursor-pointer" onClick={()=> document.getElementById("editAccountModal").close() && setUsername(api.authStore.model.username)}>Cancel</p>
                     <h2>{modalFor()}</h2>
                     <button
                         onClick={save}
@@ -66,20 +72,25 @@ export default function EditAccountModal(props) {
                         <label class="font-bold">
                             Current
                         </label>
-                         {api.authStore.model.username}
+                         {modalFor() == "Email" ? user().email : user().username } 
                     </div>
                      <div class="flex flex-col mt-2 gap-5 p-2">
                         <label>
                             New
                         </label>
                         <div contentEditable={true} class="focus:outline-none border border-t-0 border-l-0 border-r-0 "
+                        onInput={(e)=>{
+                             if(modalFor() == "Username"){
+                                setUsername(e.target.textContent.split("@")[1])
+                             }
+                        }}
                         onFocus={(e)=>{
                            if(e.target.innerHTML == "Username"){
-                                 e.target.innerHTML = "@ "
+                                 e.target.innerHTML = "@"
                            }
                         }}
                         >
-                          Username
+                           {modalFor() == "Email" ? "Email" :  "Username"} 
                         </div>
                          
                     </div>
