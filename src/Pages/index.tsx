@@ -113,7 +113,7 @@ export default function Home() {
         </Match>
         <Match when={loading()}>
           <For each={Array.from({ length: 10 })}>
-            {() => <LoadingIndicator />}
+            {() => <div class="border-b border"><LoadingIndicator /></div>}
           </For>
         </Match>
       </Switch>
