@@ -90,7 +90,7 @@ export default function SettingsPage() {
   ]
 
   return (
-    <Page  {...{ navigate, params, route: route }} >
+    <Page  {...{ navigate, params, route: route, hide:"bottomNav" }}  >
          <div class={joinClass("min-h-screen  ", 
         theme() == "dark" ? "bg-black text-white" : "bg-white text-black"
     )}> 

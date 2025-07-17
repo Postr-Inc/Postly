@@ -96,7 +96,7 @@ export default function Privacy() {
   const [contentFilterToggle, setContentFilterToggle] = createSignal(JSON.parse(localStorage.getItem("content_filtering") || "true"))
 
   return (
-     <Page {...{ navigate, params, route }}>
+     <Page {...{ navigate, params, route, hide:"bottomNav" }}  >
   <div class={joinClass("min-h-screen transition-colors duration-200", isDark ? "bg-gray-900 text-white" : "")}>
 
     {/* Header */}
