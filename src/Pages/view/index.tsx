@@ -154,7 +154,7 @@ createEffect(() => {
 
   return (
     <Page {...{ params: useParams, route, navigate: props.navigate }} id={id}>
-      <div class={joinClass("flex flex-col w-full h-full  ", theme() === "dark" && desktop() ? "border border-[#1c1c1c]" : "")}>
+      <div class={joinClass("flex flex-col w-full h-full  " )}>
         <div class="flex flex-row justify-between gap-5 p-3">
           <ArrowLeft class="w-6 h-6 cursor-pointer" onClick={() => goBack()} stroke-width="2" />
           <h1 class="font-bold">Post</h1>
@@ -195,7 +195,7 @@ createEffect(() => {
             <Match when={post() && !loading() && comments().length > 0}>
               <For each={comments()}>
                 {(comment, index) => (
-                  <div style={{ "margin-bottom": index() === comments().length - 1 ? "100px" : "0px" }} class="border-l-0 border-r-0  relative">
+                  <div style={{ "margin-bottom": index() === comments().length - 1 ? "100px" : "0px" }} class=" relative">
                     <Post
                       {...{
                         ...comment,
