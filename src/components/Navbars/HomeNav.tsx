@@ -352,7 +352,7 @@ onMount(() => {
                     "flex items-center gap-2 btn btn-sm rounded-xl  font-medium text-sm transition-all duration-200 whitespace-nowrap flex-shrink-0",
                     "border border-gray-200 dark:border-gray-600",
                     page() === `topic-${topic.name}`
-                      ? "bg-purple-600 dark:bg-purple-500 text-white shadow-lg shadow-purple-500/25"
+                      ? "bg-purple-400 dark:bg-purple-400 text-white  "
                       : "text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-800",
                   )}
                 >
