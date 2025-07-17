@@ -153,4 +153,3 @@ export default function BottomNav() {
     </div>
   )
 }
-s
