@@ -153,9 +153,7 @@ export default function User() {
     // Handle page > 1
     createEffect(() => {
       if (currentPage() <= 1) return;
-
-      setLoading(true);
-
+ 
       const common = { page: currentPage(), user: u };
 
       switch (view()) {
@@ -342,7 +340,8 @@ export default function User() {
           </div>
         </Match>
         <Match when={!loading()}>
-          <div class="flex flex-col relative">
+           <div class="border border-b">
+            <div class="flex     flex-col relative">
             <div
               class="flex flex-row justify-between p-2 h-[10rem]"
               style={{
@@ -706,6 +705,7 @@ export default function User() {
               </Switch>
             </div>
           </Show>
+           </div>
         </Match>
       </Switch>
       <Portal>
