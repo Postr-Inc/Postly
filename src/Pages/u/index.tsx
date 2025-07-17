@@ -340,7 +340,7 @@ export default function User() {
           </div>
         </Match>
         <Match when={!loading()}>
-           <div class="border border-b">
+           <div  >
             <div class="flex     flex-col relative">
             <div
               class="flex flex-row justify-between p-2 h-[10rem]"
