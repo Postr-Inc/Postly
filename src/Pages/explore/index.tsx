@@ -185,7 +185,7 @@ export default function ExplorePage() {
     const userId = api.authStore.model.id;
 
     // Fetch fresh topic to get current users
-    const fullTopic = await api.collection("topics").get(topic.id, { expand: ["Users_Subscribed"], cacheKey: `topics-get-${new Date().getDate()}` })
+    const fullTopic = await api.collection("topics").get(topic.id, { expand: ["Users_Subscribed"], cacheKey: `topics-${new Date().getDate()}` })
     const currentUsers: string[] = fullTopic.expand?.Users_Subscribed ?? [];
 
     let updatedUsers: string[];
