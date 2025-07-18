@@ -36,7 +36,8 @@ export default function Page(props: { children: any, params: () => any, route: (
 
 
     <div id={props.id} class={joinClass(
-      "relative flex justify-center w-full px-4 sm:px-6 lg:px-8"
+      "relative flex justify-center w-full",
+      "px-0 sm:px-4 lg:px-8"
     )}>
       <Portal>
         <Alert />
@@ -49,7 +50,7 @@ export default function Page(props: { children: any, params: () => any, route: (
         </div>
       </Show>
 
-      <div class="flex flex-col w-full max-w-[40rem] sm:max-w-full">
+      <div class="flex flex-col w-full max-w-[40rem]">
         {props.children}
       </div>
 
