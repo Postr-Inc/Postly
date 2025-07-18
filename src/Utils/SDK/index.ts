@@ -16,6 +16,28 @@ type MetricsStore = {
   followed_after_post_view: string[];
 };
 
+ function extractErrorMessage(error: any): string {
+  if (!error) return "Unknown error";
+
+    
+  console.log("Error keys:", Object.keys(error));
+
+  if (error.details?.response?.data?.token?.message) {
+    return error.details.response.data.token.message;
+  }
+
+  if (error.errors && Array.isArray(error.errors) && error.errors.length > 0) {
+    return error.errors.map((e: any) => e.message || JSON.stringify(e)).join(", ");
+  }
+
+  // Fallback to JSON string
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+}
+
 type AuthData = {
   token: string;
   id?: string;
@@ -107,15 +129,13 @@ export default class SDK {
       navigator.serviceWorker.register("/serviceworker.js").catch((e) => {
         console.log(e)
       })
-       if('Notification' in window){
-         Notification.requestPermission().then(permission => {
+      Notification.requestPermission().then(permission => {
         if (permission === "granted") {
           console.log("✅ Notification permission granted");
         } else {
           console.log("❌ Notification permission denied");
         }
       });
-       }
 
     }
     this.metrics.initializeMetrics()
@@ -576,8 +596,8 @@ export default class SDK {
         })
       })
     },
-    getBasicAuthToken: () => {
-      return new Promise(async (resolve, reject) => {
+    getBasicAuthToken: async () => {
+      try {
         const response = await fetch(`${this.serverURL}/auth/get-basic-auth-token`, {
           method: "GET",
           headers: {
@@ -602,54 +622,90 @@ export default class SDK {
 
         this.wsUrl = wsUrl;
         if (status !== 200) {
-          return reject(message)
+          return message
         }
         else {
           localStorage.setItem("postr_auth", JSON.stringify({ token, wsUrl: this.wsUrl }))
           this.authStore.model.token = token
 
           this.authStore.model.id = id
-          resolve(true)
+          return true
         }
-      })
+      } catch (error) {
+         dispatchAlert({
+          type:"error",
+          "message":"Failed to provide basic auth token, check server status or network connection"
+        })
+      }
+    
     },
     isValid: () => {
       if (!this.authStore.model.token) return false;
       return isTokenExpired(this.authStore.model.token) ? false : true;
     },
-    requestPasswordReset: async (email: string) => {
-      return new Promise(async (resolve, reject) => {
-        const response = await fetch(`${this.serverURL}/auth/requestPasswordReset`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            email,
-          }),
-        });
-        const { status, message } = await response.json();
-        if (status !== 200) return reject(message);
-        return resolve();
-      });
-    },
-    resetPassword: async (token: string, password: string) => {
-      return new Promise(async (resolve, reject) => {
-        const response = await fetch(`${this.serverURL}/auth/resetPassword`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            token,
-            password,
-          }),
-        });
-        const { status, message } = await response.json();
-        if (status !== 200) return reject(message);
-        return resolve();
-      });
-    },
+      requestPasswordReset: async (email: string) => {
+  try {
+    const response = await fetch(`${this.serverURL}/auth/requestPasswordReset`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email }),
+    });
+
+    if (!response.ok) {
+      let errorMessage = `HTTP error ${response.status}`;
+      try {
+        const errorJson = await response.json();
+        if (errorJson.message) errorMessage = errorJson.message;
+      } catch {
+        // ignore JSON parse errors
+      }
+      throw new Error(errorMessage);
+    }
+
+    const data = await response.json();
+    if (data.status !== 200) throw new Error(data.message || "Unknown error");
+
+  } catch (err) {
+    throw err;
+  }
+},
+
+resetPassword: async (token: string, password: string) => {
+  try {
+    const response = await fetch(`${this.serverURL}/auth/resetPassword`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ resetToken: token, password }),
+    });
+
+   if (!response.ok) {
+  let errorJson = null;
+  try {
+    errorJson = await response.json();
+  } catch {
+    // ignore
+  }
+
+  let message = "Unknown error";
+  if (errorJson) {
+     message = errorJson
+  } else {
+    message = `HTTP error ${response.status}`;
+  }
+
+  throw new Error(extractErrorMessage(message));
+}
+
+
+    const data = await response.json();
+    if (data.status !== 200) throw new Error(data.message || "Unknown error");
+
+  } catch (err) {
+    throw err;
+  }
+},
+
+
     logout: () => {
       if (window.location.pathname !== "/auth/login") {
         localStorage.removeItem("postr_auth");
@@ -1072,21 +1128,19 @@ export default class SDK {
     }
   }
   public deepSearch = async (collections: string[], query: string) => {
-    return new Promise(async (resolve, reject) => {
-      let out = await this.sendMsg({
-        type: GeneralTypes.DEEP_SEARCH,
-        payload: {
-          collections,
+    try{ 
+      const res = await this.send("/deepSearch", {
+        method :"POST",
+        body:{
           query,
-        },
-        security: {
-          token: this.authStore.model.token,
-        },
-        callback: "",
-      }, "search") as any;
-      if (out.opCode !== HttpCodes.OK) return reject(out);
-      resolve(out.payload);
-    });
+          collections
+        }
+      }) 
+      return res?.results
+    }catch (errr){
+      console.log(errr)
+      return []
+    } 
   }
 
   /**
