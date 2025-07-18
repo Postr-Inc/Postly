@@ -5,7 +5,7 @@ import useNavigation from "@/src/Utils/Hooks/useNavigation"
 import useTheme from "@/src/Utils/Hooks/useTheme"
 import { joinClass } from "@/src/Utils/Joinclass"
 import Page from "@/src/Utils/Shared/Page"
-import { createSignal, createMemo, onMount, For } from "solid-js"
+import { createSignal, createMemo, onMount, For, Show } from "solid-js"
 
 
 const getTopicIcon = (icon: string) => {
@@ -126,9 +126,10 @@ export default function ExplorePage() {
   const [search, setSearch] = createSignal("");
 
   const filteredTopics = () =>
-    TOPICS().filter(topic =>
-      topic.name.toLowerCase().includes(search().toLowerCase())
-    );
+  (TOPICS() || []).filter(topic => {
+    const name = topic?.name?.toLowerCase?.();
+    return name && name.includes((search() || "").toLowerCase());
+  });
   async function getTrendingHashTags() {
     const tags = await api.collection("Hashtags").list(1, 15, {
       filter: `posts:length > 0`,
@@ -215,119 +216,121 @@ export default function ExplorePage() {
   };
   return (
     <Page {...{ route, navigate }}>
-      <div class="w-full p-2   my-8">
+      <div class="w-full p-2  py-2  my-8">
         {/* Topics Section */}
-        <div class="   rounded-2xl  ">
-          <h2 class="text-3xl font-bold mb-8   tracking-tight">
-            Topics to Subscribe
-          </h2>
-          <div class={joinClass(
-            "max-h-[70vh] overflow-y-auto scrollbar-hide",
-          )}>
-            <input
-              type="text"
-              placeholder="Search topics..."
-              value={search()}
-              onInput={(e) => setSearch(e.currentTarget.value)}
-              class={joinClass("mb-4 px-4 py-2 w-full border rounded-full focus:outline-none   dark:bg-gray-900 text-sm dark:text-white", theme() == "dark" && "bg-base-300 border-none")}
-            />
-            <For each={visibleTopics()}>
-              {(topic) => (
-                <div
-                  key={topic.slug}
-                  class={joinClass(
-                    "group flex items-center justify-between  p-5 py-3  mb-2 rounded-xl transition-all duration-200 cursor-pointer border",
-                    theme() === "dark"
-                      ? "bg-gray-800/50 border-gray-700/50 hover:bg-gray-800 hover:border-gray-600"
-                      : "bg-gray-50/80 border-gray-200/50 hover:bg-gray-100 hover:border-gray-300"
-                  )}
-                >
-                  {/* Left side - Icon and Topic Info */}
-                  <div class="flex items-center space-x-3 flex-1 min-w-0">
-                    {/* Icon */}
-                    <div class={joinClass(
-                      "flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200",
-
-                    )}>
-                      <div class={joinClass(
-                        "transition-colors duration-200   fill-white",
-                      )}>
-                        {getTopicIcon(topic.icon)}
-                      </div>
-                    </div>
-
-                    {/* Topic Info */}
-                    <div class="flex-1 min-w-0">
-                      <div class="flex items-center space-x-2">
-                        {/* Topic Name */}
-                        <h3 class={joinClass(
-                          "font-semibold text-sm truncate transition-colors duration-200",
-                          theme() === "dark"
-                            ? "text-gray-100 group-hover:text-white"
-                            : "text-gray-900 group-hover:text-black"
-                        )}>
-                          {topic.name.startsWith('#') ? topic.name : `#${topic.name}`}
-                        </h3>
-                      </div>
-
-                      {/* Category and Stats */}
-                      <div class="flex items-center space-x-2 mt-1">
-                        <span class={joinClass(
-                          "text-xs font-medium capitalize",
-                          theme() === "dark" ? "text-blue-400" : "text-blue-600"
-                        )}>
-                          {topic.category || 'Trending'}
-                        </span>
-                        <span class={joinClass(
-                          "text-xs",
-                          theme() === "dark" ? "text-white" : "text-gray-500"
-                        )}>
-                          •
-                        </span>
-                        <span class={joinClass(
-                          "text-xs",
-                          theme() === "dark" ? "text-white" : "text-gray-500"
-                        )}>
-                          {topic.posts.length} posts
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right side - Subscribe Button */}
-                  <button
-                    onClick={() => toggleSubscription(topic)}
+        <Show when={api.authStore.model.username}>
+          <div class="   rounded-2xl  ">
+            <h2 class="text-3xl font-bold mb-8   tracking-tight">
+              Topics to Subscribe
+            </h2>
+            <div class={joinClass(
+              "max-h-[70vh] overflow-y-auto scrollbar-hide",
+            )}>
+              <input
+                type="text"
+                placeholder="Search topics..."
+                value={search()}
+                onInput={(e) => setSearch(e.currentTarget.value)}
+                class={joinClass("mb-4 px-4 py-2 w-full border rounded-full focus:outline-none   dark:bg-gray-900 text-sm dark:text-white", theme() == "dark" && "bg-base-300 border-none")}
+              />
+              <For each={visibleTopics()}>
+                {(topic) => (
+                  <div
+                    key={topic.slug}
                     class={joinClass(
-                      "relative overflow-hidden px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 transform active:scale-95 ml-3 flex-shrink-0",
-                      isSubscribed(topic.slug)
-                        ? theme() === "dark"
-                          ? "bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 shadow-lg shadow-green-500/20"
-                          : "bg-green-500 text-white hover:bg-green-600 focus:ring-green-400 shadow-lg shadow-green-500/25"
-                        : theme() === "dark"
-                          ? "bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white focus:ring-gray-500 border border-gray-600"
-                          : "bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-400 border border-gray-300 shadow-sm"
+                      "group flex items-center justify-between  p-5 py-3  mb-2 rounded-xl transition-all duration-200 cursor-pointer border",
+                      theme() === "dark"
+                        ? "bg-gray-800/50 border-gray-700/50 hover:bg-gray-800 hover:border-gray-600"
+                        : "bg-gray-50/80 border-gray-200/50 hover:bg-gray-100 hover:border-gray-300"
                     )}
                   >
-                    <span class="relative z-10">
-                      {isSubscribed(topic.slug) ? "✓ Following" : "Follow"}
-                    </span>
+                    {/* Left side - Icon and Topic Info */}
+                    <div class="flex items-center space-x-3 flex-1 min-w-0">
+                      {/* Icon */}
+                      <div class={joinClass(
+                        "flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200",
 
-                    {/* Subtle shine effect */}
-                    <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-500"></div>
-                  </button>
-                </div>
-              )}
-            </For>
+                      )}>
+                        <div class={joinClass(
+                          "transition-colors duration-200   fill-white",
+                        )}>
+                          {getTopicIcon(topic.icon)}
+                        </div>
+                      </div>
+
+                      {/* Topic Info */}
+                      <div class="flex-1 min-w-0">
+                        <div class="flex items-center space-x-2">
+                          {/* Topic Name */}
+                          <h3 class={joinClass(
+                            "font-semibold text-sm truncate transition-colors duration-200",
+                            theme() === "dark"
+                              ? "text-gray-100 group-hover:text-white"
+                              : "text-gray-900 group-hover:text-black"
+                          )}>
+                            {topic.name.startsWith('#') ? topic.name : `#${topic.name}`}
+                          </h3>
+                        </div>
+
+                        {/* Category and Stats */}
+                        <div class="flex items-center space-x-2 mt-1">
+                          <span class={joinClass(
+                            "text-xs font-medium capitalize",
+                            theme() === "dark" ? "text-blue-400" : "text-blue-600"
+                          )}>
+                            {topic.category || 'Trending'}
+                          </span>
+                          <span class={joinClass(
+                            "text-xs",
+                            theme() === "dark" ? "text-white" : "text-gray-500"
+                          )}>
+                            •
+                          </span>
+                          <span class={joinClass(
+                            "text-xs",
+                            theme() === "dark" ? "text-white" : "text-gray-500"
+                          )}>
+                            {topic.posts.length} posts
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right side - Subscribe Button */}
+                    <button
+                      onClick={() => toggleSubscription(topic)}
+                      class={joinClass(
+                        "relative overflow-hidden px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 transform active:scale-95 ml-3 flex-shrink-0",
+                        isSubscribed(topic.slug)
+                          ? theme() === "dark"
+                            ? "bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 shadow-lg shadow-green-500/20"
+                            : "bg-green-500 text-white hover:bg-green-600 focus:ring-green-400 shadow-lg shadow-green-500/25"
+                          : theme() === "dark"
+                            ? "bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white focus:ring-gray-500 border border-gray-600"
+                            : "bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-400 border border-gray-300 shadow-sm"
+                      )}
+                    >
+                      <span class="relative z-10">
+                        {isSubscribed(topic.slug) ? "✓ Following" : "Follow"}
+                      </span>
+
+                      {/* Subtle shine effect */}
+                      <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-500"></div>
+                    </button>
+                  </div>
+                )}
+              </For>
+            </div>
+            <Show when={filteredTopics().length > 6}>
+              <button
+                onClick={() => setExpanded(!expanded())}
+                class="mt-4 text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                {expanded() ? "Show Less" : "Show More"}
+              </button>
+            </Show>
           </div>
-          <Show when={filteredTopics().length > 6}>
-            <button
-              onClick={() => setExpanded(!expanded())}
-              class="mt-4 text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
-            >
-              {expanded() ? "Show Less" : "Show More"}
-            </button>
-          </Show>
-        </div>
+        </Show>
 
         {/* Trending Section */}
         <div class={joinClass(
