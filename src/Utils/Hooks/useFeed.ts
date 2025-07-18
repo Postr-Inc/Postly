@@ -2,6 +2,11 @@ import { createSignal, onMount, onCleanup, createEffect } from "solid-js";
 import { api } from "@/src";
 import { HttpCodes } from "../SDK/opCodes";
 let isFetchingMore = false;
+function getTrendingTimeRange(days = 5) {
+  const date = new Date();
+  date.setDate(date.getDate() - days);
+  return date.toISOString();
+}
 async function list(
   collection: string,
   page: number,
@@ -11,16 +16,18 @@ async function list(
   if (!collection) throw new Error("collection parameter is required");
   if (!page || page < 1) page = 1;
   const feedValue = feed();
+  console.log(feedValue)
   if (!feedValue) throw new Error("feed() signal must return a valid string");
   if (feed() === "following") {
     options.filter = `author.followers ~"${api.authStore.model.id}" && author.deactivated=false`
-  } else if (feed() === "trending") {
+  } else if (feedValue === "trending") {
     options.filter = `
-  author.deactivated = false 
-  && author.id != "${api.authStore.model.id} && topic == null"
-`;
+  author.deactivated = false   && topic = null && created >= "${getTrendingTimeRange(5)}"
+  `;
+  api.authStore.model.username &&  (options.filter += `&& author.id != "${api.authStore.model.id}"`)
   } else if (feed() == "recommended") {
     options.filter = `topic=null`
+    api.authStore.model.username &&  (options.filter += `&& author.id != "${api.authStore.model.id}"`)
   }
   if (feed().includes("topic")) {
     let topic = feed().split("topic-")[1]
@@ -54,11 +61,7 @@ async function list(
       return res;
     });
 }
-
-
-
-
-
+ 
 export default function useFeed(
   collection: string,
   options: { _for?: string; filter?: string; sort?: string; limit?: number } = {},
