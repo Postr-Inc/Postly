@@ -156,7 +156,7 @@ export default function Login() {
           <p class="text-xs text-white">
             Forgot your password?{" "}
             <button
-              onClick={() => navigate("/auth/ForgotPassword", null)}
+              onClick={() => navigate("/auth/reset-password", null)}
               class="text-blue "
             >
               Reset it
