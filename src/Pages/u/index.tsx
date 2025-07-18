@@ -709,7 +709,7 @@ export default function User() {
       </Switch>
       <Portal>
         <EditProfileModal updateUser={(data: any) => { setUser({ ...user(), ...data }) }} />
-        <FollowingListModal user={user} setFollowing={following} setUser={user} show={showFollowingModal} setShow={setShowFollowingModal}></FollowingListModal>
+        <FollowingListModal user={user} setFollowing={following} onNavigate={(usr)=> navigate(`/u/${usr}`)} setUser={user} show={showFollowingModal} setShow={setShowFollowingModal}></FollowingListModal>
       </Portal>
     </Page>
   );
