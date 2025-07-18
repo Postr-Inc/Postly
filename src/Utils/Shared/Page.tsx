@@ -49,7 +49,7 @@ export default function Page(props: { children: any, params: () => any, route: (
         </div>
       </Show>
 
-      <div class="flex flex-col w-full max-w-[40rem]">
+      <div class="flex flex-col w-full max-w-[40rem] sm:max-w-full">
         {props.children}
       </div>
 
