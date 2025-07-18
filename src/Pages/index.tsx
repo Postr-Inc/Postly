@@ -7,10 +7,13 @@ import useFeed from "../Utils/Hooks/useFeed";
 import Post from "../components/PostRelated/Post";
 import LoadingIndicator from "../components/Icons/loading";
 import { joinClass } from "../Utils/Joinclass";
+import useDevice from "../Utils/Hooks/useDevice";
 export default function Home() {
   const { route, params, navigate } = useNavigation("/");
   const { feed, currentPage, setFeed, posts, loading, reset, setPosts } = useFeed("posts", { filter: `author.id !="${api.authStore.model.id}" && author.deactivated=false`, _for: "home" });
 
+  const { mobile } = useDevice()
+  console.log(mobile())
   const [newPostAppended, setNewPostAppended] = createSignal(false);
   const [recentPosts, setRecentPosts] = createSignal<any[]>([]);
   onMount(() => {
@@ -91,7 +94,7 @@ export default function Home() {
 
             <Show when={posts()}>
               <For each={posts()}>
-                {(item, index) => <div class={joinClass(index() == posts().length - 1 ? "sm:mb-[90px]" : "")}>   <Post {...{ navigate, route, params, isLast: true, ...item, id: item.id }} />  </div>}
+                {(item, index) => <div  style={{"margin-bottom": index() == posts().length - 1  && mobile() ? "10rem" : ""}}>   <Post {...{ navigate, route, params, isLast: true, ...item, id: item.id }} />  </div>}
               </For>
             </Show>
             
