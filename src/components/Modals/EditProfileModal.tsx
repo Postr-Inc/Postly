@@ -94,6 +94,7 @@ export default function EditProfileModal({
   const [bannerFile, setBannerFile] = createSignal<File>()
   const [banner, setBanner] = createSignal(api.authStore.model.banner)
   const [username, setUsername] = createSignal(api.authStore.model.username)
+  const [handle, setHandle] = createSignal(api.authStore.model.handle || "any handle name")
   const [bio, setBio] = createSignal(api.authStore.model.bio || "")
   const [location, setLocation] = createSignal(api.authStore.model.location || "")
   const [social, setSocial] = createSignal<string[]>(Array.isArray(api.authStore.model.social) ? api.authStore.model.social : [])
@@ -141,6 +142,7 @@ export default function EditProfileModal({
       location() !== (api.authStore.model.location || "") ||
       social() !== (api.authStore.model.social || "") ||
       deactivated() !== api.authStore.model.deactivated
+      || handle() !== api.authStore.model.handle
     )
   }
 
@@ -207,6 +209,7 @@ export default function EditProfileModal({
     if (location() !== (api.authStore.model.location || "")) data.location = location()
     if (social() !== (api.authStore.model.social || "")) data.social = social()
     if (deactivated() !== api.authStore.model.deactivated) data.deactivated = deactivated()
+    if(handle() !== api.authStore.model.handle) data.handle = handle()
 
     if (Object.keys(data).length === 0) return
 
@@ -248,10 +251,10 @@ export default function EditProfileModal({
   }
 
   return (
-    <dialog id="editProfileModal" class="modal rounded-none overflow-y-scroll scroll-smooth no-scrollbar">
+    <dialog id="editProfileModal" class="modal rounded-xl overflow-y-scroll scroll-smooth no-scrollbar">
       <div
         class={joinClass(
-          "modal-content max-w-lg w-full mx-4   shadow-2xl   ",
+          "modal-content max-w-lg w-full mx-4    shadow-2xl   ",
           theme() === "dark" ? "bg-gray-900 text-white" : "bg-white text-gray-900",
         )}
       >
@@ -399,6 +402,31 @@ export default function EditProfileModal({
                 "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20",
               )}
               placeholder="Enter username"
+            />
+            <Show when={errors().username && touched().username}>
+              <div class="flex items-center gap-1 text-red-500 text-sm">
+                <AlertIcon />
+                {errors().username}
+              </div>
+            </Show>
+          </div>
+          <div class="space-y-2">
+            <label class="block text-sm font-medium">Handle <span class="text-sm text-gray-500">@handle</span></label>
+            <input
+              type="text"
+              value={handle()}
+              onInput={(e) => setHandle(e.currentTarget.value)}
+              onBlur={() => handleFieldBlur("handle")}
+              class={joinClass(
+                "w-full px-3 py-2  rounded-xl  border transition-colors",
+                errors().handle && touched().handle
+                  ? "border-red-500 focus:border-red-500"
+                  : theme() === "dark"
+                    ? "border-gray-600 bg-gray-800 focus:border-blue-500"
+                    : "border-gray-300 bg-white focus:border-blue-500",
+                "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20",
+              )}
+              placeholder="Enter a handle"
             />
             <Show when={errors().username && touched().username}>
               <div class="flex items-center gap-1 text-red-500 text-sm">
