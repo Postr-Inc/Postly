@@ -11,7 +11,7 @@ export default function RequireSignupModal(props: RequireSignupModalProps = {}) 
 
   // Globally accessible trigger
   onMount(() => {
-    ;(window as any).requireSignup = () => {
+    (window as any).requireSignup = () => {
       setVisible(true)
       //@ts-ignore
       window.hideBottomNav() 
@@ -155,7 +155,7 @@ export default function RequireSignupModal(props: RequireSignupModalProps = {}) 
       {/* Modal */}
       <Show when={visible()}>
         <div
-          class="fixed inset-0   z-[99999] flex items-center justify-center p-4"
+          class="fixed inset-0 z-[99999] flex items-center justify-center p-4 pb-[env(safe-area-inset-bottom,4.5rem)] sm:pb-4"
           onClick={handleBackdropClick}
           style={{
             "background-color": "rgba(0, 0, 0, 0.5)",
