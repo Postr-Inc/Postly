@@ -481,8 +481,7 @@ export default function User() {
               </div>
             </h1>
             <span class="text-sm mt-1 opacity-60">
-              @{user() && user().username}
-              {user() && user().id.slice(0, 5)}
+             {user().handle ? "@" + user().handle : "@" + user().username}
             </span>
             <p class=" mt-2">{user() && user().bio}</p>
             <div class="flex flex-row gap-5 mt-2">
