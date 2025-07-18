@@ -10,75 +10,71 @@ import CreatePostModal from "@/src/components/Modals/CreatePostModal";
 import Browser from "@/src/components/Browser";
 import RegisterModal from "../Modals/RegisterModal";
 import { Portal } from "solid-js/web";
-import DeleteAccountModal from "@/src/components/Modals/DeleteAccountModal";  
+import DeleteAccountModal from "@/src/components/Modals/DeleteAccountModal";
 import Alert from "../Alerts/Alert";
 import EditProfileModal from "@/src/components/Modals/EditProfileModal";
 import EditAccountModal from "@/src/components/Modals/EditAccountModal";
 import JoinPostlyModal from "../Modals/JoinPostlyModal";
 import BlockUserModal from "@/src/components/Modals/BlockedModal";
-export default function Page(props: { children: any , params: ()=> any, route: () => string, navigate: any, id: string, hide?: string[] }) {
-     
-       const [checkedAuth, setCheckedAuth] = createSignal(false);
-       onMount(async () => {
-         await api.checkAuth();
-     
-         // If still not valid, try basic token
-         if (!api.authStore.isValid()) {
-           try {
-             await api.authStore.getBasicAuthToken(); 
-           } catch (err) {
-             console.warn("Unable to issue basic auth token:", err);
-           }
-         }  
-       });
-    return <>
-     
-    
-   <div id={props.id} class={joinClass("relative xl:flex xl:w-[30vw] w-[100vw]     xl:p-0  lg:flex   2xl:w-[79rem]    justify-center xl:mx-auto ", )}>
+import PostlyPlusModal from "@/src/components/Modals/PostlyPlusModal";
+export default function Page(props: { children: any, params: () => any, route: () => string, navigate: any, id: string, hide?: string[] }) {
+
+  const [checkedAuth, setCheckedAuth] = createSignal(false);
+  onMount(async () => {
+    await api.checkAuth();
+
+    // If still not valid, try basic token
+    if (!api.authStore.isValid()) {
+      try {
+        await api.authStore.getBasicAuthToken();
+      } catch (err) {
+        console.warn("Unable to issue basic auth token:", err);
+      }
+    }
+  });
+  return <>
+
+
+    <div id={props.id} class={joinClass(
+      "relative flex justify-center w-full px-4 sm:px-6 lg:px-8"
+    )}>
       <Portal>
         <Alert />
-        
-    <RegisterModal />
+        <RegisterModal />
       </Portal>
-         <Show when={props.route() !== "/auth/login" && props.route() !== "/auth/signup" && props.route() !== "/auth/forgot"}>
-         <SideBarLeft {...{
-             params: props.params,
-             route: props.route,
-             navigate: props.navigate,
-        }} />
-        </Show>
-        
-        <div class={joinClass("flex flex-col  h-full w-full  ",  
-        )}>
-            
-        {props.children}
+
+      <Show when={!["/auth/login", "/auth/signup", "/auth/forgot"].includes(props.route())}>
+        <div class="hidden xl:block mr-6">
+          <SideBarLeft {...props} />
         </div>
+      </Show>
 
-        <Show when={props.route() !== "/auth/login" && props.route() !== "/auth/signup" && props.route() !== "/auth/forgot"}>
-        <SideBarRight {...{
-             params: props.params,
-             route: props.route,
-             navigate: props.navigate,
-        }} />
-        </Show> 
+      <div class="flex flex-col w-full max-w-[40rem]">
+        {props.children}
+      </div>
 
-        
-       {
-          !props.hide?.includes("bottomNav") && (
-               <BottomNav />
-          )
-       }
-    </div>  
+      <Show when={!["/auth/login", "/auth/signup", "/auth/forgot"].includes(props.route())}>
+        <div class="hidden xl:block ml-6">
+          <SideBarRight {...props} />
+        </div>
+      </Show>
+
+      {
+        !props.hide?.includes("bottomNav") && <BottomNav />
+      }
+    </div>
+
     <Portal>
-     
-    <Browser />
-     
-    <CreatePostModal />
-    <DeleteAccountModal />   
-    <EditAccountModal/>
-         <BlockUserModal />
-    <JoinPostlyModal />
+
+      <Browser />
+
+      <CreatePostModal />
+      <DeleteAccountModal />
+      <EditAccountModal />
+      <BlockUserModal />
+      <JoinPostlyModal />
+      <PostlyPlusModal />
     </Portal>
-    
-    </>
+
+  </>
 }
