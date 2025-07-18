@@ -98,6 +98,13 @@ export default function ForgotPassword() {
       </div>
 
       {!token() ? (
+         <form
+        class="space-y-6"
+        onSubmit={e => {
+          e.preventDefault(); // prevent page reload/navigation
+          requestReset();
+        }}
+      > 
         <div class="space-y-6">
           <div class="text-center space-y-2">
             <h1 class="text-2xl font-semibold tracking-tight">Forgot your password?</h1>
@@ -145,7 +152,15 @@ export default function ForgotPassword() {
             </button>
           </div>
         </div>
+        </form>
       ) : (
+         <form
+        class="space-y-6"
+        onSubmit={e => {
+          e.preventDefault(); // prevent page reload/navigation
+          requestReset();
+        }}
+      > 
         <div class="space-y-6">
           <div class="text-center space-y-2">
             <h1 class="text-2xl font-semibold tracking-tight">Reset your password</h1>
@@ -237,6 +252,7 @@ export default function ForgotPassword() {
             </button>
           </div>
         </div>
+        </form>
       )}
 
       <Modal id="resetPasswordModal">
