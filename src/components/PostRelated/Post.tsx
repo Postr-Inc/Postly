@@ -497,6 +497,11 @@ export default function Post(props: Props) {
             >
               {props.expand && props.expand.author.username}
             </CardTitle>
+             <CardTitle
+              class="cursor-pointer flex items-center mx-2 gap-1" 
+            >
+              {props.expand && props.expand.author.handle && "@" + props.expand.author.handle}
+            </CardTitle>
             <Show when={props.expand.author.validVerified}>
               <div data-tip="Verified" class="tooltip flex items-center">
                 <Verified class="w-5 h-5 mx-1 text-blue-500 fill-blue-500 " />
