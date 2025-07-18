@@ -37,8 +37,7 @@ if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
 render(() =>  (
   <Router>
     <Route path="/auth/login" component={Login} />
-    <Route path="/auth/ForgotPassword" component={ForgotPassword} />
-    <Route path="/auth/reset-password/:token" component={ForgotPassword} />
+    <Route path="/auth/reset-password" component={ForgotPassword} /> 
     <Route path="/auth/register" component={Registration} />
     <Route path="/" component={App} />
     <Route path="/view/:collection/:id" component={View} />
