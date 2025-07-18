@@ -36,8 +36,8 @@ export default function Page(props: { children: any, params: () => any, route: (
 
 
     <div id={props.id} class={joinClass(
-      "relative flex justify-center w-full",
-      "px-0 sm:px-4 lg:px-8"
+      "relative flex justify-center w-full sm:max-w-screen-xl",
+      "lg:px-0 lg:px-8"
     )}>
       <Portal>
         <Alert />
