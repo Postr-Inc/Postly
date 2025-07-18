@@ -1,14 +1,9 @@
 import { createSignal } from "solid-js";
 
 let currentRoute = "/";
-const arrayOfNavigations =  createSignal<string[]>([currentRoute]);
+const arrayOfNavigations = createSignal<string[]>([currentRoute]);
 let params = [{ route: "/", params: null }] as [{ route: string; params: any }];
-/**
- * @description - A hook to handle navigation in a SolidJS application
- * @param $route 
- * @param $params 
- * @returns 
- */
+
 export default function useNavigation($route?: string, $params?: any) {
   const [route, setRoute] = createSignal(
     new URL(window.location.href).pathname || "/"
@@ -16,7 +11,6 @@ export default function useNavigation($route?: string, $params?: any) {
   const [_params, setParams] = createSignal(
     params.find((p) => p.route === currentRoute)?.params || null
   );
-
 
   const searchParams = new URL(window.location.href).searchParams;
 
@@ -41,6 +35,9 @@ export default function useNavigation($route?: string, $params?: any) {
     setParams<{}>($_params);
   }
 
+  // Flag to know if popstate was manually dispatched from navigate()
+  let manualNavigation = false;
+
   const navigate = (route: string, $params?: any) => {
     if ($params) {
       params.push({ route, params: $params });
@@ -48,17 +45,26 @@ export default function useNavigation($route?: string, $params?: any) {
     }
     setRoute(route);
     currentRoute = route;
-    arrayOfNavigations.push(route);  
-    window.history.pushState(null, "",route);
+    arrayOfNavigations.push(route);
+    window.history.pushState(null, "", route);
+
+    manualNavigation = true; // Mark manual dispatch
     window.dispatchEvent(new Event("popstate"));
   };
 
   window.addEventListener("popstate", () => {
-    console.log("route change")
+    if (manualNavigation) {
+      manualNavigation = false; // reset flag
+      // Ignore the popstate event triggered manually by navigate()
+      return;
+    }
+    // Handle real browser back/forward events here
+    console.log("route change");
     const path = new URL(window.location.href).pathname;
     setRoute(path);
     const matchingParams = params.find((p) => p.route === path)?.params || null;
     setParams(matchingParams);
+    currentRoute = path;
   });
 
   const goBack = () => {
@@ -67,7 +73,7 @@ export default function useNavigation($route?: string, $params?: any) {
     currentRoute = arrayOfNavigations[index - 1];
     setRoute(currentRoute);
     window.history.back();
-    window.dispatchEvent(new Event("popstate"));
+    // No manual popstate dispatch here: browser triggers it naturally
   };
 
   const goForward = () => {
@@ -76,10 +82,8 @@ export default function useNavigation($route?: string, $params?: any) {
     currentRoute = arrayOfNavigations[index + 1];
     setRoute(currentRoute);
     window.history.forward();
-    window.dispatchEvent(new Event("popstate"));
+    // No manual popstate dispatch here either
   };
-
-   
 
   return { route, navigate, goBack, goForward, params: _params, searchParams };
 }
