@@ -341,25 +341,26 @@ export default function User() {
         </Match>
         <Match when={!loading()}>
            <div  >
-              <div class="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
+              <div  class={joinClass(theme() == "dark" ? "bg-black text-white" : "bg-white",
+              "sticky top-0 z-50")}>
               <div class="flex items-center justify-between px-4 py-3">
                 <div class="flex items-center space-x-8">
                   <button
                     onClick={() => goBack()}
-                    class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                    class="p-2 rounded-full  transition-colors"
                   >
                     <ArrowLeft class="w-5 h-5" />
                   </button>
                   <div>
-                    <h1 class="text-xl font-bold text-gray-900 dark:text-white">{user()?.username || "Loading..."}</h1>
-                    <p class="text-sm text-gray-500 dark:text-gray-400">{posts().length} posts</p>
+                    <h1 class="text-xl font-bold ">{user()?.username || "Loading..."}</h1>
+                    <p class="text-sm  ">{posts().length} posts</p>
                   </div>
                 </div>
                 <div class="flex items-center space-x-2">
-                  <button class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                  <button class="p-2 rounded-full  transition-colors">
                     <Search class="w-5 h-5" />
                   </button>
-                  <button class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                  <button class="p-2 rounded-full  transition-colors">
                     
                   </button>
                 </div>
