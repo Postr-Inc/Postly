@@ -9,9 +9,7 @@ import useNavigation from "@/src/Utils/Hooks/useNavigation";
 import useTheme from "@/src/Utils/Hooks/useTheme";
 import { joinClass } from "@/src/Utils/Joinclass";
 import Page from "@/src/Utils/Shared/Page";
-import { Index, onCleanup } from "solid-js"
-
-
+import { Index, onCleanup } from "solid-js" 
 import { useNavigate, useParams } from "@solidjs/router";
 import { createEffect, createSignal, Match, onMount, Show, Switch, For } from "solid-js";
 import Carousel, { CarouselItem } from "@/src/components/UI/UX/Carousel";
@@ -32,8 +30,7 @@ export default function View(props: any) {
     ...(collection === "comments" ? { mainComment: id } : { post: id }),
   })
   const [files, setFiles] = createSignal<any>([])
-
-  // Ensure auth check on every render
+ 
   if (!api.authStore.isValid()) navigate("/auth/login", null)
 
   const { mobile, desktop, tablet } = useDevice()
@@ -86,8 +83,7 @@ export default function View(props: any) {
         console.log(err)
         setLoading(false)
       })
-
-    // Fetch comments with nested replies
+ 
     setCommentsLoading(true)
     api
       .collection("comments")
@@ -139,8 +135,7 @@ export default function View(props: any) {
       fetchP()
     }
   })
-
-  // Sleek loading component with proper theme support
+ 
   const LoadingPost = () => (
     <div class="p-4 animate-pulse">
       <div class="flex gap-3">
@@ -165,20 +160,17 @@ export default function View(props: any) {
       </div>
     </div>
   )
-
-  // Comment with nested replies component - Twitter-style threading
-  const CommentWithReplies = (props: { comment: any; index: number; isLast: boolean }) => {
+ 
+ const CommentWithReplies = (props: { comment: any; index: number; isLast: boolean }) => {
     const { comment, index, isLast } = props
     const hasReplies = comment.expand?.comments && comment.expand.comments.length > 0
 
     return (
-      <div class="relative">
+      <div class="border-b border-gray-100 dark:border-gray-800 last:border-b-0">
         {/* Main Comment */}
         <div
           style={{ "margin-bottom": isLast && !hasReplies ? "100px" : "0px" }}
-          class={`relative transition-colors duration-200 border-b ${
-            theme() === "dark" ? "hover:bg-gray-900/30 border-gray-800" : "hover:bg-gray-50/30 border-gray-100"
-          }`}
+          class="relative hover:bg-gray-50/30 dark:hover:bg-gray-900/30 transition-colors duration-200"
         >
           <Post
             {...{
@@ -193,36 +185,20 @@ export default function View(props: any) {
           />
         </div>
 
-        {/* Nested Replies with connecting line */}
+        {/* Nested Replies */}
         <Show when={hasReplies}>
-          <div class="relative">
-            {/* Vertical connecting line from parent avatar to first reply */}
-            <div
-              class={`absolute left-[34px] top-0 w-0.5 h-4 ${theme() === "dark" ? "bg-gray-600" : "bg-gray-300"}`}
-            ></div>
-
+          <div class="ml-12 border-l-2 border-gray-100 dark:border-gray-800">
             <For each={comment.expand.comments}>
               {(reply, replyIndex) => (
-                <div class="relative">
-                  {/* Connecting line structure */}
-                  <div
-                    class={`absolute left-[34px] top-0 w-0.5 h-[52px] ${theme() === "dark" ? "bg-gray-600" : "bg-gray-300"}`}
-                  ></div>
-                  <div
-                    class={`absolute left-[34px] top-[52px] w-4 h-0.5 ${theme() === "dark" ? "bg-gray-600" : "bg-gray-300"}`}
-                  ></div>
-
-                  {/* Reply content */}
-                  <div
-                    class={`relative transition-colors duration-200 border-b ${
-                      theme() === "dark"
-                        ? "hover:bg-gray-900/20 border-gray-800"
-                        : "hover:bg-gray-50/20 border-gray-100"
-                    }`}
-                    style={{
-                      "margin-bottom": isLast && replyIndex() === comment.expand.comments.length - 1 ? "100px" : "0px",
-                    }}
-                  >
+                <div
+                  class="relative hover:bg-gray-50/20 dark:hover:bg-gray-900/20 transition-colors duration-200"
+                  style={{
+                    "margin-bottom": isLast && replyIndex() === comment.expand.comments.length - 1 ? "100px" : "0px",
+                  }}
+                >
+                  {/* Connection line */}
+                  <div class="absolute left-0 top-4 w-4 h-px bg-gray-200 dark:bg-gray-700"></div>
+                  <div class="pl-4">
                     <Post
                       {...{
                         ...reply,
@@ -235,13 +211,6 @@ export default function View(props: any) {
                       }}
                     />
                   </div>
-
-                  {/* Continue vertical line to next reply if not last */}
-                  <Show when={replyIndex() < comment.expand.comments.length - 1}>
-                    <div
-                      class={`absolute left-[34px] top-[52px] w-0.5 h-4 ${theme() === "dark" ? "bg-gray-600" : "bg-gray-300"}`}
-                    ></div>
-                  </Show>
                 </div>
               )}
             </For>
