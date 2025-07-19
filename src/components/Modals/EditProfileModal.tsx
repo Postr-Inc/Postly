@@ -6,54 +6,44 @@ import { joinClass } from "@/src/Utils/Joinclass"
 import { createSignal, createEffect, Switch, Match, Show, For } from "solid-js"
 
 // Icon Components
+ 
+
 const CloseIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5">
-    <path
-      fillRule="evenodd"
-      d="M7.72 12.53a.75.75 0 010-1.06l7.5-7.5a.75.75 0 111.06 1.06L9.31 12l6.97 6.97a.75.75 0 11-1.06 1.06l-7.5-7.5z"
-      clipRule="evenodd"
-    />
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M18.3 5.71a.996.996 0 0 0-1.41 0L12 10.59 7.11 5.7A.996.996 0 1 0 5.7 7.11L10.59 12 5.7 16.89a.996.996 0 1 0 1.41 1.41L12 13.41l4.89 4.89a.996.996 0 0 0 1.41-1.41L13.41 12l4.89-4.89c.38-.38.38-1.02 0-1.4z" />
   </svg>
 )
 
 const CameraIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-    strokeWidth="1.5"
-    stroke="currentColor"
-    class="w-5 h-5"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"
-    />
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"
-    />
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 15.2c1.99 0 3.6-1.61 3.6-3.6s-1.61-3.6-3.6-3.6-3.6 1.61-3.6 3.6 1.61 3.6 3.6 3.6zM9 2L7.17 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2h-3.17L15 2H9zm3 15c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5z" />
   </svg>
 )
 
 const AlertIcon = () => (
-  <svg
-    xmlns="http://www.w3.org/2000/svg"
-    fill="none"
-    viewBox="0 0 24 24"
-    strokeWidth="1.5"
-    stroke="currentColor"
-    class="w-4 h-4"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z"
-    />
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
   </svg>
 )
+
+const TrashIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z" />
+  </svg>
+)
+
+const LinkIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M3.9 12c0-1.71 1.39-3.1 3.1-3.1h4V7H6.9C4.29 7 2.2 9.09 2.2 11.7s2.09 4.7 4.7 4.7H11v-1.9H6.9c-1.71 0-3.1-1.39-3.1-3.1zM8 13h8v-2H8v2zm5-6h4.1c2.61 0 4.7 2.09 4.7 4.7s-2.09 4.7-4.7 4.7H13v1.9h4.1c2.61 0 4.7-2.09 4.7-4.7S19.71 7 17.1 7H13v2z" />
+  </svg>
+)
+
+const PlusIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+  </svg>
+)
+
 
 // Validation functions
 const validateUsername = (username: string) => {
@@ -196,7 +186,17 @@ export default function EditProfileModal({
       setBannerFile(file)
     }
   }
-
+  const socialPlatforms = [
+    { name: "Twitter", url: "https://twitter.com/", icon: "🐦" },
+    { name: "LinkedIn", url: "https://linkedin.com/", icon: "💼" },
+    { name: "GitHub", url: "https://github.com/", icon: "🐙" },
+    { name: "Instagram", url: "https://instagram.com/", icon: "📷" },
+    { name: "Facebook", url: "https://facebook.com/", icon: "📘" },
+    { name: "TikTok", url: "https://tiktok.com/", icon: "🎵" },
+    { name: "YouTube", url: "https://youtube.com/", icon: "📺" },
+    { name: "Reddit", url: "https://reddit.com/", icon: "🤖" },
+    { name: "Discord", url: "https://discord.com/", icon: "🎮" },
+  ]
   async function save() {
     if (hasErrors() || !hasChanges()) return
 
@@ -251,346 +251,384 @@ export default function EditProfileModal({
   }
 
   return (
-    <dialog id="editProfileModal" class="modal rounded-xl overflow-y-scroll scroll-smooth no-scrollbar">
+    <dialog id="editProfileModal" class="modal">
       <div
         class={joinClass(
-          "modal-content max-w-lg w-full mx-4    shadow-2xl   ",
-          theme() === "dark" ? "bg-gray-900 text-white" : "bg-white text-gray-900",
+          "modal-box max-w-2xl mx-auto rounded-2xl shadow-2xl border-0 p-0 max-h-[90vh] overflow-hidden",
+          theme() === "dark"
+            ? "bg-gray-900 text-white border border-gray-800"
+            : "bg-white text-gray-900 border border-gray-100",
         )}
       >
         {/* Header */}
         <div
           class={joinClass(
-            "flex items-center  justify-between p-4 border-b",
-            theme() === "dark" ? "border-gray-700" : "border-gray-200",
+            "sticky top-0 z-10 flex items-center justify-between px-6 py-4 border-b",
+            theme() === "dark"
+              ? "border-gray-800 bg-gray-900/95 backdrop-blur-sm"
+              : "border-gray-200 bg-white/95 backdrop-blur-sm",
           )}
         >
-          <button
-            onClick={closeModal}
-            class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
-          >
-            <CloseIcon />
-          </button>
-
-          <h2 class="text-lg font-semibold">Edit Profile</h2>
-
+          <div class="flex items-center space-x-4">
+            <button
+              onClick={closeModal}
+              class={joinClass(
+                "p-2 rounded-full transition-colors",
+                theme() === "dark"
+                  ? "hover:bg-gray-800 text-gray-300 hover:text-white"
+                  : "hover:bg-gray-100 text-gray-600 hover:text-gray-900",
+              )}
+            >
+              <CloseIcon />
+            </button>
+            <h2 class="text-xl font-bold text-gray-900 dark:text-white">Edit profile</h2>
+          </div>
           <button
             onClick={save}
             disabled={isSaving() || hasErrors() || !hasChanges()}
             class={joinClass(
-              "px-4 py-2 rounded-full font-medium transition-all duration-200",
+              "px-6 py-2 rounded-full font-semibold transition-all duration-200",
               isSaving() || hasErrors() || !hasChanges()
-                ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                ? theme() === "dark"
+                  ? "bg-gray-800 text-gray-500 cursor-not-allowed"
+                  : "bg-gray-200 text-gray-400 cursor-not-allowed"
                 : theme() === "dark"
-                  ? "bg-white text-black hover:bg-gray-100"
-                  : "bg-black text-white hover:bg-gray-800",
+                  ? "bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-600/25"
+                  : "bg-blue-600 text-white hover:bg-blue-700 shadow-lg shadow-blue-600/25",
             )}
           >
             {isSaving() ? "Saving..." : "Save"}
           </button>
         </div>
 
-        {/* Profile Images Section */}
-        <div class="relative">
-          {/* Banner */}
-          <div class="relative h-32 overflow-hidden">
-            <Switch>
-              <Match when={bannerFile()}>
-                <img
-                  src={URL.createObjectURL(bannerFile()!) || "/placeholder.svg"}
-                  alt="Banner preview"
-                  class="w-full h-full object-cover"
-                />
-              </Match>
-              <Match when={api.authStore.model.banner}>
-                <img
-                  src={
-                    api.cdn.getUrl("users", api.authStore.model.id, api.authStore.model.banner) || "/placeholder.svg"
-                  }
-                  alt="Current banner"
-                  class="w-full h-full object-cover"
-                />
-              </Match>
-              <Match when={true}>
-                <div class={joinClass("w-full h-full", theme() === "dark" ? "bg-gray-800" : "bg-gray-200")} />
-              </Match>
-            </Switch>
+        {/* Scrollable Content */}
+        <div class="overflow-y-auto max-h-[calc(90vh-80px)]">
+          {/* Profile Images Section */}
+          <div class="relative">
+            {/* Banner */}
+            <div class="relative h-48 overflow-hidden bg-gradient-to-r from-blue-400 to-purple-500">
+              <Switch>
+                <Match when={bannerFile()}>
+                  <img
+                    src={URL.createObjectURL(bannerFile()!) || "/placeholder.svg"}
+                    alt="Banner preview"
+                    class="w-full h-full object-cover"
+                  />
+                </Match>
+                <Match when={api.authStore.model.banner}>
+                  <img
+                    src={
+                      api.cdn.getUrl("users", api.authStore.model.id, api.authStore.model.banner) ||
+                      "/placeholder.svg" ||
+                      "/placeholder.svg" ||
+                      "/placeholder.svg"
+                    }
+                    alt="Current banner"
+                    class="w-full h-full object-cover"
+                  />
+                </Match>
+              </Switch>
 
-            {/* Banner upload button */}
-            <label
-              for="banner-upload"
-              class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
-            >
-              <div class="bg-black bg-opacity-60 rounded-full p-3">
-                <CameraIcon />
-              </div>
-            </label>
-          </div>
-
-          {/* Avatar */}
-          <div class="absolute -bottom-8 left-4">
-            <div class="relative">
-              <div
-                class={joinClass(
-                  "w-20 h-20 rounded-full border-4 overflow-hidden",
-                  theme() === "dark" ? "border-gray-900" : "border-white",
-                )}
-              >
-                <Switch>
-                  <Match when={avatarFile()}>
-                    <img
-                      src={URL.createObjectURL(avatarFile()!) || "/placeholder.svg"}
-                      alt="Avatar preview"
-                      class="w-full h-full object-cover"
-                    />
-                  </Match>
-                  <Match when={api.authStore.model.avatar}>
-                    <img
-                      src={
-                        api.cdn.getUrl("users", api.authStore.model.id, api.authStore.model.avatar) ||
-                        "/placeholder.svg"
-                      }
-                      alt="Current avatar"
-                      class="w-full h-full object-cover"
-                    />
-                  </Match>
-                  <Match when={true}>
-                    <div
-                      class={joinClass(
-                        "w-full h-full flex items-center justify-center text-xl font-bold",
-                        theme() === "dark" ? "bg-gray-700 text-white" : "bg-gray-300 text-gray-700",
-                      )}
-                    >
-                      {api.authStore.model.username[0].toUpperCase()}
-                    </div>
-                  </Match>
-                </Switch>
-              </div>
-
-              {/* Avatar upload button */}
+              {/* Banner upload overlay */}
               <label
-                for="avatar-upload"
-                class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 rounded-full opacity-0 hover:opacity-100 transition-opacity cursor-pointer"
+                for="banner-upload"
+                class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 opacity-0 hover:opacity-100 transition-opacity cursor-pointer group"
               >
-                <CameraIcon />
+                <div class="bg-black bg-opacity-75 rounded-full p-4 group-hover:scale-110 transition-transform">
+                  <CameraIcon />
+                </div>
               </label>
             </div>
-          </div>
 
-          {/* Hidden file inputs */}
-          <input type="file" id="avatar-upload" class="hidden" accept="image/*" onChange={handleAvatarChange} />
-          <input type="file" id="banner-upload" class="hidden" accept="image/*" onChange={handleBannerChange} />
-        </div>
+            {/* Avatar */}
+            <div class="absolute -bottom-16 left-6">
+              <div class="relative">
+                <div class="w-32 h-32 rounded-full border-4 border-white dark:border-gray-900 overflow-hidden bg-white dark:bg-gray-800 shadow-lg">
+                  <Switch>
+                    <Match when={avatarFile()}>
+                      <img
+                        src={URL.createObjectURL(avatarFile()!) || "/placeholder.svg"}
+                        alt="Avatar preview"
+                        class="w-full h-full object-cover"
+                      />
+                    </Match>
+                    <Match when={api.authStore.model.avatar}>
+                      <img
+                        src={
+                          api.cdn.getUrl("users", api.authStore.model.id, api.authStore.model.avatar) ||
+                          "/placeholder.svg" ||
+                          "/placeholder.svg" ||
+                          "/placeholder.svg"
+                        }
+                        alt="Current avatar"
+                        class="w-full h-full object-cover"
+                      />
+                    </Match>
+                    <Match when={true}>
+                      <div class="w-full h-full flex items-center justify-center text-3xl font-bold bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300">
+                        {api.authStore.model.username?.[0]?.toUpperCase() || "?"}
+                      </div>
+                    </Match>
+                  </Switch>
+                </div>
 
-        {/* Form Fields */}
-        <div class="p-4 pt-12 space-y-6">
-          {/* Username */}
-          <div class="space-y-2">
-            <label class="block text-sm font-medium">Username</label>
-            <input
-              type="text"
-              value={username()}
-              onInput={(e) => setUsername(e.currentTarget.value)}
-              onBlur={() => handleFieldBlur("username")}
-              class={joinClass(
-                "w-full px-3 py-2  rounded-xl  border transition-colors",
-                errors().username && touched().username
-                  ? "border-red-500 focus:border-red-500"
-                  : theme() === "dark"
-                    ? "border-gray-600 bg-gray-800 focus:border-blue-500"
-                    : "border-gray-300 bg-white focus:border-blue-500",
-                "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20",
-              )}
-              placeholder="Enter username"
-            />
-            <Show when={errors().username && touched().username}>
-              <div class="flex items-center gap-1 text-red-500 text-sm">
-                <AlertIcon />
-                {errors().username}
+                {/* Avatar upload overlay */}
+                <label
+                  for="avatar-upload"
+                  class="absolute inset-0 flex items-center justify-center bg-black bg-opacity-40 rounded-full opacity-0 hover:opacity-100 transition-opacity cursor-pointer group"
+                >
+                  <div class="bg-black bg-opacity-75 rounded-full p-3 group-hover:scale-110 transition-transform">
+                    <CameraIcon />
+                  </div>
+                </label>
               </div>
-            </Show>
+            </div>
+
+            {/* Hidden file inputs */}
+            <input type="file" id="avatar-upload" class="hidden" accept="image/*" onChange={handleAvatarChange} />
+            <input type="file" id="banner-upload" class="hidden" accept="image/*" onChange={handleBannerChange} />
           </div>
-          <div class="space-y-2">
-            <label class="block text-sm font-medium">Handle <span class="text-sm text-gray-500">@handle</span></label>
-            <input
-              type="text"
-              value={handle()}
-              onInput={(e) => setHandle(e.currentTarget.value)}
-              onBlur={() => handleFieldBlur("handle")}
-              class={joinClass(
-                "w-full px-3 py-2  rounded-xl  border transition-colors",
-                errors().handle && touched().handle
-                  ? "border-red-500 focus:border-red-500"
-                  : theme() === "dark"
-                    ? "border-gray-600 bg-gray-800 focus:border-blue-500"
-                    : "border-gray-300 bg-white focus:border-blue-500",
-                "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20",
-              )}
-              placeholder="Enter a handle"
-            />
-            <Show when={errors().username && touched().username}>
-              <div class="flex items-center gap-1 text-red-500 text-sm">
-                <AlertIcon />
-                {errors().username}
+
+          {/* Form Fields */}
+          <div class="px-6 pt-20 pb-6 space-y-6">
+            {/* Username */}
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-900 dark:text-white">Name</label>
+              <div class="relative">
+                <input
+                  type="text"
+                  value={username()}
+                  onInput={(e) => setUsername(e.currentTarget.value)}
+                  onBlur={() => handleFieldBlur("username")}
+                  class={joinClass(
+                    "w-full px-4 py-3 rounded-xl border-2 transition-all duration-200",
+                    theme() === "dark" ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200",
+                    errors().username && touched().username
+                      ? "border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/20"
+                      : theme() === "dark"
+                        ? "focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 text-white placeholder-gray-400"
+                        : "focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 text-gray-900 placeholder-gray-500",
+                    "focus:outline-none",
+                  )}
+                  placeholder="Your name"
+                  maxLength={50}
+                />
+                <div class="absolute right-3 top-3 text-sm text-gray-400">{username().length}/50</div>
               </div>
-            </Show>
-          </div>
+              <Show when={errors().username && touched().username}>
+                <div class="flex items-center gap-2 text-red-500 text-sm">
+                  <AlertIcon />
+                  {errors().username}
+                </div>
+              </Show>
+            </div>
 
-          {/* Bio */}
-          <div class="space-y-2">
-            <label class="block text-sm font-medium">
-              Bio
-              <span class="text-gray-500 font-normal">({bio().length}/160)</span>
-            </label>
-            <textarea
-              value={bio()}
-              onInput={(e) => setBio(e.currentTarget.value)}
-              onBlur={() => handleFieldBlur("bio")}
-              class={joinClass(
-                "w-full  px-3 py-2  rounded-xl  border transition-colors resize-none h-20",
-                errors().bio && touched().bio
-                  ? "border-red-500 focus:border-red-500"
-                  : theme() === "dark"
-                    ? "border-gray-600 bg-gray-800 focus:border-blue-500"
-                    : "border-gray-300 bg-white focus:border-blue-500",
-                "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20",
-              )}
-              placeholder="Tell us about yourself"
-            />
-            <Show when={errors().bio && touched().bio}>
-              <div class="flex items-center gap-1 text-red-500 text-sm">
-                <AlertIcon />
-                {errors().bio}
+            {/* Handle */}
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-900 dark:text-white">Username</label>
+              <div class="relative">
+                <div class="absolute left-4 top-3 text-gray-500 dark:text-gray-400">@</div>
+                <input
+                  type="text"
+                  value={handle()}
+                  onInput={(e) => setHandle(e.currentTarget.value)}
+                  onBlur={() => handleFieldBlur("handle")}
+                  class={joinClass(
+                    "w-full pl-8 pr-16 py-3 rounded-xl border-2 transition-all duration-200",
+                    theme() === "dark" ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200",
+                    errors().handle && touched().handle
+                      ? "border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/20"
+                      : theme() === "dark"
+                        ? "focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 text-white placeholder-gray-400"
+                        : "focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 text-gray-900 placeholder-gray-500",
+                    "focus:outline-none",
+                  )}
+                  placeholder="username"
+                  maxLength={30}
+                />
+                <div class="absolute right-3 top-3 text-sm text-gray-400">{handle().length}/30</div>
               </div>
-            </Show>
-          </div>
+              <Show when={errors().handle && touched().handle}>
+                <div class="flex items-center gap-2 text-red-500 text-sm">
+                  <AlertIcon />
+                  {errors().handle}
+                </div>
+              </Show>
+            </div>
 
-          {/* Location */}
-          <div class="space-y-2">
-            <label class="block text-sm font-medium">Location</label>
-            <input
-              type="text"
-              value={location()}
-              onInput={(e) => setLocation(e.currentTarget.value)}
-              onBlur={() => handleFieldBlur("location")}
-              class={joinClass(
-                "w-full  rounded-xl  px-3 py-2 rounded-lg border transition-colors",
-                errors().location && touched().location
-                  ? "border-red-500 focus:border-red-500"
-                  : theme() === "dark"
-                    ? "border-gray-600 bg-gray-800 focus:border-blue-500"
-                    : "border-gray-300 bg-white focus:border-blue-500",
-                "focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-20",
-              )}
-              placeholder="Where are you located?"
-            />
-            <Show when={errors().location && touched().location}>
-              <div class="flex items-center gap-1 text-red-500 text-sm">
-                <AlertIcon />
-                {errors().location}
+            {/* Bio */}
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-900 dark:text-white">Bio</label>
+              <div class="relative">
+                <textarea
+                  value={bio()}
+                  onInput={(e) => setBio(e.currentTarget.value)}
+                  onBlur={() => handleFieldBlur("bio")}
+                  class={joinClass(
+                    "w-full px-4 py-3 rounded-xl border-2 transition-all duration-200 resize-none h-24",
+                    theme() === "dark" ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200",
+                    errors().bio && touched().bio
+                      ? "border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/20"
+                      : theme() === "dark"
+                        ? "focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 text-white placeholder-gray-400"
+                        : "focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 text-gray-900 placeholder-gray-500",
+                    "focus:outline-none",
+                  )}
+                  placeholder="Tell the world about yourself"
+                  maxLength={160}
+                />
+                <div class="absolute right-3 bottom-3 text-sm text-gray-400">{bio().length}/160</div>
               </div>
-            </Show>
-          </div>
+              <Show when={errors().bio && touched().bio}>
+                <div class="flex items-center gap-2 text-red-500 text-sm">
+                  <AlertIcon />
+                  {errors().bio}
+                </div>
+              </Show>
+            </div>
 
-          {/* Social */}
+            {/* Location */}
+            <div class="space-y-2">
+              <label class="block text-sm font-semibold text-gray-900 dark:text-white">Location</label>
+              <input
+                type="text"
+                value={location()}
+                onInput={(e) => setLocation(e.currentTarget.value)}
+                onBlur={() => handleFieldBlur("location")}
+                class={joinClass(
+                  "w-full px-4 py-3 rounded-xl border-2 transition-all duration-200",
+                  theme() === "dark" ? "bg-gray-800 border-gray-700" : "bg-white border-gray-200",
+                  errors().location && touched().location
+                    ? "border-red-500 focus:border-red-500 focus:ring-4 focus:ring-red-500/20"
+                    : theme() === "dark"
+                      ? "focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 text-white placeholder-gray-400"
+                      : "focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 text-gray-900 placeholder-gray-500",
+                  "focus:outline-none",
+                )}
+                placeholder="Where are you located?"
+                maxLength={100}
+              />
+              <Show when={errors().location && touched().location}>
+                <div class="flex items-center gap-2 text-red-500 text-sm">
+                  <AlertIcon />
+                  {errors().location}
+                </div>
+              </Show>
+            </div>
 
-          <div class="space-y-2">
-            <label class="block text-sm font-medium">Add a Social Link</label>
-            <select
-              class="select select-bordered rounded-xl w-full"
-              value=""
-              onChange={(e) => {
-                const selected = e.currentTarget.value
-                if (selected && !social().includes(selected)) {
-                  setSocial([...social(), selected])
-                }
-              }}
-            >
-              <option disabled selected value="">Pick a network</option>
-              <option value="https://twitter.com/">Twitter</option>
-              <option value="https://linkedin.com/">LinkedIn</option>
-              <option value="https://github.com/">GitHub</option>
-              <option value={"https://instagram.com/"}>Instagram</option>
-              <option value="https://facebook.com/">Facebook</option>
-              <option value="https://tiktok.com/">TikTok</option>
-              <option value="https://youtube.com/">YouTube</option>
-              <option value="https://reddit.com/">Reddit</option>
-              <option value="https://strafe.chat/">Strafe</option>
-              <option value="https://discord.com/">Discord</option>
-            </select>
+            {/* Social Links */}
+            <div class="space-y-4">
+              <div class={joinClass("flex items-center justify-between", theme() == "dark" && "text-white")}>
+                <label class="block text-sm font-semibold ">Social Links</label>
+                <div class="relative">
+                  <select
+                  class={joinClass("flex items-center cursor-pointer justify-between", theme() == "dark" && "text-white", "appearance-none   rounded-xl px-4 py-2 pr-8 text-sm focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 dark:focus:ring-blue-900/20 transition-all duration-200")}
+                     
+                    value=""
+                    onChange={(e) => {
+                      const selected = e.currentTarget.value
+                      if (selected && !social().some((link) => link.startsWith(selected))) {
+                        setSocial([...social(), selected])
+                      }
+                      e.currentTarget.value = ""
+                    }}
+                  >
+                    <option value="" disabled>
+                      Add platform
+                    </option>
+                    <For each={socialPlatforms}>
+                      {(platform) => (
+                        <option value={platform.url} disabled={social().some((link) => link.startsWith(platform.url))}>
+                          {platform.icon} {platform.name}
+                        </option>
+                      )}
+                    </For>
+                  </select>
+                  <div class="absolute right-3 top-1/2 transform -translate-y-1/2 pointer-events-none">
+                    <PlusIcon />
+                  </div>
+                </div>
+              </div>
 
-            <div class="mt-2 space-y-1">
-              <div class="mt-2 space-y-1">
+              <div class="space-y-3">
                 <For each={social()}>
                   {(link, index) => (
-                    <div class="flex items-center gap-2">
-                      <input
-                        type="text"
-                        class="input input-bordered w-full"
-                        value={link}
-                        onChange={(e) => {
-                          const updated = [...social()]
-                          updated[index()] = e.currentTarget.value
-                          setSocial(updated)
-                        }}
-                      />
+                    <div
+                      class={joinClass(
+                        "flex items-center gap-3 p-3 rounded-xl",
+                        theme() === "dark"
+                          ? "bg-gray-800/50 border text-white border-gray-700"
+                          : "bg-gray-50 border border-gray-200",
+                      )}
+                    >
+                      <div class="flex items-center gap-2 flex-1">
+                        <LinkIcon />
+                        <input
+                          type="url"
+                          class="flex-1 bg-transparent border-0 outline-none "
+                          value={link}
+                          onChange={(e) => {
+                            const updated = [...social()]
+                            updated[index()] = e.currentTarget.value
+                            setSocial(updated)
+                          }}
+                          placeholder="https://..."
+                        />
+                      </div>
                       <button
                         type="button"
-                        class="btn btn-error btn-sm"
                         onClick={() => {
                           const updated = social().filter((_, i) => i !== index())
                           setSocial(updated)
                         }}
+                        class="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
                       >
-                        Remove
+                        <TrashIcon />
                       </button>
                     </div>
                   )}
                 </For>
               </div>
             </div>
-          </div>
 
-          {/* Account Deactivation */}
-          <div
-            class={joinClass(
-              "p-4 rounded-lg border",
-              theme() === "dark" ? "border-gray-700 bg-gray-800" : "border-gray-200 bg-gray-50",
-            )}
-          >
-            <div class="flex items-start justify-between">
-              <div class="flex-1">
-                <h3 class="font-medium text-sm">Deactivate Account</h3>
-                <p class="text-sm text-gray-500 mt-1">Hide your account from others. Your data won't be deleted.</p>
+            {/* Account Settings */}
+            <div class={joinClass("pt-6 border-t", theme() === "dark" ? "border-gray-800" : "border-gray-200")}>
+              <div
+                class={joinClass(
+                  "rounded-xl p-4",
+                  theme() === "dark" ? "bg-gray-800/50 border border-gray-700" : "bg-blue-50/50 border border-blue-100",
+                )}
+              >
+                <div class="flex items-center justify-between">
+                  <div class="flex-1">
+                    <h3 class="font-semibold ">Account Privacy</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                      Temporarily hide your profile from other users. Your data will be preserved.
+                    </p>
+                  </div>
+                  <label class="relative inline-flex items-center cursor-pointer ml-4">
+                    <input
+                      type="checkbox"
+                      checked={deactivated()}
+                      onChange={() => setDeactivated(!deactivated())}
+                      class="sr-only peer"
+                    />
+                    <div
+                      class={joinClass(
+                        "relative w-12 h-6 rounded-full peer transition-colors",
+                        theme() === "dark"
+                          ? "bg-gray-700 peer-checked:bg-blue-600 peer-focus:ring-blue-800"
+                          : "bg-gray-200 peer-checked:bg-blue-600 peer-focus:ring-blue-300",
+                        "peer-focus:outline-none peer-focus:ring-4 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all",
+                      )}
+                    ></div>
+                  </label>
+                </div>
               </div>
-              <label class="relative inline-flex items-center cursor-pointer ml-4">
-                <input
-                  type="checkbox"
-                  checked={deactivated()}
-                  onChange={() => setDeactivated(!deactivated())}
-                  class="sr-only peer"
-                />
-                <div class="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
-              </label>
             </div>
           </div>
         </div>
       </div>
-      <style>
-        {`
-        .no-scrollbar::-webkit-scrollbar {
-          display: none;
-        }
-        .no-scrollbar {
-          -ms-overflow-style: none;  /* IE and Edge */
-          scrollbar-width: none;  /* Firefox */
-        }
-        .scroll-smooth {
-          scroll-behavior: smooth;
-        }
-          
-        `}
-      </style>
     </dialog>
   )
 }
