@@ -392,8 +392,8 @@ export default function EditProfileModal({
           {/* Form Fields */}
           <div class="px-6 pt-20 pb-6 space-y-6">
             {/* Username */}
-            <div class="space-y-2">
-              <label class="block text-sm font-semibold text-gray-900 dark:text-white">Name</label>
+            <div class={joinClass("space-y-2", theme() === "dark"  && "text-white")}>
+              <label class="block text-sm font-semibold ">Name</label>
               <div class="relative">
                 <input
                   type="text"
@@ -424,8 +424,8 @@ export default function EditProfileModal({
             </div>
 
             {/* Handle */}
-            <div class="space-y-2">
-              <label class="block text-sm font-semibold text-gray-900 dark:text-white">Username</label>
+            <div class={joinClass("space-y-2", theme() === "dark"  && "text-white")}>
+              <label class="block text-sm font-semibold  ">Handle</label>
               <div class="relative">
                 <div class="absolute left-4 top-3 text-gray-500 dark:text-gray-400">@</div>
                 <input
@@ -457,8 +457,8 @@ export default function EditProfileModal({
             </div>
 
             {/* Bio */}
-            <div class="space-y-2">
-              <label class="block text-sm font-semibold text-gray-900 dark:text-white">Bio</label>
+            <div class={joinClass("space-y-2", theme() === "dark"  && "text-white")}>
+              <label class="block text-sm font-semibold ">Bio</label>
               <div class="relative">
                 <textarea
                   value={bio()}
@@ -488,8 +488,8 @@ export default function EditProfileModal({
             </div>
 
             {/* Location */}
-            <div class="space-y-2">
-              <label class="block text-sm font-semibold text-gray-900 dark:text-white">Location</label>
+            <div class={joinClass("space-y-2", theme() === "dark"  && "text-white")}>
+              <label class="block text-sm font-semibold ">Location</label>
               <input
                 type="text"
                 value={location()}
