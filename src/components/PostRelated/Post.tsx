@@ -207,7 +207,7 @@ export default function Post(props: Props) {
   }
 
   async function deletePost() {
-    document.getElementById("delete-post-modal")?.showModal();
+    document.getElementById(`delete-post-modal-${props.id}`)?.showModal();
   }
 
   async function Pin() {
