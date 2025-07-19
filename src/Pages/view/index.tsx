@@ -16,125 +16,133 @@ import Carousel, { CarouselItem } from "@/src/components/UI/UX/Carousel";
 import Ellipse from "@/src/components/Icons/Ellipse";
 export default function View(props: any) {
   const { route, params, searchParams, navigate, goBack } = useNavigation("/view/:collection/:id")
+const { id, collection } = useParams()
+const [isReplying, setIsReplying] = createSignal(false)
+const [post, setPost] = createSignal<any>(null, { equals: false })
+const [comments, setComments] = createSignal<any[]>([])
+const [loading, setLoading] = createSignal(true)
+const [commentsLoading, setCommentsLoading] = createSignal(true)
+
+const [comment, setComment] = createSignal<any>(() => ({
+  content: "",
+  media: [],
+  likes: [],
+  author: api.authStore.model.id,
+  ...(collection() === "comments" ? { mainComment: id() } : { post: id() }),
+}))
+
+const [files, setFiles] = createSignal<any>([])
+
+if (!api.authStore.isValid()) navigate("/auth/login", null)
+
+const { mobile, desktop, tablet } = useDevice()
+const { theme } = useTheme()
+
+// 🔁 Fetch post + comments
+const fetchP = async () => {
   const { id, collection } = useParams()
-  const [isReplying, setIsReplying] = createSignal(false)
-  const [post, setPost] = createSignal<any>(null, { equals: false })
-  const [comments, setComments] = createSignal<any[]>([])
-  const [loading, setLoading] = createSignal(true)
-  const [commentsLoading, setCommentsLoading] = createSignal(true)
-  const [comment, setComment] = createSignal<any>({
-    content: "",
-    media: [],
-    likes: [],
-    author: api.authStore.model.id,
-    ...(collection === "comments" ? { mainComment: id } : { post: id }),
-  })
-  const [files, setFiles] = createSignal<any>([])
- 
-  if (!api.authStore.isValid()) navigate("/auth/login", null)
+  const currentId = id
+  const currentCollection = collection 
+  if (!currentId || !currentCollection) return
 
-  const { mobile, desktop, tablet } = useDevice()
-  const { theme } = useTheme()
+  setLoading(true)
+  setCommentsLoading(true)
 
-  const fetchP = () => {
-    if (!id || !collection) return
+  try {
+    const data = await api.collection(currentCollection).get(currentId, {
+      cacheKey: `post-${currentId}`,
+      expand: [
+        "comments",
+        "comments.likes",
+        "comments.author",
+        "author",
+        "author.followers",
+        "likes",
+        "repost",
+        "repost.likes",
+        "repost.author",
+        "post.author",
+        "post",
+        "hashtags",
+      ],
+    })
 
-    setLoading(true)
-    api
-      .collection(collection)
-      .get(id, {
-        cacheKey: `post-${id}`,
-        expand: [
-          "comments",
-          "comments.likes",
-          "comments.author",
-          "author",
-          "author.followers",
-          "likes",
-          "repost",
-          "repost.likes",
-          "repost.author",
-          "post.author",
-          "post",
-          "hashtags",
-        ],
+    setPost(data)
+
+    // Handle metrics
+    if (api.authStore.model.id !== data?.author?.id) {
+      api.metrics.noteMetrics("followed_after_post_view", {
+        postId: currentId,
+        authorId: data?.author,
+        hasFollowed: data?.expand.author?.followers?.includes(api.authStore.model.id),
       })
-      .then((data) => {
-        setPost(data)
-        if (api.authStore.model.id !== post()?.author?.id) {
-          api.metrics.noteMetrics("followed_after_post_view", {
-            postId: id,
-            authorId: post()?.author,
-            hasFollowed: post()?.expand.author?.followers?.includes(api.authStore.model.id),
-          })
-        }
-        window.setRelevantPeople([data.expand.author])
-        if (data && data?.hashtags && data?.hashtags.length > 0) {
-          data.expand.hashtags.map((hashtag: any) => {
-            api.metrics.trackUserMetric("viewed_hashtags", hashtag.id)
-          })
-          api.metrics.uploadUserMetrics()
-        }
-        window.setWhoCanReply(data?.whoCanSee && data?.whoCanSee.length > 0 ? data?.whoCanSee[0] : [])
-        window.setMainPost(data)
-        setLoading(false)
+    }
+
+    window.setRelevantPeople([data.expand.author])
+    window.setMainPost(data)
+
+    if (data?.hashtags?.length) {
+      data.expand.hashtags.forEach((hashtag: any) => {
+        api.metrics.trackUserMetric("viewed_hashtags", hashtag.id)
       })
-      .catch((err) => {
-        console.log(err)
-        setLoading(false)
-      })
- 
-    setCommentsLoading(true)
-    api
-      .collection("comments")
-      .list(1, 10, {
-        filter: collection === "comments" ? `mainComment="${id}"` : `post="${id}"`,
-        expand: ["author", "likes", "comments", "comments.author", "comments.likes"],
-        cacheKey: `${collection}-${id}-comments`,
-        sort: "-created",
-      })
-      .then((data) => {
-        console.log(data)
-        setComments(data.items)
-        setCommentsLoading(false)
-      })
-      .catch(() => {
-        setCommentsLoading(false)
-      })
+      api.metrics.uploadUserMetrics()
+    }
+
+    // Comments
+    const commentsData = await api.collection("comments").list(1, 10, {
+      filter:
+        currentCollection === "comments"
+          ? `mainComment="${currentId}"`
+          : `post="${currentId}"`,
+      expand: ["author", "likes", "comments", "comments.author", "comments.likes"],
+      cacheKey: `${currentCollection}-${currentId}-comments`,
+      sort: "-created",
+    })
+
+    setComments(commentsData.items)
+  } catch (err) {
+    console.error("Failed to fetch post or comments", err)
+  } finally {
+    setLoading(false)
+    setCommentsLoading(false)
+  }
+}
+
+// 🧷 Initial load + event listener
+onMount(() => {
+  const commentListener = (e) => {
+    const newComment = e.detail
+    setComments((comments) => [newComment, ...comments])
+    setPost((post) => ({
+      ...post,
+      comments: [...(post?.comments || []), newComment.id],
+    }))
   }
 
-  onMount(() => {
-    const listener = (e) => {
-      const newComment = e.detail
-      setComments((comments) => [newComment, ...comments])
-      setPost((post) => ({
-        ...post,
-        comments: [...(post.comments || []), newComment.id],
-      }))
-    }
-
-    window.addEventListener("popstate", () => {
-      setPost(null)
-      setLoading(true)
-      setCommentsLoading(true)
-    })
-    window.addEventListener("commentCreated", listener)
-    fetchP()
-
-    onCleanup(() => {
-      window.removeEventListener("commentCreated", listener)
-    })
+  window.addEventListener("commentCreated", commentListener)
+  window.addEventListener("popstate", () => {
+    setPost(null)
+    setComments([])
+    setLoading(true)
+    setCommentsLoading(true)
   })
 
-  createEffect(() => {
-    if (id) {
-      setLoading(true)
-      setCommentsLoading(true)
-      setPost(null)
-      setComments([])
-      fetchP()
-    }
+  fetchP()
+
+  onCleanup(() => {
+    window.removeEventListener("commentCreated", commentListener)
   })
+})
+
+// 🔁 Refetch when `id` or `collection` changes
+createEffect(() => {  
+  setPost(null)
+  setComments([])
+  setLoading(true)
+  setCommentsLoading(true)
+  fetchP()
+})
+
  
   const LoadingPost = () => (
     <div class="p-4 animate-pulse">
@@ -166,11 +174,11 @@ export default function View(props: any) {
     const hasReplies = comment.expand?.comments && comment.expand.comments.length > 0
 
     return (
-      <div class="border-b border-gray-100 dark:border-gray-800 last:border-b-0">
+      <div class={joinClass("border-b last:border-b-0", theme() == "dark" ? "border-[#1f1f1f]" : "border-gray-100 dark:border-gray-800 ")}>
         {/* Main Comment */}
         <div
           style={{ "margin-bottom": isLast && !hasReplies ? "100px" : "0px" }}
-          class="relative hover:bg-gray-50/30 dark:hover:bg-gray-900/30 transition-colors duration-200"
+          class="relative  transition-colors duration-200"
         >
           <Post
             {...{
@@ -187,7 +195,7 @@ export default function View(props: any) {
 
         {/* Nested Replies */}
         <Show when={hasReplies}>
-          <div class="ml-12 border-l-2 border-gray-100 dark:border-gray-800">
+          <div class={joinClass(" ml-12  ", theme() == "dark" ? "border-l-2 border-[#141414] " : "border-l-2 border-gray-100 dark:border-gray-800")}>
             <For each={comment.expand.comments}>
               {(reply, replyIndex) => (
                 <div
@@ -197,7 +205,7 @@ export default function View(props: any) {
                   }}
                 >
                   {/* Connection line */}
-                  <div class="absolute left-0 top-4 w-4 h-px bg-gray-200 dark:bg-gray-700"></div>
+                  <div class={joinClass("absolute left-0 top-4 w-4 h-px ", theme() == "dark" ? "bg-[#141414]" : " bg-gray-200 dark:bg-gray-700")}></div>
                   <div class="pl-4">
                     <Post
                       {...{
@@ -256,7 +264,7 @@ export default function View(props: any) {
         {/* Main Content Area */}
         <div class="flex-1">
           {/* Post Content */}
-          <div class={`border-b  ${theme() === "dark" ? "border-gray-900" : "border-gray-100"}`}>
+          <div class={`border-b  ${theme() === "dark" ? "border-[#121212]" : "border-gray-100"}`}>
             <Switch
               fallback={
                 <div class="p-8 text-center">
@@ -346,8 +354,7 @@ export default function View(props: any) {
               </button>
             </div>
           </Show>
-
-          {/* Enhanced Comments Section with Twitter-style Threading */}
+ 
           <div class="pb-20">
             <Switch>
               <Match when={commentsLoading()}>
