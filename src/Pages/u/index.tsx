@@ -341,7 +341,33 @@ export default function User() {
         </Match>
         <Match when={!loading()}>
            <div  >
+              <div class="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-md border-b border-gray-200 dark:border-gray-800">
+              <div class="flex items-center justify-between px-4 py-3">
+                <div class="flex items-center space-x-8">
+                  <button
+                    onClick={() => goBack()}
+                    class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <ArrowLeft class="w-5 h-5" />
+                  </button>
+                  <div>
+                    <h1 class="text-xl font-bold text-gray-900 dark:text-white">{user()?.username || "Loading..."}</h1>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{posts().length} posts</p>
+                  </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                  <button class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    <Search class="w-5 h-5" />
+                  </button>
+                  <button class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors">
+                    
+                  </button>
+                </div>
+              </div>
+            </div>
             <div class="flex     flex-col relative">
+             
+
             <div
               class="flex flex-row justify-between p-2 h-[10rem]"
               style={{
@@ -352,26 +378,7 @@ export default function User() {
                     : "linear-gradient(90deg, #ff5858 0%, #f09819 49%, #ff5858 100%)",
               }}
             >
-              <div>
-                <ArrowLeft
-                  class={`p-2 h-[2.2rem] bg-base-200 cursor-pointer rounded-full bg-opacity-70  `}
-                  onClick={() => goBack()}
-                />
-              </div>
-
-              <div class="flex flex-row gap-2">
-                <Search class={
-                  joinClass(
-                    "p-2 h-[2.2rem] bg-base-200 rounded-full bg-opacity-70"
-                  )
-                } />
-
-                <Ellipse class={
-                  joinClass(
-                    "p-2 h-[2.2rem] bg-base-200 rounded-full bg-opacity-70 "
-                  )
-                } />
-              </div>
+               
             </div>
 
             <div class="flex justify-between  items-center ">
