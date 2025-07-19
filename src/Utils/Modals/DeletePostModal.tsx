@@ -29,12 +29,12 @@ export default function DeletePostModal({id, setPosts} : {id: string, setPosts: 
   }
 
   function closeModal() {
-    (document.getElementById("delete-post-modal") as HTMLDialogElement)?.close();
+    (document.getElementById(`delete-post-modal-${id}`) as HTMLDialogElement)?.close();
   }
 
   return (
     <dialog
-      id="delete-post-modal"
+      id={`delete-post-modal-${id}`}
       class="modal flex items-center justify-center p-4"
     >
       <div
