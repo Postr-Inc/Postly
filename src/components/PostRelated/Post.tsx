@@ -494,7 +494,7 @@ export default function Post(props: Props) {
         <Switch fallback={<></>}>
           <Match when={!props.expand?.author.avatar}>
             <img
-              src="/placeholder.svg?height=40&width=40"
+              src="/icons/usernotfound/image.png"
               alt={props.author}
               class="w-10 h-10 rounded object-cover hover:scale-110 transition-transform duration-300"
             />
@@ -725,61 +725,48 @@ export default function Post(props: Props) {
         </Match>
       </Switch>
       <Show when={props.files && props.files.length > 0}>
+
         <CardContent class="p-1   ">
-          <div class="carousel w-full">
+
+          <Carousel >
             <For each={props.files} fallback={<></>}>
-              {(item, index) => (
-                <div
-                  class={`carousel-item w-full ${index() === 0 ? "carousel-item-active" : ""}`}
-                  id={`slide${index()}`}
+              {(item) => (
+                console.log(item, props.id),
+                <CarouselItem
+
                 >
                   <Switch>
                     <Match when={getFileType(item) == "image"}>
                       <img
                         onClick={() => {
-                          window.open(api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item), "_blank")
+                          window.open(api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item), "_blank");
                         }}
                         src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)}
                         class={joinClass(
-                          "w-full   aspect-[16/9]  object-cover rounded-xl hover:scale-105 transition-transform duration-300",
+                          "w-full   aspect-[16/9]  object-fill rounded-xl",
                           "cursor-pointer",
-                          theme() === "dark" ? "border-[#121212] border" : "border-[#cacaca] border",
+                          theme() === "dark"
+                            ? "border-[#121212] border"
+                            : "border-[#cacaca] border"
                         )}
                       />
                     </Match>
                     <Match when={getFileType(item) == "video"}>
-                      <div
-                        class={`w-full aspect-video overflow-hidden rounded-xl border cursor-pointer hover:scale-105 transition-transform duration-300 ${theme() === "dark" ? "border-[#121212]" : "border-[#cacaca]"}`}
-                      >
-                        <video
+                      <div class="w-full aspect-video overflow-hidden rounded-xl border 
+    cursor-pointer 
+    {theme() === 'dark' ? 'border-[#121212]' : 'border-[#cacaca]'}">
+                        <VideoWithCleanup
                           src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)}
                           class="w-full h-full object-cover"
-                          controls
                         />
                       </div>
                     </Match>
+
                   </Switch>
-                  {/* Carousel navigation */}
-                  <Show when={props.files.length > 1}>
-                    <div class="absolute flex justify-between transform -translate-y-1/2 left-5 right-5 top-1/2">
-                      <a
-                        href={`#slide${index() === 0 ? props.files.length - 1 : index() - 1}`}
-                        class="btn btn-circle hover:scale-110 transition-transform duration-200"
-                      >
-                        ❮
-                      </a>
-                      <a
-                        href={`#slide${index() === props.files.length - 1 ? 0 : index() + 1}`}
-                        class="btn btn-circle hover:scale-110 transition-transform duration-200"
-                      >
-                        ❯
-                      </a>
-                    </div>
-                  </Show>
-                </div>
+                </CarouselItem>
               )}
             </For>
-          </div>
+          </Carousel>
         </CardContent>
       </Show>
       {/**
