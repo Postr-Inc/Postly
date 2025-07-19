@@ -104,12 +104,9 @@ export default function FollowingListModal(props: FollowingListModalProps) {
                   </div>
                   <p class="text-gray-500 dark:text-gray-400 text-center text-lg">
                     {isOwnProfile()
-                      ? "You don't follow anyone yet"
+                      ? "You don't follow anyone yet - start following people to see them here"
                       : `${props.user()?.username} doesn't follow anyone yet`}
-                  </p>
-                  <p class="text-gray-400 dark:text-gray-500 text-center text-sm mt-2">
-                    Start following people to see them here
-                  </p>
+                  </p> 
                 </div>
               }
             >
