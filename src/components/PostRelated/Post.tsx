@@ -739,22 +739,26 @@ export default function Post(props: Props) {
        */}
       <CardContent class="p-1">
 
-        <Show when={props.isRepost}>
-         <Post
-  author={props.expand.repost.author}
-  id={props.expand.repost.id}
-  content={props.expand.repost.content}
-  disabled={true}
-  created={props.expand.repost.created}
-  updated={props.expand.repost.updated}
-  expand={props.expand.repost.expand}
-  comments={props.expand.repost.expand?.comments ?? []}  // <-- safe fallback here
-  files={props.expand.repost.expand?.files ?? []}        // <-- also safe fallback
-  isLast={false}
-  wasReposted={true}
-  navigate={props.navigate}
-/>
-        </Show>
+        <CardContent class="p-1">
+  <Show when={props.isRepost && props.expand?.repost}>
+    {(repost) => (
+      <Post
+        author={repost().author}
+        id={repost().id}
+        content={repost().content}
+        disabled={true}
+        created={repost().created}
+        updated={repost().updated}
+        expand={repost().expand}
+        comments={repost().expand?.comments ?? []}
+        files={repost().expand?.files ?? []}
+        isLast={false}
+        wasReposted={true}
+        navigate={props.navigate}
+      />
+    )}
+  </Show>
+</CardContent>
       </CardContent>
 
       {/**
