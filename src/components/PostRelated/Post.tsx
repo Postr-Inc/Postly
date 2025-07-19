@@ -6,9 +6,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { onCleanup } from "solid-js";
-
-// Inside your Post component, where you render the video CarouselItem
-// We'll define a helper component VideoWithCleanup to encapsulate the fix:
+ 
 
 function VideoWithCleanup(props: { src: string, class: string }) {
   let videoRef: HTMLVideoElement | undefined;
@@ -16,8 +14,8 @@ function VideoWithCleanup(props: { src: string, class: string }) {
   onCleanup(() => {
     if (videoRef) {
       videoRef.pause();
-      videoRef.removeAttribute("src"); // Important: remove src to free resource
-      videoRef.load();                // Reset video element state
+      videoRef.removeAttribute("src"); 
+      videoRef.load();                
     }
   });
 
@@ -28,7 +26,7 @@ function VideoWithCleanup(props: { src: string, class: string }) {
       src={props.src}
       controls
       playsinline
-      muted={false} // user controls sound, so muted false here
+      muted={false}  
     />
   );
 }
