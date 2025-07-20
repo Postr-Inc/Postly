@@ -8,6 +8,7 @@ import useNavigation from "@/src/Utils/Hooks/useNavigation";
 import { Portal } from "solid-js/web";
 import PostlyPlusModal from "../../Modals/PostlyPlusModal";
 import { haptic } from "@/src/Utils/SDK";
+import Bookmark from "../../Icons/Bookmark";
 export function SideBarLeft(props: {
   params: () => any;
   route: () => string;
@@ -18,7 +19,7 @@ export function SideBarLeft(props: {
   const { route, navigate } = useNavigation() 
   return (
     <>
-      <div class="xl:drawer xl:w-[auto]  md:p-2  mr-5   xl:drawer-open lg:drawer-open  ">
+      <div class="xl:drawer xl:w-auto  md:p-2  mr-5   xl:drawer-open lg:drawer-open  ">
         <input id="my-drawer-3" type="checkbox" class="drawer-toggle" />
         {error ? (
           <div class="toast toast-end">
@@ -42,7 +43,7 @@ export function SideBarLeft(props: {
         ) : (
           ""
         )}
-        <div class="drawer-side">
+        <div >
           <label aria-label="close sidebar" class="drawer-overlay"></label>
           <ul class="menu   w-64  flex flex-col gap-5 min-h-full  text-base-content">
             {/* Sidebar content here */}
@@ -228,52 +229,20 @@ export function SideBarLeft(props: {
             </li>
             <li class="text-lg  rounded-full  text-start hover:outline-none  hover:text-lg  hover:justify-start hover:rounded-full">
               <a
-                onClick={() => {}}
-                class={`
-                rounded-full 
-                `}
+                onClick={() => {navigate("/bookmarks")}}
+                class={`text-xl  rounded-full rounded-full
+                    ${
+                      route() === `/bookmarks`
+                        ? "fill-blue-500 stroke-blue-500 text-blue-500"
+                        : "fill-white"
+                    }
+                  `}
               >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width={1.5}
-                  stroke="currentColor"
-                  class="w-7 h-7"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
-                  />
-                </svg>
+               <Bookmark class="size-6" />
                 Bookmarks
               </a>
             </li>
-            <li class="text-lg  rounded-full  text-start hover:outline-none  hover:text-lg  hover:justify-start hover:rounded-full">
-              <a
-                onClick={() => {}}
-                class={`
-                rounded-full 
-                `}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke-width={1.5}
-                  stroke="currentColor"
-                  class="w-7 h-7"
-                >
-                  <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                    d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75"
-                  />
-                </svg>
-                Communities
-              </a>
-            </li>
+             
              
             <button
               onClick={() => {
