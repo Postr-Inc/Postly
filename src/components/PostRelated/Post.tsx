@@ -6,7 +6,9 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { onCleanup } from "solid-js";
- 
+
+// Inside your Post component, where you render the video CarouselItem
+// We'll define a helper component VideoWithCleanup to encapsulate the fix:
 
 function VideoWithCleanup(props: { src: string, class: string }) {
   let videoRef: HTMLVideoElement | undefined;
@@ -14,8 +16,8 @@ function VideoWithCleanup(props: { src: string, class: string }) {
   onCleanup(() => {
     if (videoRef) {
       videoRef.pause();
-      videoRef.removeAttribute("src"); 
-      videoRef.load();                
+      videoRef.removeAttribute("src"); // Important: remove src to free resource
+      videoRef.load();                // Reset video element state
     }
   });
 
@@ -26,7 +28,7 @@ function VideoWithCleanup(props: { src: string, class: string }) {
       src={props.src}
       controls
       playsinline
-      muted={false}  
+      muted={false} // user controls sound, so muted false here
     />
   );
 }
@@ -141,48 +143,27 @@ export default function Post(props: Props) {
 
   const [currentImageIndex, setCurrentImageIndex] = createSignal(0)
   const {  mobile } = useDevice()
- createEffect(() => {
-  const url = props.embedded_link;
-  console.log("createEffect: Running for URL:", url);
+  createEffect(() => {
+    const url = props.embedded_link;
 
-  if (!url) {
-    console.log("createEffect: No URL, resetting state.");
-    set_preview_meta(null);
-    setLoadedMeta(false); // Ensure loadedMeta is false if no URL
-    return;
-  }
+    // Avoid refetching if the link hasn't changed
+    if (!url) return;
 
-  // Reset state before fetching to show spinner
-  set_preview_meta(null);
-  setLoadedMeta(false);
-  console.log("createEffect: Starting fetch for metadata.");
 
-  fetch(`${api.serverURL}/opengraph/embed?url=${encodeURIComponent(url)}`)
-    .then((res) => {
-      // Check for HTTP errors
-      if (!res.ok) {
-        throw new Error(`HTTP error! status: ${res.status}`);
-      }
-      return res.json();
-    })
-    .then((meta) => {
-      console.log("createEffect: Metadata fetched successfully:", meta);
-      if (meta) { // Ensure meta data exists before setting
-        set_preview_meta(meta);
-        setLoadedMeta(true);
-        console.log("createEffect: State updated: loadedMeta=true, _preview_meta set.");
-      } else {
-        console.warn("createEffect: Fetched meta is null or undefined.");
-        set_preview_meta(null); // Keep meta as null
-        setLoadedMeta(true); // Still indicate loading is complete, even if data is empty
-      }
-    })
-    .catch((error) => {
-      console.error("createEffect: Error fetching OpenGraph metadata:", error);
-      set_preview_meta(null);
-      setLoadedMeta(false); // Keep spinner if there's a permanent error
-    });
-});
+
+    fetch(`${api.serverURL}/opengraph/embed?url=${encodeURIComponent(url)}`)
+      .then((res) => res.json())
+      .then((meta) => {
+        console.log(meta)
+        set_preview_meta(meta)
+        setLoadedMeta(false)
+      })
+      .catch(() => {
+        set_preview_meta(null)
+        setLoadedMeta(true)
+      });
+  });
+
 
 
 
@@ -476,11 +457,7 @@ export default function Post(props: Props) {
   return (
        <Card
       class={joinClass(
-        theme() === "dark" && !props.page
-          ? "hover:bg-[#121212]"
-          : theme() === "light" && !props.page
-            ? "hover:bg-[#faf9f9]"
-            : "",
+         
         " h-fit z-10",
         "p-2 text-md shadow-none ",
         props.wasReposted && "border",
@@ -529,14 +506,18 @@ export default function Post(props: Props) {
         <div class="flex gap-2   items-start mt-0 mb-5 pt-0">
           <div class="flex hero items-center mt-0   pt-0">
             <CardTitle
-              class="cursor-pointer flex items-center gap-1 hover:underline transition-all duration-200"
-              onClick={() => props.navigate(StringJoin("/u/", props.expand.author.username))}
-            >
-              {props.expand && props.expand.author.username}
-            </CardTitle>
-            <CardTitle class="cursor-pointer flex items-center mx-2 gap-1 hover:underline transition-all duration-200">
-              {props.expand && props.expand.author.handle && "@" + props.expand.author.handle}
-            </CardTitle>
+  class="cursor-pointer flex items-center gap-1 hover:underline truncate transition-all duration-200 max-w-[100px] sm:max-w-none"
+  onClick={() => props.navigate(StringJoin("/u/", props.expand.author.username))}
+  title={props.expand?.author?.username} // Full name on hover
+>
+  {props.expand?.author?.username}
+</CardTitle>
+           <CardTitle
+  class="cursor-pointer mx-2 flex items-center gap-1 hover:underline truncate transition-all duration-200 max-w-[110px] sm:max-w-none"
+  title={props.expand?.author?.handle ? "@" + props.expand.author.handle : ""}
+>
+  {props.expand?.author?.handle && "@" + props.expand.author.handle}
+</CardTitle>
             <Show when={props.expand.author.validVerified}>
               <div data-tip="Verified" class="tooltip flex items-center">
                 <svg
@@ -548,16 +529,11 @@ export default function Post(props: Props) {
               </div>
             </Show>
             <Show when={props.expand.author.isEarlyUser}>
-              <div data-tip="Early Access Member" class="tooltip tooltip-top mx-2 flex items-center">
-                <img
-                  src="/icons/legacy/postr.png"
-                  class="w-[17.5px] h-[17.5px] hover:rotate-12 transition-transform duration-300"
-                />
-              </div>
+               
             </Show>
           </div>
-          <CardTitle class="text-sm opacity-50 flex items-center">·</CardTitle>
-          <CardTitle class="text-sm opacity-50 flex items-center">{created(props.created)}</CardTitle>
+  <CardTitle class="text-sm opacity-50 mx-1">·</CardTitle>
+  <CardTitle class="text-sm opacity-50 ">{created(props.created)}</CardTitle>
         </div>
         <Show
           when={
@@ -593,7 +569,7 @@ export default function Post(props: Props) {
                   />
                 </svg>
               </div>
-              <ul tabindex="0" class="dropdown-content menu bg-base-100 rounded-box w-52 p-2 shadow z-[99999]">
+              <ul tabindex="0" class="dropdown-content mt-2 menu bg-base-100 rounded-box w-52 p-2 shadow z-[99999]">
                 <li>
                   <a class="hover:scale-105 transition-transform duration-200">
                     <svg
@@ -724,7 +700,7 @@ export default function Post(props: Props) {
           <span class="loading loading-spinner loading-2xl flex mx-auto justify-center text-blue-500 mb-5 animate-spin"></span>
         </Match>
         <Match when={props.embedded_link && loadedMeta()}>
-          <Show when={previewMeta().image}>
+          <Show when={_preview_meta().image}>
             <a
               href={props.embedded_link}
               target="_blank"
@@ -732,12 +708,12 @@ export default function Post(props: Props) {
               class="block w-full h-[20rem] mt-5 relative rounded-xl overflow-hidden border hover:scale-[1.02] transition-transform duration-300"
             >
               <img
-                src={previewMeta().image || "/placeholder.svg?height=320&width=600"}
+                src={_preview_meta().image || "/placeholder.svg?height=320&width=600"}
                 class="w-full h-full  object-cover"
                 alt="Link preview"
               />
               <div class="absolute bottom-0 bg-black bg-opacity-60 text-white p-2 text-sm w-full">
-                {previewMeta().title || "Untitled"}
+                {_preview_meta().title || "Untitled"}
               </div>
             </a>
           </Show>
@@ -771,9 +747,9 @@ export default function Post(props: Props) {
                       />
                     </Match>
                     <Match when={getFileType(item) == "video"}>
-                      <div class="w-full aspect-video overflow-hidden rounded-xl border 
+                      <div class={`w-full aspect-video overflow-hidden rounded-xl border 
     cursor-pointer 
-    {theme() === 'dark' ? 'border-[#121212]' : 'border-[#cacaca]'}">
+    ${theme() === 'dark' ? 'border-[#121212]' : 'border-[#cacaca]'}`}>
                         <VideoWithCleanup
                           src={api.cdn.getUrl(props.isComment ? "comments" : "posts", props.id, item)}
                           class="w-full h-full object-cover"
