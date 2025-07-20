@@ -195,8 +195,7 @@ export function SideBarLeft(props: {
               <a
                 class=" rounded-full"
                 onClick={() => {
-                  // @ts-ignore
-                   document.getElementById("postly_plus")?.showModal()
+                  // @ts-ignore 
                 }}
               >
                 <img src={logo} class={joinClass("rounded w-8 h-8", theme() == "light" && "black")}></img>
