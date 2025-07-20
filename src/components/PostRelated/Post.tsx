@@ -156,11 +156,11 @@ export default function Post(props: Props) {
       .then((meta) => {
         console.log(meta)
         set_preview_meta(meta)
-        setLoadedMeta(false)
+        setLoadedMeta(true)
       })
       .catch(() => {
         set_preview_meta(null)
-        setLoadedMeta(true)
+        setLoadedMeta(false)
       });
   });
 
