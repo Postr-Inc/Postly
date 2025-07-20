@@ -141,27 +141,48 @@ export default function Post(props: Props) {
 
   const [currentImageIndex, setCurrentImageIndex] = createSignal(0)
   const {  mobile } = useDevice()
-  createEffect(() => {
-    const url = props.embedded_link;
+ createEffect(() => {
+  const url = props.embedded_link;
+  console.log("createEffect: Running for URL:", url);
 
-    // Avoid refetching if the link hasn't changed
-    if (!url) return;
+  if (!url) {
+    console.log("createEffect: No URL, resetting state.");
+    set_preview_meta(null);
+    setLoadedMeta(false); // Ensure loadedMeta is false if no URL
+    return;
+  }
 
+  // Reset state before fetching to show spinner
+  set_preview_meta(null);
+  setLoadedMeta(false);
+  console.log("createEffect: Starting fetch for metadata.");
 
-
-    fetch(`${api.serverURL}/opengraph/embed?url=${encodeURIComponent(url)}`)
-      .then((res) => res.json())
-      .then((meta) => {
-        console.log(meta)
-        set_preview_meta(meta)
-        setLoadedMeta(true)
-      })
-      .catch(() => {
-        set_preview_meta(null)
-        setLoadedMeta(false)
-      });
-  });
-
+  fetch(`${api.serverURL}/opengraph/embed?url=${encodeURIComponent(url)}`)
+    .then((res) => {
+      // Check for HTTP errors
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      return res.json();
+    })
+    .then((meta) => {
+      console.log("createEffect: Metadata fetched successfully:", meta);
+      if (meta) { // Ensure meta data exists before setting
+        set_preview_meta(meta);
+        setLoadedMeta(true);
+        console.log("createEffect: State updated: loadedMeta=true, _preview_meta set.");
+      } else {
+        console.warn("createEffect: Fetched meta is null or undefined.");
+        set_preview_meta(null); // Keep meta as null
+        setLoadedMeta(true); // Still indicate loading is complete, even if data is empty
+      }
+    })
+    .catch((error) => {
+      console.error("createEffect: Error fetching OpenGraph metadata:", error);
+      set_preview_meta(null);
+      setLoadedMeta(false); // Keep spinner if there's a permanent error
+    });
+});
 
 
 
