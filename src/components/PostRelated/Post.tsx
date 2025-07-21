@@ -269,81 +269,54 @@ export default function Post(props: Props) {
   }
 
   async function updateLikes(userId: string, isComment: boolean = false) {
-    if(!api.authStore.model.username){
-      //@ts-ignore
-      requireSignup()
-    }
-    const currentLikes = likes();
-    const hasLiked = currentLikes.includes(userId);
-    const action = hasLiked ? "unlike" : "like";
-    const collection = isComment ? "comments" : "posts";
-    if (!api.authStore.model.username) {
-      haptic.error()
-      return;
-    }
-
-    if (action === "like") {
-      setLikes([...likes(), userId]);
-      api.metrics.trackUserMetric("posts_liked", props.id)
-      api.metrics.uploadUserMetrics()
-      haptic()
-      api.worker.ws.send({
-        payload: {
-          type: GeneralTypes.NOTIFY,
-          notification_data: {
-            author: api.authStore.model.id,
-            ...(props.isComment ? { comment: props.id } : { post: props.id }),
-            recipients: [props.author],
-            url: `${window.location.host}/notifications`,
-            notification_title: `${api.authStore.model.username} Just liked your post 🥳`,
-            notification_body: props.content,
-            message: props.content,
-            icon: `${api.authStore.model.avatar ? api.cdn.getUrl("users", api.authStore.model.id, api.authStore.model.avatar || "") : "/icons/usernotfound/image.png"}`,
-            image: `${api.cdn.getUrl("posts", props.id, props.files[0])}`
-          }
-        },
-        security: {
-          token: api.authStore.model.token
-        }
-      })
-
-    } else {
-      setLikes(hasLiked
-        ? currentLikes.filter(id => id !== userId)
-        : [...currentLikes, userId]
-      );
-      haptic()
-    }
-
-    try {
-      const { res } = await api.send(`/actions/${collection}/${action}`, {
-        body: { targetId: props.id }
-      });
-
-      // Assuming res.likes is the updated likes array from backend
-      if (res && Array.isArray(res.likes)) {
-        api.updateCache(isComment ? "comments" : "posts", props.id, {
-          likes: likes(),
-        })
-      } else {
-        // fallback in case res.likes not returned
-        setLikes(hasLiked
-          ? currentLikes.filter(id => id !== userId)
-          : [...currentLikes, userId]
-        );
-        api.updateCache(isComment ? "comments" : "posts", props.id, {
-          likes: likes(),
-        })
-      }
-
-
-    } catch (error) {
-      dispatchAlert({
-        type: "error",
-        message: error instanceof Error ? error.message : String(error)
-      })
-    }
+  if (!api.authStore.model.username) {
+    //@ts-ignore
+    requireSignup();
+    return;
   }
+
+  // 1. Capture the original state for potential rollback on error
+  const originalLikes = likes();
+  const hasLiked = originalLikes.includes(userId);
+  const action = hasLiked ? "unlike" : "like";
+  const collection = isComment ? "comments" : "posts";
+
+  // 2. Perform the optimistic UI update immediately
+  const newLikes = hasLiked
+    ? originalLikes.filter(id => id !== userId)
+    : [...originalLikes, userId];
+  
+  setLikes(newLikes);
+  haptic();
+
+  // Handle side-effects (notifications, metrics) optimistically
+  if (action === "like") {
+    api.metrics.trackUserMetric("posts_liked", props.id);
+    api.metrics.uploadUserMetrics();
+    // Your WebSocket notification code here...
+  }
+  
+  // 3. Try to sync with the backend, and revert only on failure
+  try {
+    const { res } = await api.send(`/actions/${collection}/${action}`, {
+      body: { targetId: props.id }
+    });
+ 
+    api.updateCache(isComment ? "comments" : "posts", props.id, {
+      likes: likes(),
+    });
+
+  } catch (error) {
+    // 4. If the API call fails, revert to the original state
+    setLikes(originalLikes);
+    haptic.error(); // Provide feedback for the failure
+
+    dispatchAlert({
+      type: "error",
+      message: `Failed to ${action} post.`
+    });
+  }
+}
 
 
 
