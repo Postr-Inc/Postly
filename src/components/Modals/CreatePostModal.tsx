@@ -4,16 +4,6 @@ import { api } from "@/src";
 import { joinClass } from "@/src/Utils/Joinclass";
 import { Portal, Show, Switch, Match } from "solid-js/web";
 import Post from "../PostRelated/Post";
-import Media from "../Icons/Media";
-import Dropdown, { DropdownHeader } from "../UI/UX/dropdown";
-import World from "../Icons/World";
-import Users from "../Icons/Users";
-import Modal from "../Modal";
-import User from "../Icons/User";
-import CheckMark from "../Icons/BasicCheck";
-import Carousel from "../UI/UX/Carousel";
-import NumberedList from "../Icons/NumberedList";
-import { HttpCodes } from "@/src/Utils/SDK/opCodes";
 import useNavigation from "@/src/Utils/Hooks/useNavigation";
 import { getFileType, getDynamicImageQuality, compressImage, prepareFile } from "@/src/Utils/BetterHandling";
 import { dispatchAlert } from "@/src/Utils/SDK";
@@ -105,6 +95,81 @@ const getTopicIcon = (icon: string) => {
       return null
   }
 }
+
+const CloseIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M18.3 5.71a.996.996 0 0 0-1.41 0L12 10.59 7.11 5.7A.996.996 0 1 0 5.7 7.11L10.59 12 5.7 16.89a.996.996 0 1 0 1.41 1.41L12 13.41l4.89 4.89a.996.996 0 0 0 1.41-1.41L13.41 12l4.89-4.89c.38-.38.38-1.02 0-1.4z" />
+  </svg>
+)
+
+const MediaIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M3 5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5zm2 0v14h14V5H5zm2 3l2.5 3.5L12 8.5l4.5 6H7l2-3z" />
+  </svg>
+)
+
+const GifIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M19 10.5V8.8h-4.4v6.4h1.7v-2h2v-1.7h-2v-1H19zm-7.3-1.7h1.7v6.4h-1.7V8.8zm-3.6 1.6c.4 0 .9.2 1.2.5l1.2-1C9.9 9.2 9 8.8 8.1 8.8c-1.8 0-3.2 1.4-3.2 3.2s1.4 3.2 3.2 3.2c1 0 1.8-.4 2.4-1.1v-2.5H7.7v1.2h1.2v.6c-.2.1-.5.2-.8.2-.9 0-1.6-.7-1.6-1.6 0-.8.7-1.6 1.6-1.6z" />
+  </svg>
+)
+
+const PollIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M20.222 9.16h-1.334c.015-.09.028-.182.028-.277V6.57c0-.98-.797-1.777-1.778-1.777H3.5V3.358c0-.414-.336-.75-.75-.75s-.75.336-.75.75V20.83c0 .414.336.75.75.75s.75-.336.75-.75v-1.434h10.556c.98 0 1.778-.797 1.778-1.777v-2.313c0-.095-.013-.187-.028-.277h4.417c.98 0 1.778-.797 1.778-1.778v-2.31c0-.983-.797-1.78-1.778-1.78zM17.14 6.293c.152 0 .277.124.277.277v2.31c0 .154-.125.28-.278.28H3.472V6.29H17.14zm-2.807 9.014v2.312c0 .153-.125.277-.278.277H3.472v-2.866H14.61c.153 0 .277.125.277.277zm5.695-7.890c.153 0 .277.126.277.28v2.31c0 .154-.124.28-.277.28H3.472V7.403h16.556z" />
+  </svg>
+)
+
+const EmojiIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2C6.486 2 2 6.486 2 12s4.486 10 10 10 10-4.486 10-10S17.514 2 12 2zm0 18c-4.411 0-8-3.589-8-8s3.589-8 8-8 8 3.589 8 8-3.589 8-8 8z" />
+    <circle cx="8.5" cy="10.5" r="1.5" />
+    <circle cx="15.5" cy="10.5" r="1.5" />
+    <path d="M12 18c2.28 0 4.22-1.66 5-4H7c.78 2.34 2.72 4 5 4z" />
+  </svg>
+)
+
+const ScheduleIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z" />
+  </svg>
+)
+
+const LocationIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+  </svg>
+)
+
+const WorldIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.94-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
+  </svg>
+)
+
+const UsersIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M16 4c0-1.11.89-2 2-2s2 .89 2 2-.89 2-2 2-2-.89-2-2zm4 18v-6h2.5l-2.54-7.63A3.01 3.01 0 0 0 17.1 6H16c-.8 0-1.54.37-2.03.99L12 9l-1.97-2.01A2.99 2.99 0 0 0 8 6H6.9c-1.3 0-2.4.84-2.86 2.37L1.5 16H4v6h4v-6h2v6h4zM12.5 11.5c.83 0 1.5-.67 1.5-1.5s-.67-1.5-1.5-1.5S11 9.17 11 10s.67 1.5 1.5 1.5z" />
+  </svg>
+)
+
+const UserIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+  </svg>
+)
+
+const CheckIcon = () => (
+  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+  </svg>
+)
+
+const HashtagIcon = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+    <path d="M5.25 8.25h15m-16.5 7.5h15m-1.8-13.5-3.9 19.5m-2.1-19.5-3.9 19.5" />
+  </svg>
+)
 function extractFirstURL(text: string): string | null {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const matches = text.match(urlRegex);
@@ -179,7 +244,7 @@ export default function CreatePostModal() {
 
 
     const data = { ...postData(), author: JSON.parse(localStorage.getItem("postr_auth") || "{}").id };
-    if(data.topic){
+    if (data.topic) {
       data.topic = data.topic.id
     }
     if (!data.author) {
@@ -207,6 +272,9 @@ export default function CreatePostModal() {
           data.post = parts[3];
         }
       }
+      console.log(collection())
+
+      console.log(data)
 
       const res = await api.collection(collection()).create(data, {
         expand: [
@@ -221,11 +289,11 @@ export default function CreatePostModal() {
         ],
       }) as any;
 
-      if(data.topic){
+      if (data.topic) {
         await api.collection("topics").update(data.topic, {
-          posts: [...topics().find((i)=> i.id === data.topic).posts, res.id]
+          posts: [...topics().find((i) => i.id === data.topic).posts, res.id]
         }, {
-          invalidateCache: ["topics", "topic-get", `topic-${topics().find((i)=> i.id === data.topic).name}_feed`]
+          invalidateCache: ["topics", "topic-get", `topic-${topics().find((i) => i.id === data.topic).name}_feed`]
         })
       }
 
@@ -265,7 +333,10 @@ export default function CreatePostModal() {
         document.getElementById("createPostModal")?.close();
 
         const postId = window.location.pathname.split("/")[3];
-        const p = await api.collection(window.location.pathname.split("/")[2])
+        const p = await api.collection(window.location.pathname.split("/")[2]).get(postId, {
+          expand: ['comments'],
+          cacheKey: `post-${data.post}`,
+        })
         const d = await api.collection(window.location.pathname.split("/")[2]).update(postId, {
           comments: [...(p.comments || []), res.id],
           invalidateCache: [
@@ -374,507 +445,400 @@ export default function CreatePostModal() {
 
   console.log(postData())
   return (
-    <dialog id="createPostModal" class="modal w-screen h-screen z-[-1f]">
+    <dialog id="createPostModal" class="modal">
       <Switch>
         <Match when={isPosting() && !hasError()}>
-          <div class={joinClass("modal-box scroll focus:outline-none p-4 h-fit relative   border-4 rounded-xl border-transparent z-[-1] animate-gradient-border   shadow-xl text-center")}>
-            <div class="absolute inset-0 rounded-xl border-4 border-transparent pointer-events-none animate-border-overlay"></div>
-
-            <h2 class="text-xl font-semibold mb-4">Hang tight!</h2>
-            <p class="text-sm  mb-6">{currentMessage()}</p>
-
-            <div class="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin mx-auto"></div>
+          <div class="modal-box max-w-2xl mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border-0">
+            <div class="flex flex-col items-center justify-center py-12">
+              <div class="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin mb-6"></div>
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-2">Hang tight!</h2>
+              <p class="text-gray-500 dark:text-gray-400">{currentMessage()}</p>
+            </div>
           </div>
         </Match>
+
         <Match when={!isPosting() && !hasError()}>
-          <div class={joinClass("modal-box scroll focus:outline-none       p-2  text-black z-[-1] rounded-xl   ",
-            theme() == "dark" ? "bg-base-300 text-white" : "bg-white"
-          )}>
-            <div class="flex flex-row  h-full justify-between  ">
+          <div class="modal-box max-w-2xl mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border-0 p-0">
+            {/* Header */}
+            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800">
               <button
-                class="btn btn-sm focus:outline-none btn-circle btn-ghost  "
                 onClick={closeAndReset}
+                class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               >
-                ✕
+                <CloseIcon />
               </button>
-              <p class="text-blue-500 btn btn-sm rounded-full">Drafts</p>
+              <button class="text-blue-500 font-medium hover:underline">Drafts</button>
             </div>
-            <div class={joinClass("flex flex-row h-full overflow-hidden  text-lg mt-5",
-            )}>
 
-              <div class="flex flex-col w-full h-full gap-2 overflow-hidden  ">
-
-                <textarea
-                  value={postData().content}
-                  maxLength={400}
-                  class={joinClass(
-                    "    bg-transparent  w-full rounded-lg  p-3 resize-none overflow-hidden  outline-none scroll",
-                    postData().content.length > 100 ? "h-[24rem]" : ""
-                  )}
-                  placeholder={
-                    (canCommentOnPost() && replyRule() == "public") ||
-                      (!canCommentOnPost() &&
-                        mainPost() &&
-                        mainPost().expand &&
-                        mainPost().expand.author &&
-                        mainPost().expand.author.id === api.authStore.model.id)
-                      ? "What is on your mind?"
-                      : "Post replies are restricted, only the author can reply"
-                  }
-                  disabled={
-                    !(
-                      (canCommentOnPost() && replyRule() == "public") ||
-                      (
-                        !canCommentOnPost() &&
-                        mainPost() &&
-                        mainPost().expand &&
-                        mainPost().expand.author &&
-                        mainPost().expand.author.id === api.authStore.model.id
-                      )
-                    )
-                  }
-                  onInput={(e: any) => {
-                    setPostData({ ...postData(), content: e.target.value });
-                  }}
-                ></textarea>
-
-
-
-
-                <Show when={postData().isRepost}>
-                  <Post {...postData().repost} />
-                </Show>
-              </div>
-            </div>
-            <Show when={postData()._preview_meta}>
-
-              <a
-                href={postData().embedded_link}
-                target="_blank"
-                rel="noopener noreferrer"
-                class="block w-full h-[20rem] mt-12 relative rounded-xl overflow-hidden border"
-              >
+            {/* Content */}
+            <div class="p-4">
+              {/* User Info */}
+              <div class="flex items-start space-x-3 mb-4">
                 <img
-                  src={postData()._preview_meta?.image || '/placeholder.png'}
-                  class="w-full h-full object-cover"
-                  alt="Link preview"
+                  src={
+                    api.authStore.model?.avatar
+                      ? api.cdn.getUrl("users", api.authStore.model.id, api.authStore.model.avatar)
+                      : "/icons/usernotfound/image.png"
+                  }
+                  alt="Your avatar"
+                  class="w-10 h-10 rounded-full object-cover"
                 />
-                <div class="absolute bottom-0 bg-black bg-opacity-60 text-white p-2 text-sm w-full">
-                  {postData()._preview_meta?.title || "Untitled"}
-                </div>
-              </a>
-            </Show>
-            <Show when={files().length > 0}>
-              <Carousel>
-                <For each={files()}>
-                  {(file: File) => (
-                    <Carousel.Item
-                      showDelete={true}
-                      id={file.name}
-                      onDeleted={() => {
-                        setFiles(files().filter((f: any) => f.name !== file.name));
-                      }
+                <div class="flex-1 min-w-0">
+                  <textarea
+                    value={postData().content}
+                    maxLength={400}
+                    class="w-full bg-transparent text-xl placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white resize-none border-0 outline-none p-0"
+                    placeholder={
+                      (canCommentOnPost() && replyRule() == "public") ||
+                        (!canCommentOnPost() &&
+                          mainPost() &&
+                          mainPost().expand &&
+                          mainPost().expand.author &&
+                          mainPost().expand.author.id === api.authStore.model.id)
+                        ? "What's happening?"
+                        : "Post replies are restricted, only the author can reply"
+                    }
+                    disabled={
+                      !(
+                        (canCommentOnPost() && replyRule() == "public") ||
+                        (!canCommentOnPost() &&
+                          mainPost() &&
+                          mainPost().expand &&
+                          mainPost().expand.author &&
+                          mainPost().expand.author.id === api.authStore.model.id)
+                      )
+                    }
+                    onInput={(e: any) => {
+                      setPostData({ ...postData(), content: e.target.value })
+                      // Auto-resize textarea
+                      e.target.style.height = "auto"
+                      e.target.style.height = Math.min(e.target.scrollHeight, 200) + "px"
+                    }}
+                    style={{ "min-height": "60px" }}
+                  />
 
-                      }
+                  {/* Repost Preview */}
+                  <Show when={postData().isRepost}>
+                    <div class="mt-4 border border-gray-200 dark:border-gray-700 rounded-2xl p-4">
+                      <Post {...postData().repost} />
+                    </div>
+                  </Show>
+
+                  {/* Link Preview */}
+                  <Show when={postData()._preview_meta}>
+                    <a
+                      href={postData().embedded_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      class="block mt-4 border border-gray-200 dark:border-gray-700 rounded-2xl overflow-hidden hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
                     >
-                      <Switch>
-                        <Match when={getFileType(file) == "image"}>
-                          <img
-                            src={URL.createObjectURL(file)}
-                            class="w-full h-[20rem] object-cover rounded-lg my-2"
-                            alt="file"
-                          />
-                        </Match>
-                        <Match when={getFileType(file) == "video"}>
-                          <video src={URL.createObjectURL(file)} autoplay loop class="w-full h-[20rem] object-cover rounded-lg my-2" alt="file" />
-                        </Match>
-                      </Switch>
-                    </Carousel.Item>
-                  )}
-                </For>
-              </Carousel>
-            </Show>
+                      <Show when={postData()._preview_meta?.image}>
+                        <img
+                          src={postData()._preview_meta.image || "/placeholder.svg"}
+                          class="w-full h-48 object-cover"
+                          alt="Link preview"
+                        />
+                      </Show>
+                      <div class="p-3">
+                        <p class="font-medium text-gray-900 dark:text-white line-clamp-2">
+                          {postData()._preview_meta?.title || "Untitled"}
+                        </p>
+                        <Show when={postData()._preview_meta?.description}>
+                          <p class="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
+                            {postData()._preview_meta.description}
+                          </p>
+                        </Show>
+                        <p class="text-sm text-gray-400 dark:text-gray-500 mt-1">
+                          {(() => {
+                            try {
+                              return new URL(postData().embedded_link).hostname
+                            } catch {
+                              return postData().embedded_link
+                            }
+                          })()}
+                        </p>
+                      </div>
+                    </a>
+                  </Show>
 
-            <div class="flex">
-              <div
-                class="flex flex-row fill-blue-500 hero text-blue-500 font-semibold gap-2 hover:bg-base-200  w-fit cursor-pointer p-2 rounded-full"
-                onClick={() => document.getElementById("visibility")?.showModal()}
-              >
-                <Switch>
-                  <Match when={postData().whoCanSee === "public"}>
-                    <World class="w-5 h-5" />
-                    <p>Everyone can reply</p>
-                  </Match>
-                  <Match when={postData().whoCanSee === "following"}>
-                    <Users class="w-5 h-5" />
-                    <p>Accounts you follow</p>
-                  </Match>
-                  <Match when={postData().whoCanSee === "private"}>
-                    <User class="w-5 h-5" />
-                    <p>Only you</p>
-                  </Match>
-                </Switch>
+                  {/* Media Preview */}
+                  <Show when={files().length > 0}>
+                    <div class="mt-4 grid grid-cols-2 gap-2">
+                      <For each={files()}>
+                        {(file: File) => (
+                          <div class="relative group rounded-2xl overflow-hidden">
+                            <Switch>
+                              <Match when={getFileType(file) == "image"}>
+                                <img
+                                  src={URL.createObjectURL(file) || "/placeholder.svg"}
+                                  class="w-full h-48 object-cover"
+                                  alt="Upload preview"
+                                />
+                              </Match>
+                              <Match when={getFileType(file) == "video"}>
+                                <video
+                                  src={URL.createObjectURL(file)}
+                                  class="w-full h-48 object-cover"
+                                  autoplay
+                                  loop
+                                  muted
+                                />
+                              </Match>
+                            </Switch>
+                            <button
+                              onClick={() => {
+                                setFiles(files().filter((f: any) => f.name !== file.name))
+                              }}
+                              class="absolute top-2 right-2 w-8 h-8 bg-black bg-opacity-75 rounded-full flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                            >
+                              <CloseIcon />
+                            </button>
+                          </div>
+                        )}
+                      </For>
+                    </div>
+                  </Show>
+                </div>
               </div>
-              <div
-                class="flex flex-row fill-purple-500 hero text-sm  font-semibold gap-2 hover:bg-base-200 w-fit cursor-pointer p-2 rounded-full"
-                onClick={() => document.getElementById("topicPicker")?.showModal()}
-              >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M5.25 8.25h15m-16.5 7.5h15m-1.8-13.5-3.9 19.5m-2.1-19.5-3.9 19.5" />
-                </svg>
 
-                <p>{console.log("rendered with", postData().topic?.name) || postData().topic?.name || "Topic"}</p>
-
+              {/* Reply Settings */}
+              <div class="mb-4">
+                <button
+                  onClick={() => document.getElementById("visibility")?.showModal()}
+                  class="flex items-center space-x-2 text-blue-500 hover:bg-blue-50 dark:hover:bg-blue-900/20 px-3 py-2 rounded-full transition-colors"
+                >
+                  <Switch>
+                    <Match when={postData().whoCanSee === "public"}>
+                      <WorldIcon />
+                      <span class="text-sm font-medium">Everyone can reply</span>
+                    </Match>
+                    <Match when={postData().whoCanSee === "following"}>
+                      <UsersIcon />
+                      <span class="text-sm font-medium">People you follow</span>
+                    </Match>
+                    <Match when={postData().whoCanSee === "private"}>
+                      <UserIcon />
+                      <span class="text-sm font-medium">Only you</span>
+                    </Match>
+                  </Switch>
+                </button>
               </div>
 
+              {/* Topic Selection */}
+              <Show when={postData().topic}>
+                <div class="mb-4">
+                  <button
+                    onClick={() => document.getElementById("topicPicker")?.showModal()}
+                    class="flex items-center space-x-2 text-purple-500 hover:bg-purple-50 dark:hover:bg-purple-900/20 px-3 py-2 rounded-full transition-colors"
+                  >
+                    <HashtagIcon />
+                    <span class="text-sm font-medium">{postData().topic?.name || "Add topic"}</span>
+                  </button>
+                </div>
+              </Show>
             </div>
 
-            <Portal>
-              <dialog
-                id="visibility"
-                class="modal sm:modal-bottom rounded-xl xl:modal-middle md:modal-middle  "
-              >
-                <div class="modal-box w-32 gap-1">
-                  <div class="flex flex-col gap-2">
-                    <p class="font-bold">Who can reply to this post?</p>
-                    <p>Choose who is allowed to reply to your post.</p>
-                  </div>
-                  <div class="flex flex-col relative gap-2 mt-5">
-                    <div
-                      class="flex flex-row gap-5 font-bold cursor-pointer text-lg hero"
-                      onClick={() => {
-                        setPostData({ ...postData(), whoCanSee: "public" });
-                        document.getElementById("visibility")?.close();
-                      }}
-                    >
-                      <div class="p-3 bg-blue-500 rounded-full">
-                        <World class="w-5 h-5 fill-white stroke-blue-500" />
-                      </div>
-                      <p>Everyone</p>
-                      {postData().whoCanSee === "public" && (
-                        <CheckMark class="w-5 h-5 text-blue-500 absolute right-5" />
-                      )}
-                    </div>
-                    <div
-                      class="flex flex-row gap-5 font-bold cursor-pointer text-lg hero"
-                      onClick={() => {
-                        setPostData({ ...postData(), whoCanSee: "following" });
-                        document.getElementById("visibility")?.close();
-                      }}
-                    >
-                      <div class="p-3 bg-blue-500 rounded-full">
-                        <Users class="w-5 h-5 fill-white stroke-blue-500" />
-                      </div>
-                      <p>Following</p>
-                      {postData().whoCanSee === "following" && (
-                        <CheckMark class="w-5 h-5 text-blue-500 absolute right-5" />
-                      )}
-                    </div>
-                    <div
-                      class="flex flex-row gap-5 font-bold cursor-pointer text-lg hero"
-                      onClick={() => {
-                        setPostData({ ...postData(), whoCanSee: "private" });
-                        document.getElementById("visibility")?.close();
-                      }}
-                    >
-                      <div class="p-3 bg-blue-500 rounded-full">
-                        <User class="w-5 h-5 fill-white stroke-blue-500" />
-                      </div>
-                      <p>Only me</p>
-                      {postData().whoCanSee === "private" && (
-                        <CheckMark class="w-5 h-5 text-blue-500 absolute right-5" />
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </dialog>
-            </Portal>
-            <Portal>
-              <dialog id="topicPicker" class="modal sm:modal-bottom rounded-xl xl:modal-middle md:modal-middle">
-                <div class="modal-box">
-                  <div class="flex flex-col gap-2">
-                    <p class="font-bold text-lg">Choose a topic</p>
-                    <p class="text-sm text-gray-500">Pick a topic that matches your post.</p>
-                  </div>
-
-                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-5 max-h-80 overflow-y-auto">
-                    <For each={topics()}>
-                      {(topic) => (
-                        <div
-                          class="flex items-center gap-4 p-3 rounded-lg cursor-pointer hover:bg-base-200 transition"
-                          onClick={() => {
-                            setPostData(prev => ({ ...prev, topic }));
-                            document.getElementById("topicPicker")?.close();
-                          }}
-                        >
-                          <div class="p-2 bg-purple-100 rounded-full">
-                            {getTopicIcon(topic.icon)}
-                          </div>
-                          <p class="font-medium">{topic.name}</p>
-                          {postData().topic?.id === topic.id && (
-                            <CheckMark class="w-5 h-5 text-purple-600 ml-auto" />
-                          )}
-                        </div>
-                      )}
-                    </For>
-                  </div>
-                </div>
-              </dialog>
-            </Portal>
-
-            <div class="divider  rounded-full h-1"></div>
-            <div class="flex flex-row  relative justify-between ">
-              <input
-                type="file"
-                hidden
-                id="files"
-                onInput={(file: any) => setFiles(Array.from(file.target.files))}
-                multiple
-                accept="image/*, video/*"
-              />
-              <div class="flex flex-row gap-5">
-                <Media
-                  class={joinClass(
-                    "w-5 h-5 cursor-pointer",
-                    postData().isPoll && "opacity-50"
-                  )}
-                  onClick={() =>
-                    !postData().isPoll && document.getElementById("files")?.click()
-                  }
+            {/* Footer */}
+            <div class="flex items-center justify-between px-4 py-3 border-t border-gray-200 dark:border-gray-800">
+              <div class="flex items-center space-x-4">
+                <input
+                  type="file"
+                  hidden
+                  id="files"
+                  onInput={(file: any) => setFiles(Array.from(file.target.files))}
+                  multiple
+                  accept="image/*, video/*"
                 />
 
+                <button
+                  onClick={() => !postData().isPoll && document.getElementById("files")?.click()}
+                  class={joinClass(
+                    "p-2 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors",
+                    postData().isPoll ? "opacity-50 cursor-not-allowed" : "text-blue-500",
+                  )}
+                  disabled={postData().isPoll}
+                >
+                  <MediaIcon />
+                </button>
+
+                <button class="p-2 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-500 transition-colors">
+                  <GifIcon />
+                </button>
+
+                <button class="p-2 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-500 transition-colors">
+                  <PollIcon />
+                </button>
+
+                <button class="p-2 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-500 transition-colors">
+                  <EmojiIcon />
+                </button>
+
+                <button class="p-2 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-500 transition-colors">
+                  <ScheduleIcon />
+                </button>
+
+                <button class="p-2 rounded-full hover:bg-blue-50 dark:hover:bg-blue-900/20 text-blue-500 transition-colors">
+                  <LocationIcon />
+                </button>
               </div>
-              {/**
-           * verticle line
-           */}
-              <span>{postData().content.length} / 400</span>
-              <button
-                class="btn-sm bg-blue-500 text-white rounded-full"
-                onClick={() => {
-                  if (
-                    replyRule() == "private" &&
-                    !(
-                      mainPost() &&
-                      mainPost().expand &&
-                      mainPost().expand.author &&
-                      mainPost().expand.author.id === api.authStore.model.id
-                    )
-                  )
-                    return;
-                  createPost();
-                }}
-              >
-                {isPosting()
-                  ? "Posting..."
-                  : collection() === "posts"
-                    ? "Post"
-                    : replyRule() == "private" &&
+
+              <div class="flex items-center space-x-3">
+                <Show when={postData().content.length > 0}>
+                  <div class="flex items-center space-x-2">
+                    <div class="relative w-8 h-8">
+                      <svg class="w-8 h-8 transform -rotate-90" viewBox="0 0 36 36">
+                        <path
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                          fill="none"
+                          stroke="#e5e7eb"
+                          strokeWidth="2"
+                        />
+                        <path
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                          fill="none"
+                          stroke={postData().content.length > 380 ? "#ef4444" : "#3b82f6"}
+                          strokeWidth="2"
+                          strokeDasharray={`${(postData().content.length / 400) * 100}, 100`}
+                        />
+                      </svg>
+                      <Show when={postData().content.length > 380}>
+                        <span class="absolute inset-0 flex items-center justify-center text-xs font-medium text-red-500">
+                          {400 - postData().content.length}
+                        </span>
+                      </Show>
+                    </div>
+                  </div>
+                </Show>
+
+                <button
+                  onClick={() => {
+                    if (
+                      replyRule() == "private" &&
                       !(
                         mainPost() &&
                         mainPost().expand &&
                         mainPost().expand.author &&
                         mainPost().expand.author.id === api.authStore.model.id
                       )
-                      ? "Author Set Comments Private"
-                      : "Create Comment"}
-              </button>
+                    )
+                      return
+                    createPost()
+                  }}
+                  disabled={!postData().content.trim() || postData().content.length > 400 || isPosting()}
+                  class={joinClass(
+                    "px-6 py-2 rounded-full font-medium transition-colors",
+                    !postData().content.trim() || postData().content.length > 400 || isPosting()
+                      ? "bg-blue-300 text-white cursor-not-allowed"
+                      : "bg-blue-500 hover:bg-blue-600 text-white",
+                  )}
+                >
+                  {isPosting() ? "Posting..." : collection() === "posts" ? "Post" : "Reply"}
+                </button>
+              </div>
             </div>
           </div>
         </Match>
+
         <Match when={hasError()}>
-          <div class="modal-box  p-2 z-[-1] h-fit">
-            <div class="flex flex-row justify-between  ">
+          <div class="modal-box max-w-2xl mx-auto bg-white dark:bg-gray-900 rounded-2xl shadow-2xl border-0">
+            <div class="flex items-center justify-between px-4 py-3 border-b border-gray-200 dark:border-gray-800">
               <button
-                class="btn btn-sm focus:outline-none btn-circle btn-ghost  "
                 onClick={closeAndReset}
+                class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
               >
-                ✕
+                <CloseIcon />
               </button>
-              <p class="text-blue-500 btn btn-sm rounded-full">Drafts</p>
+              <button class="text-blue-500 font-medium hover:underline">Drafts</button>
             </div>
-            <div class="flex flex-row  text-lg mt-5">
-              <div class="flex flex-col w-full gap-2">
-                <textarea
-                  maxLength={400}
-                  class={joinClass(
-                    "w-full h-fit  rounded-lg mx-5 resize-none outline-none scroll",
-                    theme() === "dark" ? "bg-black text-white" : "bg-white"
-                  )}
-                  placeholder={`Error Occured :/`}
-                  disabled={true}
-                ></textarea>
 
-                <Show when={postData().repost}>
-                  <Post {...postData().repost} />
-                </Show>
+            <div class="p-6 text-center">
+              <div class="w-16 h-16 bg-red-100 dark:bg-red-900/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg class="w-8 h-8 text-red-500" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                </svg>
               </div>
-            </div>
-            <p class="p-5">
-              {error()}
-            </p>
-            <Show when={files().length > 0}>
-              <Carousel>
-                <For each={files()}>
-                  {(file: File) => (
-                    <Carousel.Item
-                      showDelete={true}
-                      id={file.name}
-                      onDeleted={() => {
-                        setFiles(files().filter((f: any) => f.name !== file.name));
-                      }
-
-                      }
-                    >
-                      <Switch>
-                        <Match when={getFileType(file) == "image"}>
-                          <img
-                            src={URL.createObjectURL(file)}
-                            class="w-full h-[20rem] object-cover rounded-lg my-2"
-                            alt="file"
-                          />
-                        </Match>
-                        <Match when={getFileType(file) == "video"}>
-                          <video src={URL.createObjectURL(file)} autoplay loop class="w-full h-[20rem] object-cover rounded-lg my-2" alt="file" />
-                        </Match>
-                      </Switch>
-                    </Carousel.Item>
-                  )}
-                </For>
-              </Carousel>
-            </Show>
-            <Show when={postData()._preview_meta}>
-              <a
-                href={postData()._preview_meta.url}
-                target="_blank"
-                class="block border p-2 rounded mt-2"
+              <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-2">Something went wrong</h3>
+              <p class="text-gray-500 dark:text-gray-400 mb-6">{error()}</p>
+              <button
+                onClick={closeAndReset}
+                class="px-6 py-2 bg-blue-500 hover:bg-blue-600 text-white rounded-full font-medium transition-colors"
               >
-                <div class="flex gap-4">
-                  <img
-                    src={postData()._preview_meta.image}
-                    class="w-20 h-20 object-cover rounded"
-                  />
-                  <div>
-                    <p class="font-bold">{postData()._preview_meta.title}</p>
-                    <p class="text-sm text-gray-500">{postData()._preview_meta.description}</p>
-                    <p class="text-xs text-blue-500">{postData()._preview_meta.url}</p>
-                  </div>
-                </div>
-              </a>
-            </Show>
-
-            <div
-              class="flex flex-row fill-blue-500 hero text-blue-500 font-semibold gap-2 hover:bg-base-200  w-fit cursor-pointer p-2 rounded-full"
-              onClick={() => document.getElementById("visibility")?.showModal()}
-            >
-              <Switch>
-                <Match when={postData().whoCanSee === "public"}>
-                  <World class="w-5 h-5" />
-                  <p>Everyone can reply</p>
-                </Match>
-                <Match when={postData().whoCanSee === "following"}>
-                  <Users class="w-5 h-5" />
-                  <p>Accounts you follow</p>
-                </Match>
-                <Match when={postData().whoCanSee === "private"}>
-                  <User class="w-5 h-5" />
-                  <p>Only you</p>
-                </Match>
-              </Switch>
-            </div>
-            <Portal>
-              <dialog
-                id="visibility"
-                class="modal sm:modal-bottom xl:modal-middle md:modal-middle  "
-              >
-                <div class="modal-box w-32 gap-1">
-                  <div class="flex flex-col gap-2">
-                    <p class="font-bold">Who can reply to this post?</p>
-                    <p>Choose who is allowed to reply to your post.</p>
-                  </div>
-                  <div class="flex flex-col relative gap-2 mt-5">
-                    <div
-                      class="flex flex-row gap-5 font-bold cursor-pointer text-lg hero"
-                      onClick={() => {
-                        setPostData({ ...postData(), whoCanSee: "public" });
-                        document.getElementById("visibility")?.close();
-                      }}
-                    >
-                      <div class="p-3 bg-blue-500 rounded-full">
-                        <World class="w-5 h-5 fill-white stroke-blue-500" />
-                      </div>
-                      <p>Everyone</p>
-                      {postData().whoCanSee === "public" && (
-                        <CheckMark class="w-5 h-5 text-blue-500 absolute right-5" />
-                      )}
-                    </div>
-                    <div
-                      class="flex flex-row gap-5 font-bold cursor-pointer text-lg hero"
-                      onClick={() => {
-                        setPostData({ ...postData(), whoCanSee: "following" });
-                        document.getElementById("visibility")?.close();
-                      }}
-                    >
-                      <div class="p-3 bg-blue-500 rounded-full">
-                        <Users class="w-5 h-5 fill-white stroke-blue-500" />
-                      </div>
-                      <p>Following</p>
-                      {postData().whoCanSee === "following" && (
-                        <CheckMark class="w-5 h-5 text-blue-500 absolute right-5" />
-                      )}
-                    </div>
-                    <div
-                      class="flex flex-row gap-5 font-bold cursor-pointer text-lg hero"
-                      onClick={() => {
-                        setPostData({ ...postData(), whoCanSee: "private" });
-                        document.getElementById("visibility")?.close();
-                      }}
-                    >
-                      <div class="p-3 bg-blue-500 rounded-full">
-                        <User class="w-5 h-5 fill-white stroke-blue-500" />
-                      </div>
-                      <p>Only me</p>
-                      {postData().whoCanSee === "private" && (
-                        <CheckMark class="w-5 h-5 text-blue-500 absolute right-5" />
-                      )}
-                    </div>
-                  </div>
-                </div>
-              </dialog>
-            </Portal>
-            <div class="divider  rounded-full h-1"></div>
-            <div class="flex flex-row  relative justify-between ">
-              <input
-                type="file"
-                hidden
-                id="files"
-                onInput={(file: any) => setFiles(Array.from(file.target.files))}
-                multiple
-                disabled={true}
-                accept="image/*, video/*"
-              />
-              <div class="flex flex-row gap-5">
-                <Media
-                  class={joinClass(
-                    "w-5 h-5 cursor-pointer",
-                    postData().isPoll && "opacity-50"
-                  )}
-                />
-                <NumberedList
-                  class={joinClass(
-                    "w-5 h-5 cursor-pointer",
-                    files().length > 0 && "opacity-50",
-                    postData().isPoll && "text-blue-500"
-                  )}
-                />
-              </div>
-              {/**
-           * verticle line
-           */}
+                Try again
+              </button>
             </div>
           </div>
-
         </Match>
       </Switch>
+
+      {/* Visibility Modal */}
+      <Portal>
+        <dialog id="visibility" class="modal">
+          <div class="modal-box max-w-md mx-auto bg-white dark:bg-gray-900 rounded-2xl">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Who can reply?</h3>
+            <p class="text-gray-500 dark:text-gray-400 mb-6">Choose who can reply to this post.</p>
+
+            <div class="space-y-3">
+              {[
+                { key: "public", icon: WorldIcon, label: "Everyone", desc: "Anyone on  Postly" },
+                { key: "following", icon: UsersIcon, label: "People you follow", desc: "People you follow on Postly" },
+                { key: "private", icon: UserIcon, label: "Only you", desc: "No one else can reply" },
+              ].map((option) => (
+                <button
+                  key={option.key}
+                  onClick={() => {
+                    setPostData({ ...postData(), whoCanSee: option.key })
+                    document.getElementById("visibility")?.close()
+                  }}
+                  class="w-full flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                >
+                  <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white">
+                    <option.icon />
+                  </div>
+                  <div class="flex-1 text-left">
+                    <p class="font-medium text-gray-900 dark:text-white">{option.label}</p>
+                    <p class="text-sm text-gray-500 dark:text-gray-400">{option.desc}</p>
+                  </div>
+                  <Show when={postData().whoCanSee === option.key}>
+                    <CheckIcon />
+                  </Show>
+                </button>
+              ))}
+            </div>
+          </div>
+        </dialog>
+      </Portal>
+
+      {/* Topic Picker Modal */}
+      <Portal>
+        <dialog id="topicPicker" class="modal">
+          <div class="modal-box max-w-lg mx-auto bg-white dark:bg-gray-900 rounded-2xl">
+            <h3 class="text-xl font-bold text-gray-900 dark:text-white mb-2">Choose a topic</h3>
+            <p class="text-gray-500 dark:text-gray-400 mb-6">Pick a topic that matches your post.</p>
+
+            <div class="grid grid-cols-1 gap-3 max-h-80 overflow-y-auto">
+              <For each={topics()}>
+                {(topic) => (
+                  <button
+                    onClick={() => {
+                      setPostData((prev) => ({ ...prev, topic }))
+                      document.getElementById("topicPicker")?.close()
+                    }}
+                    class="flex items-center space-x-3 p-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  >
+                    <div class="w-10 h-10 bg-purple-100 dark:bg-purple-900/20 rounded-full flex items-center justify-center">
+                      {getTopicIcon(topic.icon)}
+                    </div>
+                    <span class="flex-1 text-left font-medium text-gray-900 dark:text-white">{topic.name}</span>
+                    <Show when={postData().topic?.id === topic.id}>
+                      <CheckIcon />
+                    </Show>
+                  </button>
+                )}
+              </For>
+            </div>
+          </div>
+        </dialog>
+      </Portal>
     </dialog>
   );
 }
