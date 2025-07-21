@@ -515,7 +515,7 @@ export default function Post(props: Props) {
               class="cursor-pointer mx-2 flex items-center gap-1 hover:underline   transition-all duration-200 max-w-[110px] sm:max-w-none"
               title={props.expand?.author?.handle ? "@" + props.expand.author.handle : ""}
             >
-              {props.expand?.author?.handle  ?  "@" + props.expand.author.handle : props.expand.author.username}
+              {props.expand?.author?.handle  ?  "@" + props.expand.author.handle : "@" +  props.expand.author.username}
             </CardTitle>
             <Show when={props.expand.author.validVerified}>
               <div data-tip="Verified" class="tooltip flex items-center">
