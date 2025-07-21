@@ -142,7 +142,7 @@ export default function Post(props: Props) {
   const [_preview_meta, set_preview_meta] = createSignal(null)
 
   const [currentImageIndex, setCurrentImageIndex] = createSignal(0)
-  const {  mobile } = useDevice()
+  const { mobile } = useDevice()
   createEffect(() => {
     const url = props.embedded_link;
 
@@ -156,11 +156,11 @@ export default function Post(props: Props) {
       .then((meta) => {
         console.log(meta)
         set_preview_meta(meta)
-        setLoadedMeta(true)
+        setLoadedMeta(false)
       })
       .catch(() => {
         set_preview_meta(null)
-        setLoadedMeta(false)
+        setLoadedMeta(true)
       });
   });
 
@@ -455,21 +455,20 @@ export default function Post(props: Props) {
 
 
   return (
-       <Card
+    <Card
       class={joinClass(
-         
+
         " h-fit z-10",
         "p-2 text-md shadow-none ",
         props.wasReposted && "border",
         props.disabled
           ? "rounded "
-          : `   rounded-none shadow-none${
-              theme() === "dark" && !props.page
-                ? "hover:bg-[#121212]"
-                : theme() === "light" && !props.page
-                  ? "hover:bg-[#faf9f9]"
-                  : ""
-            }`,
+          : `   rounded-none shadow-none${theme() === "dark" && !props.page
+            ? "hover:bg-[#121212]"
+            : theme() === "light" && !props.page
+              ? "hover:bg-[#faf9f9]"
+              : ""
+          }`,
       )}
     >
       <Show when={pinned() && window.location.pathname.includes("/u")}>
@@ -506,18 +505,18 @@ export default function Post(props: Props) {
         <div class="flex gap-2   items-start mt-0 mb-5 pt-0">
           <div class="flex hero items-center mt-0   pt-0">
             <CardTitle
-  class="cursor-pointer flex items-center gap-1 hover:underline truncate transition-all duration-200 max-w-[100px] sm:max-w-none"
-  onClick={() => props.navigate(StringJoin("/u/", props.expand.author.username))}
-  title={props.expand?.author?.username} // Full name on hover
->
-  {props.expand?.author?.username}
-</CardTitle>
-           <CardTitle
-  class="cursor-pointer mx-2 flex items-center gap-1 hover:underline truncate transition-all duration-200 max-w-[110px] sm:max-w-none"
-  title={props.expand?.author?.handle ? "@" + props.expand.author.handle : ""}
->
-  {props.expand?.author?.handle && "@" + props.expand.author.handle}
-</CardTitle>
+              class="cursor-pointer flex items-center gap-1 hover:underline  transition-all duration-200 max-w-[100px] sm:max-w-none"
+              onClick={() => props.navigate(StringJoin("/u/", props.expand.author.username))}
+              title={props.expand?.author?.username} // Full name on hover
+            >
+              {props.expand?.author?.username}
+            </CardTitle>
+            <CardTitle
+              class="cursor-pointer mx-2 flex items-center gap-1 hover:underline   transition-all duration-200 max-w-[110px] sm:max-w-none"
+              title={props.expand?.author?.handle ? "@" + props.expand.author.handle : ""}
+            >
+              {props.expand?.author?.handle && "@" + props.expand.author.handle}
+            </CardTitle>
             <Show when={props.expand.author.validVerified}>
               <div data-tip="Verified" class="tooltip flex items-center">
                 <svg
@@ -529,11 +528,11 @@ export default function Post(props: Props) {
               </div>
             </Show>
             <Show when={props.expand.author.isEarlyUser}>
-               
+
             </Show>
           </div>
-  <CardTitle class="text-sm opacity-50 mx-1">·</CardTitle>
-  <CardTitle class="text-sm opacity-50 ">{created(props.created)}</CardTitle>
+          <CardTitle class="text-sm opacity-50 mx-1">·</CardTitle>
+          <CardTitle class="text-sm opacity-50 ">{created(props.created)}</CardTitle>
         </div>
         <Show
           when={
@@ -833,7 +832,7 @@ export default function Post(props: Props) {
               viewBox="0 0 24 24"
               strokeWidth="1.5"
               stroke="currentColor"
-              class="size-6 cursor-pointer hover:scale-125 hover:animate-pulse transition-transform duration-300" 
+              class="size-6 cursor-pointer hover:scale-125 hover:animate-pulse transition-transform duration-300"
             >
               <path
                 strokeLinecap="round"
