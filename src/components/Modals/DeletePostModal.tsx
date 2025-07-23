@@ -7,7 +7,7 @@ import { createSignal } from "solid-js";
 export default function DeletePostModal({id, setPosts} : {id: string, setPosts: any}) {
   const { theme } = useTheme();
 
-  const [loading, setLoading] = createSignal(false)
+  const [loading, setLoading] = createSignal(false) 
   async function deletePost() {
      setLoading(true)
      const { success } = await api.send("/actions/posts/delete", {
@@ -29,12 +29,12 @@ export default function DeletePostModal({id, setPosts} : {id: string, setPosts: 
   }
 
   function closeModal() {
-    (document.getElementById(`delete-post-modal-${id}`) as HTMLDialogElement)?.close();
+    (document.getElementById("delete-post-modal") as HTMLDialogElement)?.close();
   }
 
   return (
     <dialog
-      id={`delete-post-modal-${id}`}
+      id="delete-post-modal"
       class="modal flex items-center justify-center p-4"
     >
       <div
