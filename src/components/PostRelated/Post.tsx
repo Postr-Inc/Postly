@@ -770,6 +770,7 @@ export default function Post(props: Props) {
         </CardFooter>
       </Show>
       <BlockUserModal /> 
+      <DeletePostModal id={props.id} setPosts={props.setPosts}/>
     </Card>
   );
 }
