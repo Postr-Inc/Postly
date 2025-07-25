@@ -51,7 +51,7 @@ function UserResultItem({ user, navigate }) {
       class="flex items-start gap-3 px-4 py-3 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer"
     >
       <img
-        src={user.avatar}
+        src={api.cdn.getUrl("users", user.id, user.username)}
         alt={user.username}
         class="w-12 h-12 rounded-full object-cover mt-1"
       />
