@@ -26,6 +26,7 @@ import SafetyCenter from './Pages/safety';
 import Privacy from './Pages/settings/privacy';
 import Status from './Pages/status'; 
 import ExplorePage from './Pages/explore';
+import Search from './Pages/search';
 const root = document.getElementById('root'); 
 export const api = new SDK({serverURL:"https://api.postlyapp.com"}); 
  
@@ -58,5 +59,6 @@ render(() =>  (
     <Route path={"/safety"}  component={SafetyCenter} />
     <Route path={"/status"} component={Status} /> 
     <Route path={"/explore"} component={ExplorePage} />
+    <Route path={"/search"} component={Search} />
   </Router>
 ), root);
