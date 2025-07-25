@@ -1137,8 +1137,8 @@ resetPassword: async (token: string, password: string) => {
           query,
           collections
         }
-      }) 
-      return res?.results
+      })  
+      return res 
     }catch (errr){
       console.log(errr)
       return []
