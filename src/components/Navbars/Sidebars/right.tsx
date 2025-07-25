@@ -61,10 +61,8 @@ export function SideBarRight(props: {
     console.log("search started");
 
     try {
-      let results = await api.deepSearch(["users"], searchQuery()) as any[];
-      console.log("results received:", results);
-      let users = results;
-      setSearchResults({ users });
+      let results = await api.deepSearch(["users"], searchQuery()) as any[]; 
+      setSearchResults(results);
       if (!recentSearches().includes(searchQuery())) {
         setRecentSearches([...recentSearches(), searchQuery()]);
         localStorage.setItem("recentSearches", JSON.stringify(recentSearches()));
