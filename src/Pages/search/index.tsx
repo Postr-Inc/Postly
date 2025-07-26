@@ -194,7 +194,7 @@ export default function Search() {
                   <Show when={posts().length > 0}>
                     <div class="px-4 pt-4 pb-2 text-lg font-extrabold text-zinc-900 dark:text-white">Posts</div>
                     <For each={posts()}>
-                      {(post) => <Post {...post} />}
+                      {(post) => <Post {...post} navigate={navigate}  />}
                     </For>
                   </Show>
                 </div>
@@ -210,7 +210,7 @@ export default function Search() {
               >
                 <div class="divide-y divide-zinc-200 dark:divide-zinc-800">
                   <For each={posts()}>
-                    {(post) => <Post  {...post} />}
+                    {(post) => <Post  {...post}  navigate={navigate} />}
                   </For>
                 </div>
               </Show>
