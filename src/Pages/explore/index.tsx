@@ -351,6 +351,9 @@ export default function ExplorePage() {
               {(tag) => (
                 <div
                   key={tag.name}
+                  onClick={()=>{
+                    navigate(`/search?q=${tag.name}`)
+                  }}
                   class={joinClass(
                     "group flex items-center justify-between px-4 py-4 mx-2 mb-2 rounded-xl transition-all duration-200 cursor-pointer border",
                     theme() === "dark"
