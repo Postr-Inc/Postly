@@ -1,8 +1,0 @@
-[{
-      "relation": ["delegate_permission/common.handle_all_urls"],
-      "target": {
-        "namespace": "android_app",
-        "package_name": "com.postlyapp.twa",
-        "sha256_cert_fingerprints": ["82:9F:51:C3:C4:91:43:C0:2B:B2:CC:07:89:16:99:F9:9A:67:37:D8:2B:DD:D4:27:F9:EE:0E:A2:69:35:27:52"]
-      }
-    }]
