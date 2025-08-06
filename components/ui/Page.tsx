@@ -12,7 +12,7 @@ import { Portal } from "solid-js/web";
 import DeleteAccountModal from "./Modal/DeleteAccountModal";
 import Alert from "./Alerts/Alert";
 import EditAccountModal from "./Modal/EditAccountModal";
-import JoinPostlyModal from "./Modal/PostlyPlusModal";
+import JoinPostlyModal from "./Modal/JoinPostlyModal";
 import BlockUserModal from "./Modal/BlockedModal";
 import PostlyPlusModal from "./Modal/PostlyPlusModal";
 export default function Page(props: {
