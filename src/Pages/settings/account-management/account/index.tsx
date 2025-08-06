@@ -1,17 +1,17 @@
-"use client"
+"use client";
 
-import { api } from "@/src" 
-import useNavigation from "@/src/Utils/Hooks/useNavigation"
-import useTheme from "@/src/Utils/Hooks/useTheme"
-import { joinClass } from "@/src/Utils/Joinclass"
-import Page from "@/src/Utils/Shared/Page"
-import { createEffect, createSignal } from "solid-js" 
+import { api } from "@/src";
+import useNavigation from "@/src/Utils/Hooks/useNavigation";
+import useTheme from "@/src/Utils/Hooks/useTheme";
+import { joinClass } from "@/src/Utils/Joinclass";
+import Page from "@/components/ui/Page";
+import { createEffect, createSignal } from "solid-js";
 interface AccountOptionProps {
-  title: string
-  description: string
-  onClick: () => void
-  icon: any
-  theme: string
+  title: string;
+  description: string;
+  onClick: () => void;
+  icon: any;
+  theme: string;
 }
 
 function AccountOption(props: AccountOptionProps) {
@@ -29,68 +29,86 @@ function AccountOption(props: AccountOptionProps) {
         <div
           class={joinClass(
             "flex items-center justify-center w-12 h-12 rounded-full transition-colors",
-            props.theme === "dark" ? "bg-gray-800 text-gray-300" : "bg-gray-100 text-gray-600",
+            props.theme === "dark"
+              ? "bg-gray-800 text-gray-300"
+              : "bg-gray-100 text-gray-600",
           )}
         >
           {props.icon}
         </div>
         <div class="flex-1">
           <h3 class="font-semibold text-base mb-1">{props.title}</h3>
-          <p class="text-sm text-gray-500 leading-relaxed">{props.description}</p>
+          <p class="text-sm text-gray-500 leading-relaxed">
+            {props.description}
+          </p>
         </div>
       </div>
       <div class="text-gray-400 group-hover:text-gray-600 transition-colors">
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 5l7 7-7 7" />
+        <svg
+          class="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth="2"
+            d="M9 5l7 7-7 7"
+          />
         </svg>
       </div>
     </div>
-  )
+  );
 }
 
 export default function Account() {
-  const { params, route, navigate, goBack } = useNavigation("/settings")
-  const { theme } = useTheme()
-  const [isLoggingOut, setIsLoggingOut] = createSignal(false)
-  const [user, setUser] = createSignal(api.authStore.model)
+  const { params, route, navigate, goBack } = useNavigation("/settings");
+  const { theme } = useTheme();
+  const [isLoggingOut, setIsLoggingOut] = createSignal(false);
+  const [user, setUser] = createSignal(api.authStore.model);
 
-  const currentTheme = theme()
-  const isDark = currentTheme === "dark"
+  const currentTheme = theme();
+  const isDark = currentTheme === "dark";
 
   const handleEditUsername = () => {
-    const modal = document.getElementById("editAccountModal") as HTMLDialogElement
-    modal?.showModal()
+    const modal = document.getElementById(
+      "editAccountModal",
+    ) as HTMLDialogElement;
+    modal?.showModal();
     window.dispatchEvent(
       new CustomEvent("modal-for", {
         detail: "Update Username",
       }),
-    )
-  }
+    );
+  };
 
   const handleEditEmail = () => {
-    const modal = document.getElementById("editAccountModal") as HTMLDialogElement
-    modal?.showModal()
+    const modal = document.getElementById(
+      "editAccountModal",
+    ) as HTMLDialogElement;
+    modal?.showModal();
     window.dispatchEvent(
       new CustomEvent("modal-for", {
         detail: "Email",
       }),
-    )
-  }
+    );
+  };
 
   const handleLogout = async () => {
-    setIsLoggingOut(true)
+    setIsLoggingOut(true);
     try {
-      await api.authStore.logout(true)
+      await api.authStore.logout(true);
     } finally {
-      setIsLoggingOut(false)
+      setIsLoggingOut(false);
     }
-  }
+  };
 
-  createEffect(()=>{
-    api.on("authChange", ()=>{
-      setUser(JSON.parse(localStorage.getItem("postr_auth") as any ))
-    })
-  })
+  createEffect(() => {
+    api.on("authChange", () => {
+      setUser(JSON.parse(localStorage.getItem("postr_auth") as any));
+    });
+  });
 
   const accountOptions = [
     {
@@ -98,7 +116,12 @@ export default function Account() {
       description: `@${user().username}`,
       onClick: handleEditUsername,
       icon: (
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          class="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -113,7 +136,12 @@ export default function Account() {
       description: api.authStore.model.email,
       onClick: handleEditEmail,
       icon: (
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          class="w-6 h-6"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path
             strokeLinecap="round"
             strokeLinejoin="round"
@@ -123,21 +151,18 @@ export default function Account() {
         </svg>
       ),
     },
-     
-  ]
+  ];
 
   return (
     <Page {...{ navigate, params, route }}>
-      <div
-        class={joinClass(
-          "min-h-screen transition-colors duration-200", 
-        )}
-      >
+      <div class={joinClass("min-h-screen transition-colors duration-200")}>
         {/* Header */}
         <div
           class={joinClass(
             "sticky top-0 z-10 backdrop-blur-md border-b transition-colors",
-            isDark ? "bg-gray-900/80 border-gray-800" : "bg-white/80 border-gray-200",
+            isDark
+              ? "bg-gray-900/80 border-gray-800"
+              : "bg-white/80 border-gray-200",
           )}
         >
           <div class="flex items-center px-4 py-4">
@@ -145,12 +170,24 @@ export default function Account() {
               onClick={goBack}
               class={joinClass(
                 "mr-4 p-2 rounded-full transition-colors duration-200",
-                isDark ? "hover:bg-gray-800 active:bg-gray-700" : "hover:bg-gray-100 active:bg-gray-200",
+                isDark
+                  ? "hover:bg-gray-800 active:bg-gray-700"
+                  : "hover:bg-gray-100 active:bg-gray-200",
               )}
               aria-label="Go back"
             >
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+              <svg
+                class="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M15 19l-7-7 7-7"
+                />
               </svg>
             </button>
             <div class="flex-1 text-center">
@@ -166,7 +203,9 @@ export default function Account() {
           <div
             class={joinClass(
               "flex items-center space-x-4 p-6 rounded-2xl border",
-              isDark ? "bg-gray-800/50 border-gray-700" : "bg-white border-gray-200",
+              isDark
+                ? "bg-gray-800/50 border-gray-700"
+                : "bg-white border-gray-200",
             )}
           >
             <div
@@ -186,7 +225,9 @@ export default function Account() {
 
         {/* Account Options */}
         <div class="px-4 space-y-3">
-          <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Account Information</h3>
+          <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
+            Account Information
+          </h3>
           {accountOptions.map((option) => (
             <AccountOption
               key={option.title}
@@ -201,14 +242,21 @@ export default function Account() {
 
         {/* Additional Settings */}
         <div class="px-4 mt-8 space-y-3">
-          <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">Data & Privacy</h3>
+          <h3 class="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4">
+            Data & Privacy
+          </h3>
           <AccountOption
             title="Clear Cache"
             description="Clear app cache and temporary data"
             onClick={() => api.resetCache()}
             theme={currentTheme}
             icon={
-              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg
+                class="w-6 h-6"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
                 <path
                   strokeLinecap="round"
                   strokeLinejoin="round"
@@ -229,13 +277,25 @@ export default function Account() {
               "w-full flex items-center justify-center space-x-2 py-4 px-6 rounded-xl font-semibold transition-all duration-200",
               "border-2 border-red-200 text-red-600 hover:bg-red-50 hover:border-red-300 active:bg-red-100",
               "disabled:opacity-50 disabled:cursor-not-allowed",
-              isDark && "border-red-800 text-red-400 hover:bg-red-900/20 hover:border-red-700 active:bg-red-900/30",
+              isDark &&
+                "border-red-800 text-red-400 hover:bg-red-900/20 hover:border-red-700 active:bg-red-900/30",
             )}
           >
             {isLoggingOut() ? (
               <>
-                <svg class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <svg
+                  class="w-5 h-5 animate-spin"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  />
                   <path
                     class="opacity-75"
                     fill="currentColor"
@@ -246,7 +306,12 @@ export default function Account() {
               </>
             ) : (
               <>
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -261,5 +326,5 @@ export default function Account() {
         </div>
       </div>
     </Page>
-  )
+  );
 }

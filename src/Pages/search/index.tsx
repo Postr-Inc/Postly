@@ -9,11 +9,10 @@ import {
 } from "solid-js";
 import { useNavigate } from "@solidjs/router";
 
-import Page from "@/src/Utils/Shared/Page";
+import Page from "@/components/ui/Page";
 import { api } from "@/src";
 import useNavigation from "@/src/Utils/Hooks/useNavigation";
-import Post from "@/src/components/PostRelated/Post";
-
+import Post from "@/components/ui/PostRelated/Post";
 // Utility: Get query param from URL
 const getQueryParam = () =>
   new URLSearchParams(window.location.search).get("q") || "";
@@ -27,7 +26,9 @@ function useQueryParam() {
   return query;
 }
 
-async function fetchSearch(query: string): Promise<{ users: any[]; posts: any[] }> {
+async function fetchSearch(
+  query: string,
+): Promise<{ users: any[]; posts: any[] }> {
   if (!query.trim()) return { users: [], posts: [] };
   try {
     const res = await api.deepSearch(["users", "posts"], query.trim());
@@ -38,8 +39,14 @@ async function fetchSearch(query: string): Promise<{ users: any[]; posts: any[] 
   }
 }
 
-function UserResultItem({ user, navigate }) {
-  const handleNavigate = (e) => {
+function UserResultItem({
+  user,
+  navigate,
+}: {
+  user: any;
+  navigate: (p: string) => void;
+}) {
+  const handleNavigate = (e: any) => {
     if (e.target.tagName !== "BUTTON") {
       navigate(`/u/${user.username}`);
     }
@@ -58,7 +65,9 @@ function UserResultItem({ user, navigate }) {
       <div class="flex-1">
         <div class="flex justify-between items-center">
           <div>
-            <div class="font-bold text-sm text-zinc-900 dark:text-white">{user.name}</div>
+            <div class="font-bold text-sm text-zinc-900 dark:text-white">
+              {user.name}
+            </div>
             <div class="text-xs text-zinc-500">@{user.username}</div>
           </div>
           <button class="px-3 py-1 text-sm font-medium text-white bg-zinc-900 dark:bg-white dark:text-black rounded-full hover:opacity-90 relative z-10">
@@ -165,7 +174,9 @@ export default function Search() {
               <Show
                 when={users().length > 0}
                 fallback={
-                  <div class="p-4 text-sm text-zinc-500 text-center">No users found.</div>
+                  <div class="p-4 text-sm text-zinc-500 text-center">
+                    No users found.
+                  </div>
                 }
               >
                 <For each={users()}>
@@ -185,16 +196,22 @@ export default function Search() {
               >
                 <div class="divide-y divide-zinc-200 dark:divide-zinc-800">
                   <Show when={users().length > 0}>
-                    <div class="px-4 pt-4 pb-2 text-lg font-extrabold text-zinc-900 dark:text-white">People</div>
+                    <div class="px-4 pt-4 pb-2 text-lg font-extrabold text-zinc-900 dark:text-white">
+                      People
+                    </div>
                     <For each={users().slice(0, 3)}>
-                      {(user) => <UserResultItem user={user} navigate={navigate} />}
+                      {(user) => (
+                        <UserResultItem user={user} navigate={navigate} />
+                      )}
                     </For>
                   </Show>
 
                   <Show when={posts().length > 0}>
-                    <div class="px-4 pt-4 pb-2 text-lg font-extrabold text-zinc-900 dark:text-white">Posts</div>
+                    <div class="px-4 pt-4 pb-2 text-lg font-extrabold text-zinc-900 dark:text-white">
+                      Posts
+                    </div>
                     <For each={posts()}>
-                      {(post) => <Post {...post} navigate={navigate}  />}
+                      {(post) => <Post {...post} navigate={navigate} />}
                     </For>
                   </Show>
                 </div>
@@ -205,12 +222,14 @@ export default function Search() {
               <Show
                 when={posts().length > 0}
                 fallback={
-                  <div class="p-4 text-sm text-zinc-500 text-center">No posts found.</div>
+                  <div class="p-4 text-sm text-zinc-500 text-center">
+                    No posts found.
+                  </div>
                 }
               >
                 <div class="divide-y divide-zinc-200 dark:divide-zinc-800">
                   <For each={posts()}>
-                    {(post) => <Post  {...post}  navigate={navigate} />}
+                    {(post) => <Post {...post} navigate={navigate} />}
                   </For>
                 </div>
               </Show>
@@ -218,7 +237,9 @@ export default function Search() {
 
             <Match when={["Media", "Lists"].includes(activeTab())}>
               <div class="p-8 text-center text-sm text-zinc-500">
-                <h3 class="font-bold text-lg text-zinc-800 dark:text-zinc-200">Coming Soon!</h3>
+                <h3 class="font-bold text-lg text-zinc-800 dark:text-zinc-200">
+                  Coming Soon!
+                </h3>
                 <p>Search for {activeTab()} is not available yet.</p>
               </div>
             </Match>

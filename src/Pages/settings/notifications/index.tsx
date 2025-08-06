@@ -1,11 +1,11 @@
 import { createSignal, onMount } from "solid-js";
-import ArrowLeft from "@/src/components/Icons/ArrowLeft";
+import ArrowLeft from "@/components/Icons/ArrowLeft";
 import useNavigation from "@/src/Utils/Hooks/useNavigation";
 import useTheme from "@/src/Utils/Hooks/useTheme";
-import Page from "@/src/Utils/Shared/Page";
+import Page from "@/components/ui/Page";
 
 // Helper to read/write from IndexedDB
- function setNotificationPreference(enabled: boolean): Promise<void> {
+function setNotificationPreference(enabled: boolean): Promise<void> {
   return new Promise((resolve, reject) => {
     localStorage.setItem("notifications_enabled", JSON.stringify(enabled)); // ✅ Mirror in localStorage
 
@@ -83,9 +83,7 @@ import Page from "@/src/Utils/Shared/Page";
   });
 }
 
-
-
- function getNotificationPreference(): Promise<boolean> {
+function getNotificationPreference(): Promise<boolean> {
   return new Promise((resolve) => {
     // ✅ First try localStorage
     const cached = localStorage.getItem("notifications_enabled");
@@ -124,7 +122,6 @@ import Page from "@/src/Utils/Shared/Page";
   });
 }
 
-
 export default function () {
   const { params, route, navigate } = useNavigation("/settings");
   const { theme } = useTheme();
@@ -146,7 +143,11 @@ export default function () {
   };
 
   return (
-    <Page {...{ navigate, params, route }} id={crypto.randomUUID()} hide={["bottomNav"]}>
+    <Page
+      {...{ navigate, params, route }}
+      id={crypto.randomUUID()}
+      hide={["bottomNav"]}
+    >
       <div class="flex flex-col w-full h-full p-5">
         <div class="flex flex-row hero justify-between gap-2 mb-6">
           <ArrowLeft
@@ -160,7 +161,8 @@ export default function () {
         <div class="flex justify-between items-center border-b py-4">
           <span class="text-lg font-medium">Enable Notifications</span>
           <p>
-            Get notifications when users like your posts, messages are recieved, when people you follow post, and when someone likes your post!
+            Get notifications when users like your posts, messages are recieved,
+            when people you follow post, and when someone likes your post!
           </p>
           <label class="relative inline-flex items-center cursor-pointer">
             <input
@@ -169,12 +171,13 @@ export default function () {
               checked={notificationsEnabled()}
               onChange={toggleNotifications}
             />
-            <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700
+            <div
+              class="w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700
                         peer-checked:after:translate-x-full peer-checked:bg-blue-600
                         after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white
                         after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5
-                        after:transition-all peer-checked:after:border-white">
-            </div>
+                        after:transition-all peer-checked:after:border-white"
+            ></div>
           </label>
         </div>
       </div>

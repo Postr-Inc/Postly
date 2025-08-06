@@ -1,23 +1,23 @@
 import { A } from "@solidjs/router";
-import { createEffect, createSignal, Show, } from "solid-js";
+import { createEffect, createSignal, Show } from "solid-js";
 import useAuth from "../../Utils/Hooks/useAuth";
 import { api } from "../..";
-import Page from "@/src/Utils/Shared/Page";
+import Page from "@/components/ui/Page";
 import useNavigation from "@/src/Utils/Hooks/useNavigation";
 import logo from "@/src/assets/icon_transparent.png";
-import LandingPage from "@/src/assets/Landing Page.jpg"
+import LandingPage from "@/src/assets/Landing Page.jpg";
 import { joinClass } from "@/src/Utils/Joinclass";
 import useTheme from "@/src/Utils/Hooks/useTheme";
 import useDevice from "@/src/Utils/Hooks/useDevice";
-import Modal from "@/src/components/Modal";
-import RegisterModal from "@/src/Utils/Modals/RegisterModal";
+import Modal from "@/components/ui/Modal";
+import RegisterModal from "@/components/ui/Modal/RegisterModal";
 import { Portal } from "solid-js/web";
 import { dispatchAlert, haptic } from "@/src/Utils/SDK";
-import Alert from "@/src/Utils/Alerts/Alert"
+import Alert from "@/components/ui/Alerts/Alert";
 export default function Login() {
-  const { navigate } = useNavigation()
+  const { navigate } = useNavigation();
   const [isAuthenticated, setIsAuthenticated] = createSignal(
-    api.authStore.isValid()
+    api.authStore.isValid(),
   );
   const [isLoading, setIsLoading] = createSignal(false);
   const [error, setError] = createSignal("");
@@ -38,14 +38,27 @@ export default function Login() {
       haptic.confirm();
     } catch (err: any) {
       // If Zod error, show field errors
-      console.log(error)
+      console.log(error);
       if (err?.error?.issues) {
         err.error.issues.forEach((issue: any) => {
           const field = issue.path[0];
           const message = issue.message;
 
-          if (field === "emailOrUsername" || message === "Invalid email or password") setEmailError(message === "Invalid email or password" ? "Invalid Email" : message);
-          if (field === "password" || message === "Invalid email or password") setPasswordError(message === "Invalid email or password" ? "Invalid Password" : message);
+          if (
+            field === "emailOrUsername" ||
+            message === "Invalid email or password"
+          )
+            setEmailError(
+              message === "Invalid email or password"
+                ? "Invalid Email"
+                : message,
+            );
+          if (field === "password" || message === "Invalid email or password")
+            setPasswordError(
+              message === "Invalid email or password"
+                ? "Invalid Password"
+                : message,
+            );
           else dispatchAlert({ type: "error", message });
         });
         haptic.error();
@@ -53,14 +66,15 @@ export default function Login() {
       }
 
       // Fallback for non-validation errors
-      dispatchAlert({ type: "error", message: err?.message || "Login failed." });
+      dispatchAlert({
+        type: "error",
+        message: err?.message || "Login failed.",
+      });
       haptic.error();
     } finally {
       setIsLoading(false);
     }
   };
-
-
 
   let [email, setEmail] = createSignal("");
   let [password, setPassword] = createSignal("");
@@ -74,17 +88,16 @@ export default function Login() {
     function startTyping() {
       if (typingTimeout) {
         clearTimeout(typingTimeout);
-      } 
-
+      }
     }
 
     function stopTyping() {
-      clearTimeout(typingTimeout); 
+      clearTimeout(typingTimeout);
     }
 
     async function handleKeydown(e: KeyboardEvent) {
-      if (e.key === "Enter") { 
-        await login(); 
+      if (e.key === "Enter") {
+        await login();
       }
       startTyping();
     }
@@ -100,11 +113,15 @@ export default function Login() {
   return (
     <>
       <Alert />
-      <div style={{ "background-image": `url(${LandingPage})`, "background-size": "cover", "background-position": "center" }} class="w-full h-screen flex justify-center items-center">
-        <div
-
-
-          class=" relative w-full p-2 xl:mt-5    justify-center flex flex-col gap-5 mx-auto xl:w-[30vw] lg:w-[50vw]">
+      <div
+        style={{
+          "background-image": `url(${LandingPage})`,
+          "background-size": "cover",
+          "background-position": "center",
+        }}
+        class="w-full h-screen flex justify-center items-center"
+      >
+        <div class=" relative w-full p-2 xl:mt-5    justify-center flex flex-col gap-5 mx-auto xl:w-[30vw] lg:w-[50vw]">
           <img src={logo} class="w-20 h-20 mx-auto  " />
           <div class=" mb-12 flex flex-col gap-5  w-full">
             <p class=" mt-2  sm:mt-0  w-full text-3xl text-white font-extrabold  theme:text-black">
@@ -114,7 +131,9 @@ export default function Login() {
               Join the community building a safer, more secure social space.
             </p>
           </div>
-          <label for="email" class="text-white">Email or Username</label>
+          <label for="email" class="text-white">
+            Email or Username
+          </label>
           <div class="relative w-full">
             <input
               id="email"
@@ -126,9 +145,10 @@ export default function Login() {
             <Show when={emailError()}>
               <p class="text-red-500 text-xs">{emailError()}</p>
             </Show>
-
           </div>
-          <label for="password" class="text-white">Password</label>
+          <label for="password" class="text-white">
+            Password
+          </label>
 
           <input
             id="password"
@@ -150,9 +170,7 @@ export default function Login() {
             {isLoading() ? "Loading..." : "Sign in"}
           </button>
 
-          {
-            error() && "error"
-          }
+          {error() && "error"}
           <p class="text-xs text-white">
             Forgot your password?{" "}
             <button
@@ -166,7 +184,13 @@ export default function Login() {
             <p class="text-xs">
               Don't have an account?{" "}
               <button
-                onClick={() => (document.getElementById("register") as HTMLDialogElement | null)?.showModal()}
+                onClick={() =>
+                  (
+                    document.getElementById(
+                      "register",
+                    ) as HTMLDialogElement | null
+                  )?.showModal()
+                }
                 class="text-blue-500"
               >
                 Sign up

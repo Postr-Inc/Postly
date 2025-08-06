@@ -1,21 +1,21 @@
-import { createSignal, onMount, For, Show } from 'solid-js';
+import { createSignal, onMount, For, Show } from "solid-js";
 
 // A more polished status indicator component
 const StatusIndicator = (props) => {
   const colorClasses = {
-    up: 'bg-green-500',
-    down: 'bg-red-500',
-    checking: 'bg-yellow-500',
+    up: "bg-green-500",
+    down: "bg-red-500",
+    checking: "bg-yellow-500",
   };
 
   return (
     <div class="relative flex h-3 w-3">
-      <Show when={props.status === 'checking'}>
+      <Show when={props.status === "checking"}>
         <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-yellow-400 opacity-75"></span>
       </Show>
       <span
         class={`relative inline-flex rounded-full h-3 w-3 ${
-          colorClasses[props.status] || 'bg-gray-400'
+          colorClasses[props.status] || "bg-gray-400"
         }`}
       ></span>
     </div>
@@ -41,37 +41,64 @@ const PLogo = () => (
 
 function Status() {
   const [services, setServices] = createSignal([
-    { name: 'Hapta Backend', url: 'https://api.postlyapp.com/health', status: 'checking', reason: null },
+    {
+      name: "Hapta Backend",
+      url: "https://api.postlyapp.com/health",
+      status: "checking",
+      reason: null,
+    },
   ]);
   const [alerts, setAlerts] = createSignal([]);
   const [lastChecked, setLastChecked] = createSignal(null);
 
   // *** PING LOGIC WITH DOWNTIME REASONS ***
-  const pingService = async (service) => {
+  const pingService = async (service: any) => {
     const previousStatus = service.status;
-    let newStatusInfo = { status: 'down', reason: 'An unknown error occurred.' };
+    let newStatusInfo = {
+      status: "down",
+      reason: "An unknown error occurred.",
+    } as { status: "up" | "down"; reason: string | null };
 
     try {
-      const response = await fetch(service.url, { method: 'HEAD', signal: AbortSignal.timeout(10000) }); // 10s timeout
+      const response = await fetch(service.url, {
+        method: "HEAD",
+        signal: AbortSignal.timeout(10000),
+      }); // 10s timeout
 
       if (response.ok) {
-        newStatusInfo = { status: 'up', reason: null };
+        newStatusInfo = { status: "up", reason: null };
       } else {
         // Server responded with an HTTP error code (4xx, 5xx)
-        newStatusInfo = { status: 'down', reason: `Server responded with an error (${response.status}).` };
+        newStatusInfo = {
+          status: "down",
+          reason: `Server responded with an error (${response.status}).`,
+        };
       }
-    } catch (error) {
+    } catch (error: any) {
       // This catches network errors (server unreachable, DNS issues, timeout)
-      if (error.name === 'AbortError' || error.name === 'TypeError') {
-        newStatusInfo = { status: 'down', reason: 'Server is unreachable, possibly for maintenance.' };
+      if (error.name === "AbortError" || error.name === "TypeError") {
+        newStatusInfo = {
+          status: "down",
+          reason: "Server is unreachable, possibly for maintenance.",
+        };
       }
       console.error(`Ping failed for ${service.name}:`, error.name);
     }
 
     // Create an alert only if the status has changed from a known state.
-    if (previousStatus !== newStatusInfo.status && previousStatus !== 'checking') {
-      const message = `${service.name} is now ${newStatusInfo.status === 'up' ? 'Operational' : `Down: ${newStatusInfo.reason}`}`;
-      setAlerts((prev) => [...prev, { id: Date.now(), message, type: newStatusInfo.status === 'up' ? 'success' : 'error' }]);
+    if (
+      previousStatus !== newStatusInfo.status &&
+      previousStatus !== "checking"
+    ) {
+      const message = `${service.name} is now ${newStatusInfo.status === "up" ? "Operational" : `Down: ${newStatusInfo.reason}`}`;
+      setAlerts((prev) => [
+        ...prev,
+        {
+          id: Date.now(),
+          message,
+          type: newStatusInfo.status === "up" ? "success" : "error",
+        },
+      ]);
     }
     return newStatusInfo;
   };
@@ -81,7 +108,7 @@ function Status() {
       services().map(async (service) => {
         const { status, reason } = await pingService(service);
         return { ...service, status, reason };
-      })
+      }),
     );
     setServices(updatedServices);
     setLastChecked(new Date().toLocaleTimeString());
@@ -90,7 +117,7 @@ function Status() {
   onMount(() => {
     checkAllServices();
     // *** REFRESH INTERVAL UPDATED TO 1 MINUTE ***
-    const interval = setInterval(checkAllServices, 60000); 
+    const interval = setInterval(checkAllServices, 60000);
     return () => clearInterval(interval);
   });
 
@@ -99,9 +126,9 @@ function Status() {
   };
 
   const statusInfo = {
-    up: { text: 'Operational', class: 'bg-green-100 text-green-800' },
-    down: { text: 'Down', class: 'bg-red-100 text-red-800' },
-    checking: { text: 'Checking...', class: 'bg-yellow-100 text-yellow-800' },
+    up: { text: "Operational", class: "bg-green-100 text-green-800" },
+    down: { text: "Down", class: "bg-red-100 text-red-800" },
+    checking: { text: "Checking...", class: "bg-yellow-100 text-yellow-800" },
   };
 
   return (
@@ -117,7 +144,7 @@ function Status() {
 
         <main class="bg-white shadow-md rounded-lg p-6">
           <div class="flow-root">
-             <div class="-my-4 divide-y divide-slate-200">
+            <div class="-my-4 divide-y divide-slate-200">
               <For each={services()}>
                 {(service) => (
                   <div class="flex items-center justify-between py-4">
@@ -126,21 +153,23 @@ function Status() {
                       <span class="text-lg font-medium">{service.name}</span>
                     </div>
                     <div class="text-right">
-                       <div
+                      <div
                         class={`inline-block text-sm font-semibold px-2.5 py-1 rounded-full ${
                           statusInfo[service.status]?.class
                         }`}
                       >
                         {statusInfo[service.status]?.text}
                       </div>
-                      <Show when={service.status === 'down' && service.reason}>
-                        <p class="text-sm text-slate-500 mt-1">{service.reason}</p>
+                      <Show when={service.status === "down" && service.reason}>
+                        <p class="text-sm text-slate-500 mt-1">
+                          {service.reason}
+                        </p>
                       </Show>
                     </div>
                   </div>
                 )}
               </For>
-             </div>
+            </div>
           </div>
         </main>
 
@@ -150,7 +179,9 @@ function Status() {
               {(alert) => (
                 <div
                   class={`p-4 rounded-lg flex items-center justify-between shadow-sm ${
-                    alert.type === 'success' ? 'bg-green-100 text-green-900' : 'bg-red-100 text-red-900'
+                    alert.type === "success"
+                      ? "bg-green-100 text-green-900"
+                      : "bg-red-100 text-red-900"
                   }`}
                   role="alert"
                 >
@@ -170,7 +201,8 @@ function Status() {
 
         <footer class="text-center mt-10 text-sm text-slate-500">
           <p>
-            Last updated at: <Show when={lastChecked()} fallback={<span>Checking...</span>}>
+            Last updated at:{" "}
+            <Show when={lastChecked()} fallback={<span>Checking...</span>}>
               {(time) => <span class="font-medium">{time}</span>}
             </Show>
           </p>

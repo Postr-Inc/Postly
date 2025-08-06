@@ -1,21 +1,32 @@
-"use client"
+"use client";
 
-import { createSignal, onCleanup, onMount, For, Show, createEffect } from "solid-js"
-import Page from "@/src/Utils/Shared/Page"
-import useNavigation from "@/src/Utils/Hooks/useNavigation"
-import useFeed from "@/src/Utils/Hooks/useFeed"
-import { api } from "@/src"
-import { joinClass } from "@/src/Utils/Joinclass"
-import StringJoin from "@/src/Utils/StringJoin"
+import {
+  createSignal,
+  onCleanup,
+  onMount,
+  For,
+  Show,
+  createEffect,
+} from "solid-js";
+import Page from "@/components/ui/Page";
+import useNavigation from "@/src/Utils/Hooks/useNavigation";
+import useFeed from "@/src/Utils/Hooks/useFeed";
+import { api } from "@/src";
+import { joinClass } from "@/src/Utils/Joinclass";
+import StringJoin from "@/src/Utils/StringJoin";
 
-function VideoWithCleanup(props: { src: string; index: number; onCanPlay: () => void }) {
-  let videoRef: HTMLVideoElement | undefined
+function VideoWithCleanup(props: {
+  src: string;
+  index: number;
+  onCanPlay: () => void;
+}) {
+  let videoRef: HTMLVideoElement | undefined;
 
   return (
     <video
       ref={(el) => {
-        videoRef = el!
-        videoRefs[props.index] = el!
+        videoRef = el!;
+        videoRefs[props.index] = el!;
       }}
       class="h-full w-full object-cover z-0"
       muted
@@ -28,13 +39,18 @@ function VideoWithCleanup(props: { src: string; index: number; onCanPlay: () => 
       onLoadedData={props.onCanPlay}
       onLoadedMetadata={props.onCanPlay}
     />
-  )
+  );
 }
 
 // Solid SVG Icons Component
 const Icons = {
   Heart: (props: any) => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      {...props}
+    >
       <path d="m11.645 20.91-.007-.003-.022-.012a15.247 15.247 0 0 1-.383-.218 25.18 25.18 0 0 1-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.688 3A5.5 5.5 0 0 1 12 5.052 5.5 5.5 0 0 1 16.313 3c2.973 0 5.437 2.322 5.437 5.25 0 3.925-2.438 7.111-4.739 9.256a25.175 25.175 0 0 1-4.244 3.17 15.247 15.247 0 0 1-.383.219l-.022.012-.007.004-.003.001a.752.752 0 0 1-.704 0l-.003-.001Z" />
     </svg>
   ),
@@ -71,7 +87,12 @@ const Icons = {
     </svg>
   ),
   Share: (props: any) => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      {...props}
+    >
       <path
         fillRule="evenodd"
         d="M15.75 4.5a3 3 0 1 1 .825 2.066l-8.421 4.679a3.002 3.002 0 0 1 0 1.51l8.421 4.679a3 3 0 1 1-.729 1.31l-8.421-4.678a3 3 0 1 1 0-4.132l8.421-4.679a3 3 0 0 1-.096-.755Z"
@@ -80,7 +101,12 @@ const Icons = {
     </svg>
   ),
   Bookmark: (props: any) => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      {...props}
+    >
       <path
         fillRule="evenodd"
         d="M6.32 2.577a49.255 49.255 0 0 1 11.36 0c1.497.174 2.57 1.46 2.57 2.93V21a.75.75 0 0 1-1.085.67L12 18.089l-7.165 3.583A.75.75 0 0 1 3.75 21V5.507c0-1.47 1.073-2.756 2.57-2.93Z"
@@ -105,7 +131,12 @@ const Icons = {
     </svg>
   ),
   Play: (props: any) => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      {...props}
+    >
       <path
         fillRule="evenodd"
         d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z"
@@ -114,7 +145,12 @@ const Icons = {
     </svg>
   ),
   Pause: (props: any) => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      {...props}
+    >
       <path
         fillRule="evenodd"
         d="M6.75 5.25a.75.75 0 0 1 .75-.75H9a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H7.5a.75.75 0 0 1-.75-.75V5.25Zm7.5 0A.75.75 0 0 1 15 4.5h1.5a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H15a.75.75 0 0 1-.75-.75V5.25Z"
@@ -123,18 +159,33 @@ const Icons = {
     </svg>
   ),
   VolumeOff: (props: any) => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      {...props}
+    >
       <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 0 0 1.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06ZM17.78 9.22a.75.75 0 1 0-1.06 1.06L18.44 12l-1.72 1.72a.75.75 0 1 0 1.06 1.06l1.72-1.72 1.72 1.72a.75.75 0 1 0 1.06-1.06L20.56 12l1.72-1.72a.75.75 0 1 0-1.06-1.06L19.5 10.94l-1.72-1.72Z" />
     </svg>
   ),
   VolumeUp: (props: any) => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      {...props}
+    >
       <path d="M13.5 4.06c0-1.336-1.616-2.005-2.56-1.06l-4.5 4.5H4.508c-1.141 0-2.318.664-2.66 1.905A9.76 9.76 0 0 0 1.5 12c0 .898.121 1.768.35 2.595.341 1.24 1.518 1.905 2.659 1.905h1.93l4.5 4.5c.945.945 2.561.276 2.561-1.06V4.06ZM18.584 5.106a.75.75 0 0 1 1.06 0 11.249 11.249 0 0 1 0 15.788.75.75 0 0 1-1.06-1.06 9.749 9.749 0 0 0 0-13.668.75.75 0 0 1 0-1.06Z" />
       <path d="M15.932 7.757a.75.75 0 0 1 1.061 0 6.251 6.251 0 0 1 0 8.486.75.75 0 0 1-1.06-1.061 4.751 4.751 0 0 0 0-6.364.75.75 0 0 1 0-1.06Z" />
     </svg>
   ),
   User: (props: any) => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      {...props}
+    >
       <path
         fillRule="evenodd"
         d="M7.5 6a4.5 4.5 0 1 1 9 0 4.5 4.5 0 0 1-9 0ZM3.751 20.105a8.25 8.25 0 0 1 16.498 0 .75.75 0 0 1-.437.695A18.683 18.683 0 0 1 12 22.5c-2.786 0-5.433-.608-7.812-1.7a.75.75 0 0 1-.437-.695Z"
@@ -143,7 +194,12 @@ const Icons = {
     </svg>
   ),
   DotsVertical: (props: any) => (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" {...props}>
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill="currentColor"
+      {...props}
+    >
       <path
         fillRule="evenodd"
         d="M10.5 6a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm0 6a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Zm0 6a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0Z"
@@ -151,23 +207,23 @@ const Icons = {
       />
     </svg>
   ),
-}
+};
 
-let videoRefs: HTMLVideoElement[] = []
+let videoRefs: HTMLVideoElement[] = [];
 
 export default function SnippetReels() {
-  const { params, route, navigate } = useNavigation("/snippets")
+  const { params, route, navigate } = useNavigation("/snippets");
 
   function pauseAllVideos() {
     videoRefs.forEach((video) => {
-      if (!video) return
-      video.pause()
-      video.currentTime = 0
-      video.muted = true
-    })
+      if (!video) return;
+      video.pause();
+      video.currentTime = 0;
+      video.muted = true;
+    });
   }
 
-  const [activeIndex, setActiveIndex] = createSignal(0)
+  const [activeIndex, setActiveIndex] = createSignal(0);
   const { posts, loading } = useFeed(
     "posts",
     {
@@ -177,84 +233,88 @@ export default function SnippetReels() {
       limit: 10,
     },
     activeIndex,
-  )
+  );
 
-  const [userInteracted, setUserInteracted] = createSignal(false)
-  const [videoLoaded, setVideoLoaded] = createSignal<boolean[]>([])
-  const [currentPost, setCurrentPost] = createSignal(null)
-  const [isPlaying, setIsPlaying] = createSignal(true)
+  const [userInteracted, setUserInteracted] = createSignal(false);
+  const [videoLoaded, setVideoLoaded] = createSignal<boolean[]>([]);
+  const [currentPost, setCurrentPost] = createSignal(null);
+  const [isPlaying, setIsPlaying] = createSignal(true);
 
-  let containerRef: HTMLDivElement | undefined
-  let observer: IntersectionObserver | null = null
+  let containerRef: HTMLDivElement | undefined;
+  let observer: IntersectionObserver | null = null;
 
   // Fixed video refs management
   createEffect(() => {
-    const currentPosts = posts()
+    const currentPosts = posts();
     if (currentPosts && currentPosts.length > 0) {
       // Always reinitialize to ensure proper length
-      videoRefs = new Array(currentPosts.length).fill(null)
-      setVideoLoaded(new Array(currentPosts.length).fill(false))
-      console.log(`Initialized ${currentPosts.length} video slots`)
+      videoRefs = new Array(currentPosts.length).fill(null);
+      setVideoLoaded(new Array(currentPosts.length).fill(false));
+      console.log(`Initialized ${currentPosts.length} video slots`);
     }
-  })
+  });
 
   const handleUserInteraction = () => {
     if (!userInteracted()) {
-      setUserInteracted(true)
-      const currentVideo = videoRefs[activeIndex()]
+      setUserInteracted(true);
+      const currentVideo = videoRefs[activeIndex()];
       if (currentVideo) {
-        currentVideo.muted = false
-        currentVideo.play().catch(() => {})
+        currentVideo.muted = false;
+        currentVideo.play().catch(() => {});
       }
     }
-  }
+  };
 
   const togglePlayPause = (e: Event) => {
-    e.stopPropagation()
-    const currentVideo = videoRefs[activeIndex()]
-    if (!currentVideo) return
+    e.stopPropagation();
+    const currentVideo = videoRefs[activeIndex()];
+    if (!currentVideo) return;
 
     if (currentVideo.paused) {
-      currentVideo.play().catch(() => {})
-      setIsPlaying(true)
+      currentVideo.play().catch(() => {});
+      setIsPlaying(true);
     } else {
-      currentVideo.pause()
-      setIsPlaying(false)
+      currentVideo.pause();
+      setIsPlaying(false);
     }
-  }
+  };
 
   const handleVideoLoaded = (index: number) => {
-    console.log(`Video ${index} loaded`)
+    console.log(`Video ${index} loaded`);
     setVideoLoaded((prev) => {
-      const newLoaded = [...prev]
-      newLoaded[index] = true
-      return newLoaded
-    })
-  }
+      const newLoaded = [...prev];
+      newLoaded[index] = true;
+      return newLoaded;
+    });
+  };
 
   const setupObserver = () => {
-    if (!containerRef || observer) return
-    console.log("Setting up observer...")
+    if (!containerRef || observer) return;
+    console.log("Setting up observer...");
 
     observer = new IntersectionObserver(
       (entries) => {
-        let bestMatch = { index: -1, ratio: 0 }
+        let bestMatch = { index: -1, ratio: 0 };
 
         entries.forEach((entry) => {
-          const index = Number(entry.target.getAttribute("data-index"))
+          const index = Number(entry.target.getAttribute("data-index"));
           if (entry.isIntersecting && !isNaN(index)) {
-            const ratio = entry.intersectionRatio
+            const ratio = entry.intersectionRatio;
             if (ratio > bestMatch.ratio) {
-              bestMatch = { index, ratio }
+              bestMatch = { index, ratio };
             }
           }
-        })
+        });
 
-        if (bestMatch.index !== -1 && bestMatch.ratio > 0.5 && bestMatch.index !== activeIndex()) {
-          console.log("Setting active index to:", bestMatch.index)
-          setActiveIndex(bestMatch.index)
-          setIsPlaying(true)
-          setCurrentPost(posts()[bestMatch.index])
+        if (
+          bestMatch.index !== -1 &&
+          bestMatch.ratio > 0.5 &&
+          bestMatch.index !== activeIndex()
+        ) {
+          console.log("Setting active index to:", bestMatch.index);
+          setActiveIndex(bestMatch.index);
+          setIsPlaying(true);
+          setCurrentPost(posts()[bestMatch.index]);
         }
       },
       {
@@ -262,108 +322,112 @@ export default function SnippetReels() {
         threshold: [0.1, 0.25, 0.5, 0.75, 1.0],
         rootMargin: "0px",
       },
-    )
-  }
+    );
+  };
 
   const observeElements = () => {
-    if (!observer || !containerRef) return
+    if (!observer || !containerRef) return;
 
     // Clear previous observations
-    observer.disconnect()
+    observer.disconnect();
 
-    const containers = containerRef.querySelectorAll("[data-index]")
-    console.log("Found elements to observe:", containers.length)
+    const containers = containerRef.querySelectorAll("[data-index]");
+    console.log("Found elements to observe:", containers.length);
 
     containers.forEach((element) => {
-      observer?.observe(element)
-    })
-  }
+      observer?.observe(element);
+    });
+  };
 
   onMount(() => {
-    console.log("Component mounted")
-    setupObserver()
-  })
+    console.log("Component mounted");
+    setupObserver();
+  });
 
   createEffect(() => {
-    const currentPosts = posts()
-    const isLoading = loading()
+    const currentPosts = posts();
+    const isLoading = loading();
     if (!isLoading && currentPosts && currentPosts.length > 0 && containerRef) {
-      console.log("Posts loaded, setting up observation...")
+      console.log("Posts loaded, setting up observation...");
       // Use a shorter timeout for better responsiveness
       setTimeout(() => {
-        observeElements()
-      }, 100)
+        observeElements();
+      }, 100);
     }
-  })
+  });
 
   createEffect(() => {
-    const currentIndex = activeIndex()
-    const loaded = videoLoaded()
-    const currentPosts = posts()
+    const currentIndex = activeIndex();
+    const loaded = videoLoaded();
+    const currentPosts = posts();
 
-    if (!currentPosts || !currentPosts[currentIndex]) return
+    if (!currentPosts || !currentPosts[currentIndex]) return;
 
-    setCurrentPost(currentPosts[currentIndex])
+    setCurrentPost(currentPosts[currentIndex]);
 
     videoRefs.forEach((video, i) => {
-      if (!video) return
+      if (!video) return;
 
       if (i === currentIndex) {
         // Current video logic
         if (isPlaying()) {
-          video.play().catch(() => {})
+          video.play().catch(() => {});
         } else {
-          video.pause()
+          video.pause();
         }
-        video.muted = !userInteracted()
+        video.muted = !userInteracted();
       } else {
         // Other videos always paused and muted
-        video.pause()
-        video.currentTime = 0
-        video.muted = true
+        video.pause();
+        video.currentTime = 0;
+        video.muted = true;
       }
-    })
-  })
+    });
+  });
 
   onCleanup(() => {
-    console.log("Cleaning up observer")
+    console.log("Cleaning up observer");
     if (observer) {
-      observer.disconnect()
-      observer = null
+      observer.disconnect();
+      observer = null;
     }
-  })
+  });
 
   async function handleLike(post: any) {
-    const userId = api.authStore.model?.id
-    if (!userId) return
+    const userId = api.authStore.model?.id;
+    if (!userId) return;
 
-    const hasLiked = post.likes.includes(userId)
-    const updatedLikes = hasLiked ? post.likes.filter((id: string) => id !== userId) : [...post.likes, userId]
+    const hasLiked = post.likes.includes(userId);
+    const updatedLikes = hasLiked
+      ? post.likes.filter((id: string) => id !== userId)
+      : [...post.likes, userId];
 
     // Optimistically update post object
-    post.likes = updatedLikes
+    post.likes = updatedLikes;
 
     // Update the local signal state if this is the current post
     if (post.id === currentPost()?.id) {
-      setCurrentPost({ ...post })
+      setCurrentPost({ ...post });
     }
 
     // Update the global cache
-    api.updateCache("posts", post.id, { likes: updatedLikes })
+    api.updateCache("posts", post.id, { likes: updatedLikes });
 
     try {
       await api.send(`/actions/posts/${hasLiked ? "unlike" : "like"}`, {
         body: { targetId: post.id },
-      })
+      });
     } catch (err) {
-      console.error("Like/unlike request failed:", err)
+      console.error("Like/unlike request failed:", err);
       // Optionally rollback like state on failure
-      const rollbackLikes = hasLiked ? [...post.likes, userId] : post.likes.filter((id: string) => id !== userId)
-      post.likes = rollbackLikes
+      const rollbackLikes = hasLiked
+        ? [...post.likes, userId]
+        : post.likes.filter((id: string) => id !== userId);
+      post.likes = rollbackLikes;
       if (post.id === currentPost()?.id) {
-        setCurrentPost({ ...post })
+        setCurrentPost({ ...post });
       }
-      api.updateCache("posts", post.id, { likes: rollbackLikes })
+      api.updateCache("posts", post.id, { likes: rollbackLikes });
     }
   }
 
@@ -372,9 +436,9 @@ export default function SnippetReels() {
       navigator.share({
         title: "Check out this snippet",
         url: window.location.href,
-      })
+      });
     }
-  }
+  };
 
   return (
     <Page {...{ params, route, navigate, id: "reels" }}>
@@ -388,10 +452,12 @@ export default function SnippetReels() {
         <Show when={!loading() && posts()?.length > 0}>
           <For each={posts()}>
             {(post, index) => {
-              const author = post.expand?.author
-              const videoUrl = post.files?.[0] ? api.cdn.getUrl("posts", post.id, post.files[0]) : null
-              const isLiked = post.likes?.includes(api.authStore.model?.id)
-              const isCurrentVideo = index() === activeIndex()
+              const author = post.expand?.author;
+              const videoUrl = post.files?.[0]
+                ? api.cdn.getUrl("posts", post.id, post.files[0])
+                : null;
+              const isLiked = post.likes?.includes(api.authStore.model?.id);
+              const isCurrentVideo = index() === activeIndex();
 
               return (
                 <Show when={videoUrl}>
@@ -404,7 +470,11 @@ export default function SnippetReels() {
                   >
                     {/* Video container */}
                     <div class="absolute inset-0 overflow-hidden">
-                      <VideoWithCleanup src={videoUrl} index={index()} onCanPlay={() => handleVideoLoaded(index())} />
+                      <VideoWithCleanup
+                        src={videoUrl}
+                        index={index()}
+                        onCanPlay={() => handleVideoLoaded(index())}
+                      />
                     </div>
 
                     {/* Simple gradient overlays for readability */}
@@ -413,7 +483,9 @@ export default function SnippetReels() {
                     {/* Header - Minimal */}
                     <div class="absolute top-4 left-4 right-4 flex justify-between items-center z-20">
                       <div class="bg-black/50 px-3 py-1 rounded-full">
-                        <h1 class="font-semibold text-sm text-white opacity-80">Snippets</h1>
+                        <h1 class="font-semibold text-sm text-white opacity-80">
+                          Snippets
+                        </h1>
                       </div>
                       <div class="flex gap-2">
                         <Show when={isCurrentVideo && !userInteracted()}>
@@ -462,17 +534,28 @@ export default function SnippetReels() {
                                 }
                               >
                                 <img
-                                  src={api.cdn.getUrl("users", author.id, author.avatar) || "/placeholder.svg"}
+                                  src={
+                                    api.cdn.getUrl(
+                                      "users",
+                                      author.id,
+                                      author.avatar,
+                                    ) || "/placeholder.svg"
+                                  }
                                   alt="avatar"
                                   class="h-10 w-10 rounded-full object-cover"
                                 />
-                              </Show> 
+                              </Show>
                             </div>
                             <div>
-                              <div class="font-semibold text-lg text-white">{author?.username || "Unknown"}</div>
+                              <div class="font-semibold text-lg text-white">
+                                {author?.username || "Unknown"}
+                              </div>
                               <div class="text-sm text-gray-300 flex items-center gap-1">
                                 <Icons.User class="w-3 h-3" />
-                                {(author?.followers?.length || 0).toLocaleString()} followers
+                                {(
+                                  author?.followers?.length || 0
+                                ).toLocaleString()}{" "}
+                                followers
                               </div>
                             </div>
                           </div>
@@ -494,19 +577,30 @@ export default function SnippetReels() {
                               class="bg-black/50 p-3 rounded-full cursor-pointer hover:bg-black/70 transition-colors duration-200"
                               onClick={() => handleLike(post)}
                             >
-                              <Show when={isLiked} fallback={<Icons.HeartOutline class="w-7 h-7 text-white" />}>
+                              <Show
+                                when={isLiked}
+                                fallback={
+                                  <Icons.HeartOutline class="w-7 h-7 text-white" />
+                                }
+                              >
                                 <Icons.Heart
                                   class={joinClass(
                                     "w-7 h-7 transition-colors duration-200",
-                                    currentPost() && currentPost().likes?.length ? "text-red-500" : "text-white",
+                                    currentPost() && currentPost().likes?.length
+                                      ? "text-red-500"
+                                      : "text-white",
                                   )}
                                 />
                               </Show>
                             </div>
                             <span class="text-xs font-semibold text-white bg-black/30 px-2 py-1 rounded-full">
-                              {((currentPost() && currentPost().likes?.length) || 0) > 999
+                              {((currentPost() &&
+                                currentPost().likes?.length) ||
+                                0) > 999
                                 ? `${(((currentPost() && currentPost().likes?.length) || 0) / 1000).toFixed(1)}k`
-                                : (currentPost() && currentPost().likes?.length) || 0}
+                                : (currentPost() &&
+                                    currentPost().likes?.length) ||
+                                  0}
                             </span>
                           </div>
 
@@ -514,7 +608,11 @@ export default function SnippetReels() {
                           <div class="flex flex-col items-center gap-1">
                             <div
                               class="bg-black/50 p-3 rounded-full cursor-pointer hover:bg-black/70 transition-colors duration-200"
-                              onClick={() => navigate(StringJoin("/view/", "posts/", post.id))}
+                              onClick={() =>
+                                navigate(
+                                  StringJoin("/view/", "posts/", post.id),
+                                )
+                              }
                             >
                               <Icons.Chat class="w-7 h-7 text-white" />
                             </div>
@@ -558,11 +656,14 @@ export default function SnippetReels() {
 
                     {/* Click overlay for play/pause */}
                     <Show when={isCurrentVideo && isPlaying()}>
-                      <div class="absolute inset-0 z-[5] cursor-pointer" onClick={togglePlayPause} />
+                      <div
+                        class="absolute inset-0 z-[5] cursor-pointer"
+                        onClick={togglePlayPause}
+                      />
                     </Show>
                   </div>
                 </Show>
-              )
+              );
             }}
           </For>
         </Show>
@@ -578,7 +679,9 @@ export default function SnippetReels() {
                   style="animation-direction: reverse;"
                 ></div>
               </div>
-              <div class="text-xl font-semibold animate-pulse">Loading amazing snippets...</div>
+              <div class="text-xl font-semibold animate-pulse">
+                Loading amazing snippets...
+              </div>
             </div>
           </div>
         </Show>
@@ -612,5 +715,5 @@ export default function SnippetReels() {
         }
       `}</style>
     </Page>
-  )
+  );
 }

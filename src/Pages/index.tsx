@@ -1,26 +1,39 @@
 import { api } from "..";
-import HomeNav from "../components/Navbars/HomeNav";
-import Page from "../Utils/Shared/Page";
+import HomeNav from "@/components/ui/Navbars/HomeNav";
+import Page from "@/components/ui/Page";
 import useNavigation from "../Utils/Hooks/useNavigation";
-import { createEffect, createSignal, ErrorBoundary, For, Match, Switch, onMount, Show } from "solid-js";
+import {
+  createEffect,
+  createSignal,
+  ErrorBoundary,
+  For,
+  Match,
+  Switch,
+  onMount,
+  Show,
+} from "solid-js";
 import useFeed from "../Utils/Hooks/useFeed";
-import Post from "../components/PostRelated/Post";
-import LoadingIndicator from "../components/Icons/loading";
+import Post from "@/components/ui/PostRelated/Post";
+import LoadingIndicator from "@/components/Icons/loading";
 import { joinClass } from "../Utils/Joinclass";
 import useDevice from "../Utils/Hooks/useDevice";
 export default function Home() {
   const { route, params, navigate } = useNavigation("/");
-  const { feed, currentPage, setFeed, posts, loading, reset, setPosts } = useFeed("posts", { filter: `author.id !="${api.authStore.model.id}" && author.deactivated=false`, _for: "home" });
+  const { feed, currentPage, setFeed, posts, loading, reset, setPosts } =
+    useFeed("posts", {
+      filter: `author.id !="${api.authStore.model.id}" && author.deactivated=false`,
+      _for: "home",
+    });
 
-  const { mobile } = useDevice()
-  console.log(mobile())
+  const { mobile } = useDevice();
+  console.log(mobile());
   const [newPostAppended, setNewPostAppended] = createSignal(false);
   const [recentPosts, setRecentPosts] = createSignal<any[]>([]);
   onMount(() => {
     createEffect(() => {
       window.onbeforeunload = function () {
         window.scrollTo(0, 0);
-      }
+      };
     });
 
     window.addEventListener("scroll", () => {
@@ -32,28 +45,30 @@ export default function Home() {
     api.ws?.addEventListener("message", (event) => {
       // listen for new posts
       const { data } = JSON.parse(event.data);
-      if (data.action === "create" && data.collection === "posts" && data.res.author != api.authStore.model.id) {
+      if (
+        data.action === "create" &&
+        data.collection === "posts" &&
+        data.res.author != api.authStore.model.id
+      ) {
         console.log("New post received:", data.res);
-        setNewPostAppended(true); 
+        setNewPostAppended(true);
         setPosts((prevPosts) => [data.res, ...prevPosts]);
-        setRecentPosts((prevPosts) => { 
+        setRecentPosts((prevPosts) => {
           if (prevPosts.length >= 5) {
             return [data.res, ...prevPosts.slice(0, 4)];
           }
           return [data.res, ...prevPosts];
-        }
-        );
+        });
 
         setTimeout(() => {
           setNewPostAppended(false);
           setRecentPosts([]);
         }, 5000);
 
-        api.updateCache("posts", data.res.id, data.res, data.res, "add") 
+        api.updateCache("posts", data.res.id, data.res, data.res, "add");
       }
-    })
-
-  })
+    });
+  });
 
   return (
     <Page {...{ navigate, params, route: route }} id={feed()}>
@@ -73,14 +88,21 @@ export default function Home() {
                 {(item) => (
                   <div class="avatar">
                     <div class="w-8 border-2 border-white rounded-full overflow-hidden">
-                      <img src={api.cdn.getUrl("users", item.author, item.expand.author.avatar)} alt="New Post" />
-                      
+                      <img
+                        src={api.cdn.getUrl(
+                          "users",
+                          item.author,
+                          item.expand.author.avatar,
+                        )}
+                        alt="New Post"
+                      />
                     </div>
                   </div>
                 )}
               </For>
               <span class="text-sm font-semibold">
-                {recentPosts().length} new post{recentPosts().length > 1 ? "s" : ""}
+                {recentPosts().length} new post
+                {recentPosts().length > 1 ? "s" : ""}
               </span>
             </div>
           </div>
@@ -90,24 +112,49 @@ export default function Home() {
       <Switch>
         <Match when={!loading()}>
           <div class="flex flex-col     ">
-
-
             <Show when={posts()}>
               <For each={posts()}>
-                {(item, index) => <div  style={{"margin-bottom": index() == posts().length - 1  && mobile() ? "10rem" : ""}}>   <Post {...{ navigate, route, params, isLast: true, ...item, id: item.id }} />  </div>}
+                {(item, index) => (
+                  <div
+                    style={{
+                      "margin-bottom":
+                        index() == posts().length - 1 && mobile()
+                          ? "10rem"
+                          : "",
+                    }}
+                  >
+                    {" "}
+                    <Post
+                      {...{
+                        navigate,
+                        route,
+                        params,
+                        isLast: true,
+                        ...item,
+                        id: item.id,
+                      }}
+                    />{" "}
+                  </div>
+                )}
               </For>
             </Show>
-            
-            <Show when={posts().length < 1 }>
+
+            <Show when={posts().length < 1}>
               <div class="text-center text-gray-500 dark:text-gray-400 mt-10">
-                No {feed().includes("topic") ? feed().split("topic-")[1] : feed()} posts available at the moment.
+                No{" "}
+                {feed().includes("topic") ? feed().split("topic-")[1] : feed()}{" "}
+                posts available at the moment.
               </div>
             </Show>
           </div>
         </Match>
         <Match when={loading()}>
           <For each={Array.from({ length: 10 })}>
-            {() => <div  ><LoadingIndicator /></div>}
+            {() => (
+              <div>
+                <LoadingIndicator />
+              </div>
+            )}
           </For>
         </Match>
       </Switch>
