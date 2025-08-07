@@ -25,6 +25,7 @@ import Status from "./Pages/status";
 import ExplorePage from "./Pages/explore";
 import Search from "./Pages/search";
 import Main from "./Pages/index";
+import AnalyticsPanel from "./Pages/analytics";
 const root = document.getElementById("root");
 export const api = new SDK({ serverURL: "https://api.postlyapp.com" });
 
@@ -72,6 +73,7 @@ render(
       <Route path={"/status"} component={Status} />
       <Route path={"/explore"} component={ExplorePage} />
       <Route path={"/search"} component={Search} />
+      <Route path={"/analytics"} component={AnalyticsPanel}></Route>
     </Router>
   ),
   root,

@@ -16,10 +16,9 @@ type MetricsStore = {
   followed_after_post_view: string[];
 };
 
- function extractErrorMessage(error: any): string {
+function extractErrorMessage(error: any): string {
   if (!error) return "Unknown error";
 
-    
   console.log("Error keys:", Object.keys(error));
 
   if (error.details?.response?.data?.token?.message) {
@@ -27,7 +26,9 @@ type MetricsStore = {
   }
 
   if (error.errors && Array.isArray(error.errors) && error.errors.length > 0) {
-    return error.errors.map((e: any) => e.message || JSON.stringify(e)).join(", ");
+    return error.errors
+      .map((e: any) => e.message || JSON.stringify(e))
+      .join(", ");
   }
 
   // Fallback to JSON string
@@ -109,38 +110,39 @@ export default class SDK {
   wsUrl: string;
   statisticalData: any[];
   callbacks: Map<string, (data: any) => void>;
-  subscriptions: Map<string, (data: any) => void>; 
+  subscriptions: Map<string, (data: any) => void>;
   notedMetrics: Map<string, any>;
   constructor(data: { serverURL: string }) {
     this.serverURL = data.serverURL;
     this.ip = sessionStorage.getItem("ip") as string;
     this.callbacks = new Map();
     this.changeEvent = new CustomEvent("authChange");
-    this.subscriptions = new Map(); 
-    openPostrDB()
-    this.wsUrl = this.serverURL  
+    this.subscriptions = new Map();
+    openPostrDB();
+    this.wsUrl = this.serverURL;
     /**
      * @description data metrics used to track user activity - this is stored locally
      */
-    this.statisticalData = JSON.parse(localStorage.getItem("postr_statistical") || "{}");
+    this.statisticalData = JSON.parse(
+      localStorage.getItem("postr_statistical") || "{}",
+    );
     this.notedMetrics = new Map();
 
     if ("serviceWorker" in navigator) {
       navigator.serviceWorker.register("/serviceworker.js").catch((e) => {
-        console.log(e)
-      })
-     if('Notification' in window){
-        Notification.requestPermission().then(permission => {
-        if (permission === "granted") {
-          console.log("✅ Notification permission granted");
-        } else {
-          console.log("❌ Notification permission denied");
-        }
+        console.log(e);
       });
-     }
-
+      if ("Notification" in window) {
+        Notification.requestPermission().then((permission) => {
+          if (permission === "granted") {
+            console.log("✅ Notification permission granted");
+          } else {
+            console.log("❌ Notification permission denied");
+          }
+        });
+      }
     }
-    this.metrics.initializeMetrics()
+    this.metrics.initializeMetrics();
     // autoroll new token every hour
     setInterval(() => {
       if (localStorage.getItem("postr_auth")) {
@@ -156,28 +158,26 @@ export default class SDK {
             security: {
               token: auth.token,
             },
-          })
-
+          });
         } else {
           console.log("Token expired, reauthenticating");
         }
       }
 
       this.metrics.uploadUserMetrics();
-    }, 3600000) // every hour
+    }, 3600000); // every hour
 
     //@ts-ignore
-    this.isOnIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+    this.isOnIos =
+      /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
 
     const clearCache = async () => {
-
       this.metrics.uploadUserMetrics();
       console.log("Clearing app cache");
       const keys = await caches.keys();
       for (const key of keys) {
         await caches.delete(key);
       }
-
     };
 
     if (this.isOnIos) {
@@ -194,7 +194,6 @@ export default class SDK {
     }
 
     // check if logged in and check if ws is closed periodically
-     
   }
 
   on = (type: "authChange" | string, cb: (data: any) => void) => {
@@ -205,49 +204,52 @@ export default class SDK {
 
   // Define the type for the metrics store
 
-
   worker = {
-  ws: {
-    send: (msg: any) => {
-      console.log(msg);
+    ws: {
+      send: (msg: any) => {
+        console.log(msg);
 
-      // Check if the service worker is available and controlling
-      if (navigator.serviceWorker.controller) {
-        navigator.serviceWorker.controller.postMessage(msg);
-      } else {
-        console.warn('No active service worker controller found.');
-      }
+        // Check if the service worker is available and controlling
+        if (navigator.serviceWorker.controller) {
+          navigator.serviceWorker.controller.postMessage(msg);
+        } else {
+          console.warn("No active service worker controller found.");
+        }
+      },
+
+      addEventListener: (cb: (ev: MessageEvent) => void) => {
+        // Ensure the service worker controller is available
+        if (navigator.serviceWorker.controller) {
+          // Add event listener to the service worker controller
+          navigator.serviceWorker.addEventListener("message", cb);
+        } else {
+          console.warn("No active service worker controller found.");
+        }
+      },
+
+      removeEventListener: (cb: (ev: MessageEvent) => void) => {
+        // Ensure the service worker controller is available
+        if (navigator.serviceWorker.controller) {
+          // Remove event listener from the service worker controller
+          navigator.serviceWorker.removeEventListener("message", cb);
+        } else {
+          console.warn("No active service worker controller found.");
+        }
+      },
     },
-
-    addEventListener: (cb: (ev: MessageEvent) => void) => {
-      // Ensure the service worker controller is available
-      if (navigator.serviceWorker.controller) {
-        // Add event listener to the service worker controller
-        navigator.serviceWorker.addEventListener("message",cb)
-      } else {
-        console.warn('No active service worker controller found.');
-      }
-    },
-
-    removeEventListener: (cb: (ev: MessageEvent) => void) => {
-      // Ensure the service worker controller is available
-      if (navigator.serviceWorker.controller) {
-        // Remove event listener from the service worker controller
-        navigator.serviceWorker.removeEventListener("message", cb)
-      } else {
-        console.warn('No active service worker controller found.');
-      }
-    }
-  }
-};
-
+  };
 
   metrics = {
     uploadUserMetrics: async () => {
       if (!this.authStore.model.username) return;
-      const store = JSON.parse(localStorage.getItem("postr_user_metrics") || "{}");
+      const store = JSON.parse(
+        localStorage.getItem("postr_user_metrics") || "{}",
+      );
       if (!store.user) {
-        if (this.authStore.model.username) store.user = JSON.parse(localStorage.getItem("postr_auth") || "{}").id;
+        if (this.authStore.model.username)
+          store.user = JSON.parse(
+            localStorage.getItem("postr_auth") || "{}",
+          ).id;
       }
 
       try {
@@ -256,8 +258,10 @@ export default class SDK {
           body: store,
           headers: {
             "Content-Type": "application/json",
-            "Authorization": JSON.parse(localStorage.getItem("postr_auth") || "{}").token
-          }
+            Authorization: JSON.parse(
+              localStorage.getItem("postr_auth") || "{}",
+            ).token,
+          },
         });
         const response = await res;
         if (response.status == 200) {
@@ -277,8 +281,13 @@ export default class SDK {
     getNotedMetrics: (key: keyof Omit<MetricsStore, "user">) => {
       return this.notedMetrics.get(key);
     },
-    trackUserMetric: (action: keyof Omit<MetricsStore, "user">, relationId: string) => {
-      const store: MetricsStore = JSON.parse(localStorage.getItem("postr_user_metrics") || "{}");
+    trackUserMetric: (
+      action: keyof Omit<MetricsStore, "user">,
+      relationId: string,
+    ) => {
+      const store: MetricsStore = JSON.parse(
+        localStorage.getItem("postr_user_metrics") || "{}",
+      );
 
       if (!store[action]) {
         store[action] = [];
@@ -289,7 +298,7 @@ export default class SDK {
 
         console.log(`✅ Metric added: ${action} → ${relationId}`);
       } else {
-        store[action] = store[action].filter((id) => id !== relationId)
+        store[action] = store[action].filter((id) => id !== relationId);
 
         console.log(`✅ Metric removed: ${action} → ${relationId}`);
       }
@@ -306,23 +315,22 @@ export default class SDK {
           posts_liked: [],
           posts_bookmarked: [],
           commented_on_post: [],
-          followed_after_post_view: []
+          followed_after_post_view: [],
         };
         localStorage.setItem("postr_user_metrics", JSON.stringify(newData));
       }
-    }
-  }
-
+    },
+  };
 
   // Existing methods like collection(), authStore, etc...
 
   async send<T = any>(
     endpoint: string,
     options: {
-      method?: "GET" | "POST" | "PUT" | "DELETE",
-      body?: any,
-      headers?: Record<string, string>
-    } = {}
+      method?: "GET" | "POST" | "PUT" | "DELETE";
+      body?: any;
+      headers?: Record<string, string>;
+    } = {},
   ): Promise<T> {
     const method = options.method || "POST";
 
@@ -331,7 +339,8 @@ export default class SDK {
       ...options.headers,
     };
 
-    const token = JSON.parse(localStorage.getItem("postr_auth") || "{}").token || null;
+    const token =
+      JSON.parse(localStorage.getItem("postr_auth") || "{}").token || null;
     if (token) {
       headers["Authorization"] = `${token}`;
     }
@@ -347,15 +356,15 @@ export default class SDK {
         message: "Unknown error occurred",
         status: response.status,
       }));
-      throw new Error(error.message || `Request failed with status ${response.status}`);
+      throw new Error(
+        error.message || `Request failed with status ${response.status}`,
+      );
     }
 
     return response.json();
   }
 
-  wsReconnect = () => {
-    
-  };
+  wsReconnect = () => {};
 
   convertToBase64(file: Blob): Promise<string> {
     return new Promise((resolve) => {
@@ -387,25 +396,29 @@ export default class SDK {
   }
 
   // ✅ Helper: Find and update by username in arrays
-  updateArrayByUsername = (array: any[], username: string, data: any): boolean => {
+  updateArrayByUsername = (
+    array: any[],
+    username: string,
+    data: any,
+  ): boolean => {
     const index = array.findIndex((e) => e.username === username);
     if (index !== -1) {
       array[index] = { ...array[index], ...data };
       return true;
     }
     return false;
-  }
+  };
 
   updateCache = async (
     collection: string,
     id: string,
     data: any,
     fullPost?: any,
-    action: "add" | "remove" = "add"
+    action: "add" | "remove" = "add",
   ) => {
     const { get, set, remove, clear } = useCache();
 
-    // Since Map is in-memory, no async keys() or open caches, 
+    // Since Map is in-memory, no async keys() or open caches,
     // so we need a way to track all cache keys.
     // For simplicity, assume you maintain a separate Set of keys somewhere,
     // or you can store keys in a special Map entry.
@@ -498,7 +511,9 @@ export default class SDK {
           }
 
           if (value.payload && Array.isArray(value.payload)) {
-            const index = value.payload.findIndex((e: any) => e.username === id);
+            const index = value.payload.findIndex(
+              (e: any) => e.username === id,
+            );
             if (index !== -1) {
               value.payload[index] = { ...value.payload[index], ...data };
               updated = true;
@@ -540,28 +555,21 @@ export default class SDK {
     }
   };
 
-
-
-
-
   checkAuth = async () => {
-
     if (localStorage.getItem("postr_auth") && !this.hasChecked) {
       let res = await fetch(`${this.serverURL}/auth/verify`, {
         headers: {
-          Authorization: JSON.parse(localStorage.getItem("postr_auth") || "{}").token,
+          Authorization: JSON.parse(localStorage.getItem("postr_auth") || "{}")
+            .token,
         },
       });
       this.hasChecked = true;
       if (res.status !== 200) {
-        this.authStore.model = {}
-        localStorage.removeItem("postr_auth")
-        return;
+        return false;
+      } else {
+        return true;
       }
-      
     }
-
-
   };
 
   waitUntilSocketIsOpen = (cb: () => void) => {
@@ -572,19 +580,22 @@ export default class SDK {
         this.waitUntilSocketIsOpen(cb);
       }, 100);
     }
-  }
+  };
 
   handleMessages = (data: any) => {
-    let _data = JSON.parse(data)
+    let _data = JSON.parse(data);
     console.log("Received data from WebSocket", _data);
-    if (_data.data && _data.data.callback && this.callbacks.has(_data.data.callback)) {
+    if (
+      _data.data &&
+      _data.data.callback &&
+      this.callbacks.has(_data.data.callback)
+    ) {
       this.callbacks.get(_data.data.callback)?.(_data.data);
       console.log("Callback executed for", _data.data.callback);
       this.callbacks.delete(_data.data.callback);
       return;
     }
   };
-
 
   authStore: authStore = {
     model: JSON.parse(localStorage.getItem("postr_auth") || "{}"),
@@ -593,19 +604,22 @@ export default class SDK {
         const res = await fetch(`${this.serverURL}/auth/delete`, {
           method: "DELETE",
           headers: {
-            "Authorization": this.authStore.model.token
-          }
-        })
-      })
+            Authorization: this.authStore.model.token,
+          },
+        });
+      });
     },
     getBasicAuthToken: async () => {
       try {
-        const response = await fetch(`${this.serverURL}/auth/get-basic-auth-token`, {
-          method: "GET",
-          headers: {
-            "Content-Type": "application/json"
-          }
-        })
+        const response = await fetch(
+          `${this.serverURL}/auth/get-basic-auth-token`,
+          {
+            method: "GET",
+            headers: {
+              "Content-Type": "application/json",
+            },
+          },
+        );
 
         const { status, token, message, id } = await response.json();
 
@@ -619,200 +633,197 @@ export default class SDK {
 
         // Convert http(s) to ws(s)
         if (!wsUrl.startsWith("ws://") && !wsUrl.startsWith("wss://")) {
-          wsUrl = wsUrl.replace(/^https?:\/\//, (match) => (match === "https://" ? "wss://" : "ws://"));
+          wsUrl = wsUrl.replace(/^https?:\/\//, (match) =>
+            match === "https://" ? "wss://" : "ws://",
+          );
         }
 
         this.wsUrl = wsUrl;
         if (status !== 200) {
-          return message
-        }
-        else {
-          localStorage.setItem("postr_auth", JSON.stringify({ token, wsUrl: this.wsUrl }))
-          this.authStore.model.token = token
+          return message;
+        } else {
+          localStorage.setItem(
+            "postr_auth",
+            JSON.stringify({ token, wsUrl: this.wsUrl }),
+          );
+          this.authStore.model.token = token;
 
-          this.authStore.model.id = id
-          return true
+          this.authStore.model.id = id;
+          return true;
         }
       } catch (error) {
-         dispatchAlert({
-          type:"error",
-          "message":"Failed to provide basic auth token, check server status or network connection"
-        })
+        dispatchAlert({
+          type: "error",
+          message:
+            "Failed to provide basic auth token, check server status or network connection",
+        });
       }
-    
     },
     isValid: () => {
       if (!this.authStore.model.token) return false;
       return isTokenExpired(this.authStore.model.token) ? false : true;
     },
-      requestPasswordReset: async (email: string) => {
-  try {
-    const response = await fetch(`${this.serverURL}/auth/requestPasswordReset`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email }),
-    });
-
-    if (!response.ok) {
-      let errorMessage = `HTTP error ${response.status}`;
+    requestPasswordReset: async (email: string) => {
       try {
-        const errorJson = await response.json();
-        if (errorJson.message) errorMessage = errorJson.message;
-      } catch {
-        // ignore JSON parse errors
+        const response = await fetch(
+          `${this.serverURL}/auth/requestPasswordReset`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email }),
+          },
+        );
+
+        if (!response.ok) {
+          let errorMessage = `HTTP error ${response.status}`;
+          try {
+            const errorJson = await response.json();
+            if (errorJson.message) errorMessage = errorJson.message;
+          } catch {
+            // ignore JSON parse errors
+          }
+          throw new Error(errorMessage);
+        }
+
+        const data = await response.json();
+        if (data.status !== 200)
+          throw new Error(data.message || "Unknown error");
+      } catch (err) {
+        throw err;
       }
-      throw new Error(errorMessage);
-    }
+    },
 
-    const data = await response.json();
-    if (data.status !== 200) throw new Error(data.message || "Unknown error");
+    resetPassword: async (token: string, password: string) => {
+      try {
+        const response = await fetch(`${this.serverURL}/auth/resetPassword`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ resetToken: token, password }),
+        });
 
-  } catch (err) {
-    throw err;
-  }
-},
+        if (!response.ok) {
+          let errorJson = null;
+          try {
+            errorJson = await response.json();
+          } catch {
+            // ignore
+          }
 
-resetPassword: async (token: string, password: string) => {
-  try {
-    const response = await fetch(`${this.serverURL}/auth/resetPassword`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ resetToken: token, password }),
-    });
+          let message = "Unknown error";
+          if (errorJson) {
+            message = errorJson;
+          } else {
+            message = `HTTP error ${response.status}`;
+          }
 
-   if (!response.ok) {
-  let errorJson = null;
-  try {
-    errorJson = await response.json();
-  } catch {
-    // ignore
-  }
+          throw new Error(extractErrorMessage(message));
+        }
 
-  let message = "Unknown error";
-  if (errorJson) {
-     message = errorJson
-  } else {
-    message = `HTTP error ${response.status}`;
-  }
-
-  throw new Error(extractErrorMessage(message));
-}
-
-
-    const data = await response.json();
-    if (data.status !== 200) throw new Error(data.message || "Unknown error");
-
-  } catch (err) {
-    throw err;
-  }
-},
-
+        const data = await response.json();
+        if (data.status !== 200)
+          throw new Error(data.message || "Unknown error");
+      } catch (err) {
+        throw err;
+      }
+    },
 
     logout: () => {
       if (window.location.pathname !== "/auth/login") {
         localStorage.removeItem("postr_auth");
         window.location.href = "/auth/login";
       }
-
-
     },
     login: async (emailOrUsername: string, password: string) => {
-  try {
-    const response = await fetch(`${this.serverURL}/auth/login`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        emailOrUsername,
-        password,
-        deviceInfo: {
-          userAgent: navigator.userAgent,
-        },
-      }),
-    });
-
-    // Handle WebSocket URL from headers or fallback
-    let wsUrl = response.headers.get("Server") || this.serverURL;
-    
-    // Ensure proper URL format
-    wsUrl = wsUrl.trim();
-    if (wsUrl.startsWith("localhost")) {
-      wsUrl = `http://${wsUrl}`;
-    }
-
-    // Convert http(s) to ws(s)
-    if (!wsUrl.startsWith("ws://") && !wsUrl.startsWith("wss://")) {
-      wsUrl = wsUrl.replace(/^https?:\/\//, (match) => 
-        match === "https://" ? "wss://" : "ws://"
-      );
-    }
-
-    this.wsUrl = wsUrl;
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw result;
-    }
-
-    // Update auth state
-    this.authStore.model = result.data;
-    const authData = { ...result.data, wsUrl: this.wsUrl };
-    localStorage.setItem("postr_auth", JSON.stringify(authData));
-
-    // Handle WebSocket connection
-    if (this.ws) {
-      this.ws.close();
-    }
-    this.wsReconnect();
-
-    // Store token in IndexedDB with proper error handling
-    try {
-      await this.storeTokenInIndexedDB(result.data.token);
-    } catch (error) {
-      console.error("Failed to store token in IndexedDB:", error);
-      // Don't fail login if IndexedDB fails, but log it
-    }
-
-    // Notify service worker if available
-    if (navigator.serviceWorker?.controller) {
       try {
-        navigator.serviceWorker.controller.postMessage({
-          type: "reconnect",
-          token: result.data.token
+        const response = await fetch(`${this.serverURL}/auth/login`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            emailOrUsername,
+            password,
+            deviceInfo: {
+              userAgent: navigator.userAgent,
+            },
+          }),
         });
-      } catch (swError) {
-        console.error("Failed to notify service worker:", swError);
+
+        // Handle WebSocket URL from headers or fallback
+        let wsUrl = response.headers.get("Server") || this.serverURL;
+
+        // Ensure proper URL format
+        wsUrl = wsUrl.trim();
+        if (wsUrl.startsWith("localhost")) {
+          wsUrl = `http://${wsUrl}`;
+        }
+
+        // Convert http(s) to ws(s)
+        if (!wsUrl.startsWith("ws://") && !wsUrl.startsWith("wss://")) {
+          wsUrl = wsUrl.replace(/^https?:\/\//, (match) =>
+            match === "https://" ? "wss://" : "ws://",
+          );
+        }
+
+        this.wsUrl = wsUrl;
+        const result = await response.json();
+
+        if (!response.ok) {
+          throw result;
+        }
+
+        // Update auth state
+        this.authStore.model = result.data;
+        const authData = { ...result.data, wsUrl: this.wsUrl };
+        localStorage.setItem("postr_auth", JSON.stringify(authData));
+
+        // Handle WebSocket connection
+        if (this.ws) {
+          this.ws.close();
+        }
+        this.wsReconnect();
+
+        // Store token in IndexedDB with proper error handling
+        try {
+          await this.storeTokenInIndexedDB(result.data.token);
+        } catch (error) {
+          console.error("Failed to store token in IndexedDB:", error);
+          // Don't fail login if IndexedDB fails, but log it
+        }
+
+        // Notify service worker if available
+        if (navigator.serviceWorker?.controller) {
+          try {
+            navigator.serviceWorker.controller.postMessage({
+              type: "reconnect",
+              token: result.data.token,
+            });
+          } catch (swError) {
+            console.error("Failed to notify service worker:", swError);
+          }
+        }
+
+        return result.data;
+      } catch (error) {
+        console.error("Login failed:", error);
+        // Clear any partial auth state on failure
+        this.authStore.model = {};
+        localStorage.removeItem("postr_auth");
+        throw error;
       }
-    }
-
-    return result.data;
-  } catch (error) {
-    console.error("Login failed:", error);
-    // Clear any partial auth state on failure
-    this.authStore.model = {};
-    localStorage.removeItem("postr_auth");
-    throw error;
-  }
-},
-
- 
+    },
 
     // Helper method for IndexedDB token storage
-
-
-
-  
-  }
+  };
 
   connectToWS = () => {
-    this.workerChannel.postMessage({"type": "connect"})
-  }
+    this.workerChannel.postMessage({ type: "connect" });
+  };
 
   cdn = {
     getUrl: (collection: string, id: string, file: string) => {
       return `${this.serverURL}/api/files/${collection}/${id}/${file}`;
-    }
+    },
   };
   stripPagePart(key: string) {
     // Replace any _<number>_ in the middle of underscores
@@ -837,7 +848,12 @@ resetPassword: async (token: string, password: string) => {
       const requestKey = parts[parts.length - 1];
       const normalizedRequestKey = this.stripPagePart(requestKey);
 
-      console.log("Normalized CacheKey:", normalizedRequestKey, "Target:", normalizedTarget);
+      console.log(
+        "Normalized CacheKey:",
+        normalizedRequestKey,
+        "Target:",
+        normalizedTarget,
+      );
 
       if (normalizedRequestKey.includes(normalizedTarget)) {
         await remove(requestKey);
@@ -845,88 +861,96 @@ resetPassword: async (token: string, password: string) => {
     }
   };
 
-
-
   private storeTokenInIndexedDB = (token: string): Promise<void> => {
-  return new Promise((resolve, reject) => {
-    if (!token || typeof token !== "string") {
-      reject(new Error("Invalid token provided"));
-      return;
-    }
-
-    const DB_NAME = "postr_auth_db";
-    const DB_VERSION = 2;
-    const STORE_NAME = "auth";
-
-    const dbRequest = indexedDB.open(DB_NAME, DB_VERSION);
-
-    // Timeout for safety (5 seconds)
-    const timeoutId = setTimeout(() => {
-      reject(new Error("IndexedDB operation timed out"));
-      if (dbRequest.result) {
-        dbRequest.result.close();
-      }
-    }, 5000);
-
-    dbRequest.onerror = () => {
-      clearTimeout(timeoutId);
-      console.error("IndexedDB open error:", dbRequest.error);
-      reject(new Error(`Database error: ${dbRequest.error?.message || "Unknown error"}`));
-    };
-
-    dbRequest.onblocked = () => {
-      clearTimeout(timeoutId);
-      console.warn("Database upgrade blocked");
-      reject(new Error("Database upgrade blocked by another connection"));
-    };
-
-    dbRequest.onupgradeneeded = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: "id" });
-        console.log(`Created object store "${STORE_NAME}"`);
-      }
-    };
-
-    dbRequest.onsuccess = (event) => {
-      const db = (event.target as IDBOpenDBRequest).result;
-
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        clearTimeout(timeoutId);
-        db.close();
-        reject(new Error(`Object store "${STORE_NAME}" not found`));
+    return new Promise((resolve, reject) => {
+      if (!token || typeof token !== "string") {
+        reject(new Error("Invalid token provided"));
         return;
       }
 
-      const tx = db.transaction(STORE_NAME, "readwrite");
-      tx.onerror = () => {
+      const DB_NAME = "postr_auth_db";
+      const DB_VERSION = 2;
+      const STORE_NAME = "auth";
+
+      const dbRequest = indexedDB.open(DB_NAME, DB_VERSION);
+
+      // Timeout for safety (5 seconds)
+      const timeoutId = setTimeout(() => {
+        reject(new Error("IndexedDB operation timed out"));
+        if (dbRequest.result) {
+          dbRequest.result.close();
+        }
+      }, 5000);
+
+      dbRequest.onerror = () => {
         clearTimeout(timeoutId);
-        console.error("Transaction error:", tx.error);
-        db.close();
-        reject(new Error(`Transaction failed: ${tx.error?.message || "Unknown error"}`));
+        console.error("IndexedDB open error:", dbRequest.error);
+        reject(
+          new Error(
+            `Database error: ${dbRequest.error?.message || "Unknown error"}`,
+          ),
+        );
       };
 
-      const store = tx.objectStore(STORE_NAME);
-      const putRequest = store.put({ id: "token", token });
-
-      putRequest.onerror = () => {
+      dbRequest.onblocked = () => {
         clearTimeout(timeoutId);
-        console.error("Put operation error:", putRequest.error);
-        db.close();
-        reject(new Error(`Failed to store token: ${putRequest.error?.message || "Unknown error"}`));
+        console.warn("Database upgrade blocked");
+        reject(new Error("Database upgrade blocked by another connection"));
       };
 
-      tx.oncomplete = () => {
-        clearTimeout(timeoutId);
-        db.close();
-        console.log("Token successfully stored in IndexedDB");
-        resolve();
+      dbRequest.onupgradeneeded = (event) => {
+        const db = (event.target as IDBOpenDBRequest).result;
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          db.createObjectStore(STORE_NAME, { keyPath: "id" });
+          console.log(`Created object store "${STORE_NAME}"`);
+        }
       };
-    };
-  });
-};
 
+      dbRequest.onsuccess = (event) => {
+        const db = (event.target as IDBOpenDBRequest).result;
 
+        if (!db.objectStoreNames.contains(STORE_NAME)) {
+          clearTimeout(timeoutId);
+          db.close();
+          reject(new Error(`Object store "${STORE_NAME}" not found`));
+          return;
+        }
+
+        const tx = db.transaction(STORE_NAME, "readwrite");
+        tx.onerror = () => {
+          clearTimeout(timeoutId);
+          console.error("Transaction error:", tx.error);
+          db.close();
+          reject(
+            new Error(
+              `Transaction failed: ${tx.error?.message || "Unknown error"}`,
+            ),
+          );
+        };
+
+        const store = tx.objectStore(STORE_NAME);
+        const putRequest = store.put({ id: "token", token });
+
+        putRequest.onerror = () => {
+          clearTimeout(timeoutId);
+          console.error("Put operation error:", putRequest.error);
+          db.close();
+          reject(
+            new Error(
+              `Failed to store token: ${putRequest.error?.message || "Unknown error"}`,
+            ),
+          );
+        };
+
+        tx.oncomplete = () => {
+          clearTimeout(timeoutId);
+          db.close();
+          console.log("Token successfully stored in IndexedDB");
+          resolve();
+        };
+      };
+    });
+  };
 
   sendMsg = async (msg: any, type: any) => {
     // WebSocket path
@@ -950,7 +974,9 @@ resetPassword: async (token: string, password: string) => {
         const cid = this.callback((data: any) => {
           if (data.type === GeneralTypes.AUTH_ROLL_TOKEN) {
             const newToken = data.token;
-            let authData = JSON.parse(localStorage.getItem("postr_auth") || "{}");
+            let authData = JSON.parse(
+              localStorage.getItem("postr_auth") || "{}",
+            );
             authData.token = newToken;
             localStorage.setItem("postr_auth", JSON.stringify(authData));
             this.authStore.model = authData;
@@ -971,7 +997,9 @@ resetPassword: async (token: string, password: string) => {
             };
             window.dispatchEvent(this.changeEvent);
 
-            navigator.serviceWorker.controller?.postMessage({ type: "reconnect" });
+            navigator.serviceWorker.controller?.postMessage({
+              type: "reconnect",
+            });
           }
         });
 
@@ -985,7 +1013,11 @@ resetPassword: async (token: string, password: string) => {
     // HTTP path
     try {
       // Token validation
-      if (!msg.security || !msg.security.token || isTokenExpired(msg.security.token)) {
+      if (
+        !msg.security ||
+        !msg.security.token ||
+        isTokenExpired(msg.security.token)
+      ) {
         if (!this.authStore.isValid()) {
           return {
             opCode: ErrorCodes.INVALID_OR_MISSING_TOKEN,
@@ -994,7 +1026,9 @@ resetPassword: async (token: string, password: string) => {
         }
       }
 
-      const token = JSON.parse(localStorage.getItem("postr_auth") || "{}").token;
+      const token = JSON.parse(
+        localStorage.getItem("postr_auth") || "{}",
+      ).token;
       let endpoint = "";
       let method = "POST";
       let body: BodyInit | undefined = undefined;
@@ -1019,13 +1053,16 @@ resetPassword: async (token: string, password: string) => {
           payload: {
             ...msg.payload,
             data: restOfData,
-          }
+          },
         };
         formData.append("payload", JSON.stringify(payloadWithoutFiles.payload));
         formData.append("type", msg.type);
-        formData.append("security", JSON.stringify({
-          token
-        }));
+        formData.append(
+          "security",
+          JSON.stringify({
+            token,
+          }),
+        );
         // Append files individually
         for (const file of files) {
           // Ensure file is a File or Blob instance
@@ -1070,7 +1107,9 @@ resetPassword: async (token: string, password: string) => {
       });
 
       // Handle rate limiting headers
-      const remaining = parseInt(response.headers.get("Ratelimit-Remaining") || "0");
+      const remaining = parseInt(
+        response.headers.get("Ratelimit-Remaining") || "0",
+      );
       const retryAfter = parseInt(response.headers.get("Retry-After") || "0");
 
       if (!response.ok) {
@@ -1085,7 +1124,7 @@ resetPassword: async (token: string, password: string) => {
         try {
           const errorData = await response.json();
           errorMessage = errorData.message || errorMessage;
-        } catch (_) { }
+        } catch (_) {}
 
         return {
           opCode: response.status,
@@ -1107,9 +1146,6 @@ resetPassword: async (token: string, password: string) => {
     }
   };
 
-
-
-
   callback(cb: (data: any) => void) {
     const id = Math.random().toString(36).substring(7);
     const cleanup = () => {
@@ -1130,20 +1166,20 @@ resetPassword: async (token: string, password: string) => {
     }
   }
   public deepSearch = async (collections: string[], query: string) => {
-    try{ 
+    try {
       const res = await this.send("/deepSearch", {
-        method :"POST",
-        body:{
+        method: "POST",
+        body: {
           query,
-          collections
-        }
-      })  
-      return res 
-    }catch (errr){
-      console.log(errr)
-      return []
-    } 
-  }
+          collections,
+        },
+      });
+      return res;
+    } catch (errr) {
+      console.log(errr);
+      return [];
+    }
+  };
 
   /**
    * @method collection
@@ -1165,17 +1201,25 @@ resetPassword: async (token: string, password: string) => {
        * @param options
        * @returns {Promise<any>}
        */
-      subscribe: async (id: "*" | string, options: { cb: (data: any) => void }) => {
+      subscribe: async (
+        id: "*" | string,
+        options: { cb: (data: any) => void },
+      ) => {
         return new Promise(async (resolve, reject) => {
           if (!this.subscriptions.has(`${name}:${id}`)) {
             this.subscriptions.set(`${name}:${id}`, options.cb);
             this.waitUntilSocketIsOpen(() => {
-              this.ws?.send(JSON.stringify({ payload: { collection: name, id, callback: `${name}:${id}` }, security: { token: this.authStore.model.token } }));
+              this.ws?.send(
+                JSON.stringify({
+                  payload: { collection: name, id, callback: `${name}:${id}` },
+                  security: { token: this.authStore.model.token },
+                }),
+              );
             });
           } else {
             reject("Already subscribed to this collection");
           }
-        })
+        });
       },
       /**
        * @method list
@@ -1197,40 +1241,47 @@ resetPassword: async (token: string, password: string) => {
           filter?: string;
           cacheKey?: string;
         },
-        shouldCache = true
+        shouldCache = true,
       ) => {
         return new Promise(async (resolve, reject) => {
           const { set, get, remove, clear } = useCache();
-          const cacheKey = options?.cacheKey || `${this.serverURL}/api/collections/${name}?page=${page}&limit=${limit}`;
+          const cacheKey =
+            options?.cacheKey ||
+            `${this.serverURL}/api/collections/${name}?page=${page}&limit=${limit}`;
           const cacheData = shouldCache ? await get(cacheKey) : null;
-          if (cacheData) return resolve({
-            opCode: HttpCodes.OK,
-            ...(Array.isArray(cacheData) ? { items: [...cacheData] } : { items: cacheData.payload }), totalItems: cacheData.totalItems, totalPages: cacheData.totalPages
-          });
+          if (cacheData)
+            return resolve({
+              opCode: HttpCodes.OK,
+              ...(Array.isArray(cacheData)
+                ? { items: [...cacheData] }
+                : { items: cacheData.payload }),
+              totalItems: cacheData.totalItems,
+              totalPages: cacheData.totalPages,
+            });
 
-          let out = await this.sendMsg({
+          let out = (await this.sendMsg({
             type: GeneralTypes.LIST,
             payload: {
               collection: name,
               page,
               limit,
               options,
-              cacheKey: options?.cacheKey
+              cacheKey: options?.cacheKey,
             },
             security: {
               token: this.authStore.model.token,
             },
             callback: "",
-          }) as any;
+          })) as any;
           if (out.opCode !== HttpCodes.OK) return reject(out);
           console.log(cacheKey, "Caching data for key:", out.payload);
-          shouldCache && set(cacheKey, out, new Date().getTime() + 3600); // cache for 1 hour\ 
+          shouldCache && set(cacheKey, out, new Date().getTime() + 3600); // cache for 1 hour\
           resolve({
             opCode: out.opCode,
             items: out.payload,
             totalItems: out.totalItems,
             totalPages: out.totalPages,
-            cacheKey
+            cacheKey,
           }) as any;
         });
       },
@@ -1241,7 +1292,10 @@ resetPassword: async (token: string, password: string) => {
         reader.readAsArrayBuffer(file);
         return new Promise((resolve, reject) => {
           reader.onload = () => {
-            resolve({ data: Array.from(new Uint8Array(reader.result as ArrayBuffer)), name: file.name });
+            resolve({
+              data: Array.from(new Uint8Array(reader.result as ArrayBuffer)),
+              name: file.name,
+            });
           };
         });
       },
@@ -1252,25 +1306,33 @@ resetPassword: async (token: string, password: string) => {
        * @param data
        */
 
-      update: async (id: string, data: any, options?: { cacheKey?: string, expand?: any[], invalidateCache: string[] }) => {
+      update: async (
+        id: string,
+        data: any,
+        options?: {
+          cacheKey?: string;
+          expand?: any[];
+          invalidateCache: string[];
+        },
+      ) => {
         return new Promise(async (resolve, reject) => {
-
-          this.updateCache(name, id, data)
+          this.updateCache(name, id, data);
           let out = await this.sendMsg({
             type: GeneralTypes.UPDATE,
             payload: {
               collection: name,
               id: id,
               fields: data,
-              options
+              options,
             },
             security: {
-              token: JSON.parse(localStorage.getItem("postr_auth") || "{}").token
+              token: JSON.parse(localStorage.getItem("postr_auth") || "{}")
+                .token,
             },
-            callback: ""
-          })
-          resolve(out.payload)
-        })
+            callback: "",
+          });
+          resolve(out.payload);
+        });
       },
       /**
        * @method create
@@ -1278,10 +1340,20 @@ resetPassword: async (token: string, password: string) => {
        * @param data
        * @returns {Promise<any>}
        */
-      create: async (data: any, options?: { cacheKey?: string, expand?: any[], [key: string]: any, invalidateCache?: string[] }) => {
+      create: async (
+        data: any,
+        options?: {
+          cacheKey?: string;
+          expand?: any[];
+          [key: string]: any;
+          invalidateCache?: string[];
+        },
+      ) => {
         return new Promise(async (resolve, reject) => {
-
-          if (options?.invalidateCache && Array.isArray(options.invalidateCache)) {
+          if (
+            options?.invalidateCache &&
+            Array.isArray(options.invalidateCache)
+          ) {
             const { set, get, remove, clear } = useCache();
             // check keys that include the one in invalidateCache
             const keys = await caches.keys();
@@ -1295,21 +1367,22 @@ resetPassword: async (token: string, password: string) => {
             }
           }
 
-          let out = await this.sendMsg({
+          let out = (await this.sendMsg({
             type: GeneralTypes.CREATE,
             hasFiles: data.files,
             payload: {
               collection: name,
               invalidateCache: options?.invalidateCache,
               data,
-              expand: options?.expand
+              expand: options?.expand,
             },
             security: {
-              token: JSON.parse(localStorage.getItem("postr_auth") || "{}").token,
+              token: JSON.parse(localStorage.getItem("postr_auth") || "{}")
+                .token,
             },
             callback: "",
-          }) as any
-          resolve(out.payload)
+          })) as any;
+          resolve(out.payload);
         });
       },
 
@@ -1322,29 +1395,31 @@ resetPassword: async (token: string, password: string) => {
 
       get: async (
         id: string,
-        options?: { expand?: string[], cacheKey?: string },
-        shouldCache = true
+        options?: { expand?: string[]; cacheKey?: string },
+        shouldCache = true,
       ) => {
         return new Promise(async (resolve, reject) => {
           const { set, get } = useCache();
 
-          const cacheKey = options?.cacheKey || `${this.serverURL}/api/collections/${name}/${id}`;
+          const cacheKey =
+            options?.cacheKey ||
+            `${this.serverURL}/api/collections/${name}/${id}`;
           const cached = shouldCache ? await get(cacheKey) : null;
 
           if (cached) return resolve(cached);
 
-          const out = await this.sendMsg({
+          const out = (await this.sendMsg({
             type: GeneralTypes.GET,
             payload: {
               collection: name,
               id,
-              options
+              options,
             },
             security: {
-              token: this.authStore.model.token
+              token: this.authStore.model.token,
             },
-            callback: ""
-          }) as any;
+            callback: "",
+          })) as any;
 
           if (out.opCode !== HttpCodes.OK) return reject(out);
 
@@ -1356,7 +1431,6 @@ resetPassword: async (token: string, password: string) => {
           resolve(out.payload);
         });
       },
-
     };
   }
 }
