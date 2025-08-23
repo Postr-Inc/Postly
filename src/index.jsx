@@ -56,17 +56,14 @@ function App() {
       }
 
       setReady(true);
-
-      console.log({ ready: ready() });
     } catch (err) {
       console.error("Auth bootstrap failed:", err);
     }
   });
 
-  console.log({ ready: ready() });
   return (
     <>
-      {ready() ? (
+      {ready() || window.location.pathname == "/auth/login" ? (
         <Router>
           <Route path="/" component={Main} />
           <Route path="/auth/login" component={Login} />
