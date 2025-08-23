@@ -430,7 +430,7 @@ export default function Post(props: Props) {
       class={joinClass(
         "h-fit z-10",
         "p-3 text-md shadow-none", // Increased base padding
-        props.wasReposted && "border",
+        props.wasReposted && "border border-[#121212]",
         props.disabled
           ? "rounded"
           : `rounded-none shadow-none${
