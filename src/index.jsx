@@ -31,7 +31,7 @@ import AnalyticsPanel from "./Pages/analytics";
 
 import logo from "@/src/assets/icon.jpg";
 const root = document.getElementById("root");
-export const api = new SDK({ serverURL: "http://localhost:8080" });
+export const api = new SDK({ serverURL: "https://api.postlyapp.com" });
 
 if (import.meta.env.DEV && !(root instanceof HTMLElement)) {
   throw new Error(
