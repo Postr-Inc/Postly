@@ -385,6 +385,8 @@ export default function User() {
     "Dec",
   ];
 
+  console.log(user()?.avatar)
+
   return (
     <Page {...{ params, route, navigate, id: "user" }}>
       <Switch>
@@ -401,403 +403,387 @@ export default function User() {
           <div>
             <div
               class={joinClass(
-                theme() == "dark" ? "bg-black text-white" : "bg-white",
-                "sticky top-0 z-50",
+                theme() == "dark" ? "bg-black/95 backdrop-blur-sm text-white" : "bg-white/95 backdrop-blur-sm",
+                "sticky top-0 z-50 border-b border-gray-200 dark:border-gray-800",
               )}
             >
-              <div class="flex items-center justify-between px-4 py-3">
-                <div class="flex items-center space-x-8">
+              <div class="flex items-center justify-between px-4 py-3 max-w-4xl mx-auto transition-all duration-300 hover:shadow-sm">
+                <div class="flex items-center space-x-4">
                   <button
                     onClick={() => goBack()}
-                    class="p-2 rounded-full  transition-colors"
+                    class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-all duration-200 hover:scale-105"
                   >
                     <ArrowLeft class="w-5 h-5" />
                   </button>
                   <div>
-                    <h1 class="text-xl font-bold ">
+                    <h1 class="text-lg sm:text-xl font-bold leading-tight">
                       {user()?.username || "Loading..."}
                     </h1>
-                    <p class="text-sm  ">{posts().length} posts</p>
+                    <p class="text-xs sm:text-sm text-gray-500 dark:text-gray-400">{posts().length} posts</p>
                   </div>
                 </div>
                 <div class="flex items-center space-x-2">
-                  <button class="p-2 rounded-full  transition-colors">
+                  <button class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200">
                     <Search class="w-5 h-5" />
                   </button>
-                  <button class="p-2 rounded-full  transition-colors"></button>
+                  <button class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors duration-200">
+                    <Ellipse class="w-5 h-5" />
+                  </button>
                 </div>
               </div>
             </div>
             <div class="flex     flex-col relative">
-              <div
-                class="flex flex-row justify-between p-2 h-[10rem]"
-                style={{
-                  "background-size": "cover",
-                  "background-image":
-                    user() && user().banner
-                      ? `url(${user().banner?.includes("blob") ? user().banner : api.cdn.getUrl("users", user().id, user().banner)})`
-                      : "linear-gradient(90deg, #ff5858 0%, #f09819 49%, #ff5858 100%)",
-                }}
-              ></div>
-
-              <div class="flex justify-between  items-center ">
-                <Switch>
-                  <Match when={user() && user().avatar}>
-                    <img
-                      src={
-                        user().avatar?.includes("blob")
-                          ? user().avatar
-                          : api.cdn.getUrl("users", user().id, user().avatar)
-                      }
-                      class={`
-                      rounded-full xl:w-24 xl:h-24 w-[5rem] h-[5rem] mx-1   -mt-12 object-cover
-
-                    `}
-                    />
-                  </Match>
-                  <Match when={!user() || !user().avatar}>
-                    <img
-                      src="/icons/usernotfound/image.png"
-                      alt={user().username}
-                      class={`
-                      rounded-full xl:w-24 xl:h-24 w-[5rem] h-[5rem] mx-1   -mt-12 object-cover
-
-                    `}
-                    />
-                  </Match>
-                </Switch>
-                <Switch>
-                  <Match
-                    when={
-                      user() &&
-                      user().id != api.authStore.model.id &&
-                      user().followers.includes(api.authStore.model.id)
-                    }
-                  >
-                    <button
-                      style={{
-                        "border-radius": "9999px",
-                      }}
-                      disabled={notFound()}
-                      class={
-                        theme() === "dark"
-                          ? "bg-white text-black p-2 w-24 mr-2 mt-2 text-sm"
-                          : "bg-black text-white mt-2 p-2 rounded-full w-24 mr-2 text-sm"
-                      }
-                      onclick={() => {
-                        if (notFound()) return;
-                        //@ts-ignore
-                        if (!api.authStore.model?.username)
-                          return requireSignup();
-                        follow("unfollow");
-                      }}
-                    >
-                      Unfollow
-                    </button>
-                  </Match>
-                  <Match
-                    when={
-                      (!user() && user().id != api.authStore.model.id) ||
-                      (user().id != api.authStore.model.id &&
-                        !user().followers.includes(api.authStore.model.id) &&
-                        !notFound())
-                    }
-                  >
-                    <button
-                      style={{
-                        "border-radius": "9999px",
-                      }}
-                      disabled={notFound()}
-                      class={joinClass(
-                        theme() === "dark"
-                          ? "bg-white text-black p-2 mt-2 w-40 mr-2 text-sm"
-                          : "bg-black text-white p-2 mt-2 w-40 mr-2 text-sm",
-                        "rounded-full",
-                      )}
-                      onclick={() => {
-                        if (notFound()) return;
-                        //@ts-ignore
-                        if (!api.authStore.model?.username)
-                          return requireSignup();
-                        follow("follow");
-                      }}
-                    >
-                      {notFound()
-                        ? "User not found"
-                        : !api.authStore.model?.username
-                          ? "Join the Community"
-                          : "Follow"}
-                    </button>
-                  </Match>
-                </Switch>
-                <Show when={user() && user().id === api.authStore.model.id}>
-                  <button
-                    onClick={() =>
-                      document.getElementById("editProfileModal")?.showModal()
-                    }
-                    class={joinClass(
-                      theme() === "dark"
-                        ? "bg-white text-black p-2 w-24 mr-2 text-sm"
-                        : "bg-black text-white p-2 rounded-full w-24 mr-2 text-sm",
-                      "sm:mt-2 md:mt-3",
-                      "rounded-full",
-                    )}
-                  >
-                    Edit Profile
-                  </button>
-                </Show>
-              </div>
-            </div>
-            <div class="flex flex-col   p-2">
-              <h1 class="text-2xl font-bold flex hero gap-2">
-                {user() ? user().username : "Loading..."}
-                <Show when={user() && user().verified}>
-                  <div data-tip="Verified" class="tooltip tooltip-top">
-                    {" "}
-                    <Verified class="h-7 w-7 text-white  fill-blue-500" />
-                  </div>
-                </Show>
-                <div>
-                  {user() ? (
-                    user().isEarlyUser ? (
-                      <div
-                        data-tip="Early Access Member"
-                        class="tooltip tooltip-top"
-                      >
-                        {" "}
-                        <img
-                          src="/icons/legacy/postr.png"
-                          class="w-5 h-5"
-                        ></img>
-                      </div>
-                    ) : (
-                      <span></span>
-                    )
-                  ) : (
-                    ""
-                  )}
+              <div class="relative">
+                <div
+                  class="h-32 sm:h-40 md:h-48 bg-gradient-to-br from-blue-400 via-purple-500 to-pink-500"
+                  style={{
+                    "background-size": "cover",
+                    "background-image":
+                      user() && user().banner
+                        ? `url(${user().banner?.includes("blob") ? user().banner : api.cdn.getUrl("users", user().id, user().banner)})`
+                        : "linear-gradient(90deg, #ff5858 0%, #f09819 49%, #ff5858 100%)",
+                  }}
+                >
+                  <div class="absolute inset-0 bg-black/20"></div>
                 </div>
-              </h1>
-              <span class="text-sm mt-1 opacity-60">
-                {user().handle ? "@" + user().handle : "@" + user().username}
-              </span>
-              <p class=" mt-2">{user() && user().bio}</p>
-              <div class="flex flex-row gap-5 mt-2">
-                {user() &&
-                  Array.isArray(user().social) &&
-                  user().social.length > 0 && (
-                    <div class="flex flex-row gap-1 items-center text-sm">
-                      <div class="dropdown rounded">
-                        <div
-                          tabIndex={0}
-                          role="button"
-                          class="btn btn-sm rounded px-3 py-1"
-                          onClick={() => {
-                            if (user().social.length > 0) return;
-                            else {
-                              if (user().social[0].startsWith("https://")) {
-                                window.open(user().social[0], "_blank");
-                              }
-                            }
+                <div class="absolute bottom-0 left-4 sm:left-6 transform translate-y-1/2">
+                  <div class="relative group">
+                     <img
+                      src={api.cdn.getUrl("users", user()?.id, user()?.avatar) || "/images/default-avatar.png"}
+                      alt="Avatar"
+                      class="w-32 object-cover h-32 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-gray-900 shadow-2xl group-hover:scale-105 transition-transform duration-300"
+                    />
+                    <div class="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
+                      <span class="text-white opacity-0 group-hover:opacity-100 text-xs font-medium transition-opacity duration-300">View Photo</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="px-4 sm:px-6 pt-16 pb-4 flex justify-between">
+                <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                  <div class="flex-1">
+                    <div class="flex items-center space-x-2 mb-1">
+                      <h2 class="text-2xl sm:text-3xl font-bold">{user()?.username}</h2>
+                      <Show when={user() && user().verified}>
+                        <Verified class="w-5 h-5 sm:w-6 sm:h-6 text-blue-500" />
+                      </Show>
+                      <Show when={user() && user().isEarlyUser}>
+                        <span class="text-xs bg-gradient-to-r from-purple-500 to-pink-500 text-white px-2 py-1 rounded-full font-medium">
+                          Early Access
+                        </span>
+                      </Show>
+                    </div>
+                    <p class="text-gray-500 dark:text-gray-400 text-sm sm:text-base">@{user() ? (user().handle || user().username) : "Loading..."}</p>
+                  </div>
+                  
+                </div>
+                <div>
+                    <Show when={user() && user().id === api.authStore.model.id}>
+                      <button
+                        onClick={() =>
+                          document.getElementById("editProfileModal")?.showModal()
+                        }
+                        class={joinClass(
+                          "px-4 py-2 rounded-full font-medium transition-all duration-200 transform hover:scale-105 active:scale-95",
+                          theme() === "dark"
+                            ? "bg-gray-700 text-white hover:bg-gray-600"
+                            : "bg-gray-200 text-black hover:bg-gray-300"
+                        )}
+                      >
+                        Edit Profile
+                      </button>
+                    </Show>
+                     <Switch>
+                      <Match
+                        when={
+                          user() &&
+                          user().id != api.authStore.model.id &&
+                          user().followers.includes(api.authStore.model.id)
+                        }
+                      >
+                        <button
+                          style={{ "border-radius": "9999px" }}
+                          disabled={notFound()}
+                          class={joinClass(
+                            "px-4 py-2 rounded-full font-medium transition-all duration-200 transform hover:scale-105 active:scale-95",
+                            theme() === "dark"
+                              ? "bg-gray-700 text-white hover:bg-gray-600"
+                              : "bg-gray-200 text-black hover:bg-gray-300"
+                          )}
+                          onclick={() => {
+                            if (notFound()) return;
+                            if (!api.authStore.model?.username)
+                              return requireSignup();
+                            follow("unfollow");
                           }}
                         >
-                          <Link class="h-4 w-4" />
-                          {(() => {
-                            try {
-                              const url = new URL(user().social[0].trim());
-                              return (
-                                url.hostname
-                                  .replace("www.", "")
-                                  .split(".")[0]
-                                  .charAt(0)
-                                  .toUpperCase() +
-                                url.hostname
-                                  .replace("www.", "")
-                                  .split(".")[0]
-                                  .slice(1)
-                              );
-                            } catch {
-                              return (
-                                user()
-                                  .social[0].split(".")[0]
-                                  .toUpperCase()
-                                  .charAt(0) + user().social[0].slice(1)
-                              );
-                            }
-                          })()}
-                        </div>
-                        {user().social.length > 1 && (
-                          <ul
-                            tabIndex={0}
-                            class={joinClass(
-                              "dropdown-content menu   rounded-box z-10 w-52 p-2 shadow dark:bg-base-200",
-                              theme() === "dark"
-                                ? "bg-base-200 rounded-xl"
-                                : "bg-base-100",
-                            )}
-                          >
-                            {user().social.map((link) => (
-                              <li>
-                                <a
-                                  onClick={() => {
-                                    if (link.startsWith("https://")) {
-                                      window.open(link, "_blank");
-                                    }
-                                  }}
-                                >
-                                  {(() => {
-                                    try {
-                                      const url = new URL(link.trim());
-                                      return (
-                                        url.hostname
-                                          .replace("www.", "")
-                                          .split(".")[0]
-                                          .charAt(0)
-                                          .toUpperCase() +
-                                        url.hostname
-                                          .replace("www.", "")
-                                          .split(".")[0]
-                                          .slice(1)
-                                      );
-                                    } catch {
-                                      return (
-                                        link
-                                          .split(".")[0]
-                                          .charAt(0)
-                                          .toUpperCase() + link.slice(1)
-                                      );
-                                    }
-                                  })()}
-                                </a>
-                              </li>
-                            ))}
-                          </ul>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                {user() &&
-                  typeof user().location === "string" &&
-                  user().location.trim() !== "" && (
-                    <p class="flex flex-row gap-1 items-center text-sm  ">
-                      <MapPin class="h-4 w-4" />
-                      <span>{user().location}</span>
-                    </p>
-                  )}
-                <p class="flex flex-row gap-2 items-center text-sm opacity-50">
-                  {" "}
-                  <Calendar class="h-5 w-5" /> Joined{" "}
-                  {user() && months[new Date(user().created).getMonth()]}{" "}
-                  {user() && new Date(user().created).getFullYear()}
-                </p>
+                          Unfollow
+                        </button>
+                      </Match>
+                      <Match
+                        when={
+                          (!user() && user().id != api.authStore.model.id) ||
+                          (user().id != api.authStore.model.id &&
+                            !user().followers.includes(api.authStore.model.id) &&
+                            !notFound())
+                        }
+                      >
+                        <button
+                          style={{ "border-radius": "9999px" }}
+                          disabled={notFound()}
+                          class={joinClass(
+                            "px-4 py-2 rounded-full font-medium transition-all duration-200 transform hover:scale-105 active:scale-95",
+                            theme() === "dark"
+                              ? "bg-white text-black hover:bg-gray-100"
+                              : "bg-black text-white hover:bg-gray-800"
+                          )}
+                          onclick={() => {
+                            if (notFound()) return;
+                            if (!api.authStore.model?.username)
+                              return requireSignup();
+                            follow("follow");
+                          }}
+                        >
+                          {notFound()
+                            ? "User not found"
+                            : !api.authStore.model?.username
+                              ? "Join the Community"
+                              : "Follow"}
+                        </button>
+                      </Match>
+                    </Switch>
+                </div>
               </div>
+            </div>
+            
+            <div class="px-4 sm:px-6 pb-4">
+              <div class="mb-3">
+                <p class="text-sm sm:text-base leading-relaxed text-gray-800 dark:text-gray-200">{user() && user().bio}</p>
+              </div>
+              
+              <div class="flex flex-wrap gap-3 mb-3">
+                  {user() &&
+                    Array.isArray(user().social) &&
+                    user().social.length > 0 && (
+                      <div class="flex flex-row gap-1 items-center text-sm">
+                        <div class="dropdown rounded">
+                          <div
+                            tabIndex={0}
+                            role="button"
+                            class="btn btn-sm rounded px-3 py-1 bg-gray-100 dark:bg-gray-800 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all duration-200 border-0"
+                            onClick={() => {
+                              if (user().social.length > 0) return;
+                              else {
+                                if (user().social[0].startsWith("https://")) {
+                                  window.open(user().social[0], "_blank");
+                                }
+                              }
+                            }}
+                          >
+                            <Link class="h-4 w-4" />
+                            {(() => {
+                              try {
+                                const url = new URL(user().social[0].trim());
+                                return (
+                                  url.hostname
+                                    .replace("www.", "")
+                                    .split(".")[0]
+                                    .charAt(0)
+                                    .toUpperCase() +
+                                  url.hostname
+                                    .replace("www.", "")
+                                    .split(".")[0]
+                                    .slice(1)
+                                );
+                              } catch {
+                                return (
+                                  user()
+                                    .social[0].split(".")[0]
+                                    .toUpperCase()
+                                    .charAt(0) + user().social[0].slice(1)
+                                );
+                              }
+                            })()}
+                          </div>
+                          {user().social.length > 1 && (
+                            <ul
+                              tabIndex={0}
+                              class={joinClass(
+                                "dropdown-content menu rounded-box z-10 w-52 p-2 shadow-lg dark:bg-gray-800",
+                                theme() === "dark"
+                                  ? "bg-gray-800 rounded-xl border border-gray-700"
+                                  : "bg-white border border-gray-200",
+                              )}
+                            >
+                              {user().social.map((link) => (
+                                <li>
+                                  <a
+                                    onClick={() => {
+                                      if (link.startsWith("https://")) {
+                                        window.open(link, "_blank");
+                                      }
+                                    }}
+                                    class="hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors duration-200"
+                                  >
+                                    {(() => {
+                                      try {
+                                        const url = new URL(link.trim());
+                                        return (
+                                          url.hostname
+                                            .replace("www.", "")
+                                            .split(".")[0]
+                                            .charAt(0)
+                                            .toUpperCase() +
+                                          url.hostname
+                                            .replace("www.", "")
+                                            .split(".")[0]
+                                            .slice(1)
+                                        );
+                                      } catch {
+                                        return (
+                                          link
+                                            .split(".")[0]
+                                            .charAt(0)
+                                            .toUpperCase() + link.slice(1)
+                                        );
+                                      }
+                                    })()}
+                                  </a>
+                                </li>
+                              ))}
+                            </ul>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
-              <div class="flex flex-row gap-2 mt-2">
-                {user() && user().following && (
-                  <p>
-                    <span class="font-bold">{user().following.length} </span>{" "}
-                    <span
-                      onClick={() => {
-                        setShowFollowingModal(!showFollowingModal());
-                      }}
-                      class="text-gray-500 hover:underline cursor-pointer"
-                    >
-                      {" "}
-                      Following
-                    </span>
+                  {user() &&
+                    typeof user().location === "string" &&
+                    user().location.trim() !== "" && (
+                      <p class="flex flex-row gap-1 items-center text-sm text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors duration-200">
+                        <MapPin class="h-4 w-4" />
+                        <span>{user().location}</span>
+                      </p>
+                    )}
+                  <p class="flex flex-row gap-2 items-center text-sm text-gray-500 dark:text-gray-400">
+                    {" "}
+                    <Calendar class="h-5 w-5" /> Joined{" "}
+                    {user() && months[new Date(user().created).getMonth()]}{" "}
+                    {user() && new Date(user().created).getFullYear()}
                   </p>
-                )}
-                {user() && user().followers && (
-                  <p>
-                    <span class="font-bold">{user().followers.length} </span>
-                    <span
-                      class="text-gray-500 hover:underline cursor-pointer"
-                      onClick={() => {
-                        const modal =
-                          document.getElementById("followers-modal");
-                        if (modal) (modal as HTMLDialogElement).showModal();
-                      }}
-                    >
-                      {" "}
-                      Followers
-                    </span>
-                  </p>
-                )}
+                </div>
+              
+              <div class="flex gap-6 text-sm mt-3">
+                <span 
+                  class="hover:underline cursor-pointer group transition-all duration-200 flex gap-2"
+                  onClick={() => setShowFollowingModal(true)}
+                >
+                  <strong class="group-hover:text-blue-500 transition-colors duration-200">{user()?.following?.length || 0}</strong> 
+                  <span class="text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300">Following</span>
+                </span>
+                <span 
+                  class="hover:underline cursor-pointer group transition-all duration-200 flex gap-2"
+                  onClick={() => {
+                    const modal = document.getElementById("followers-modal");
+                    if (modal) (modal as HTMLDialogElement).showModal();
+                  }}
+                >
+                  <strong class="group-hover:text-blue-500 transition-colors duration-200">{user()?.followers?.length || 0}</strong> 
+                  <span class="text-gray-500 dark:text-gray-400 group-hover:text-gray-700 dark:group-hover:text-gray-300">Followers</span>
+                </span>
               </div>
             </div>
             <Show when={user()}>
-              <Show when={!user()}>
-                <div class="w-screen justify-center flex mx-auto"></div>
-              </Show>
-              <div class="flex  flex-row justify-between p-2 border-b-base-200">
-                <p
-                  class="flex flex-col cursor-pointer border-b-gray-500"
-                  onClick={() => {
-                    setView("posts");
-                    swapFeed("posts");
-                    setFeed("posts");
-                    //set query params to posts
-                    navigate(`/u/${u.id}?feed=posts`);
-                  }}
-                >
-                  Posts
-                  <Show when={view() === "posts"}>
-                    {/**
-                     * animate slide in from left
-                     */}
-                    <span class="bg-blue-500 w-full text-white p-[0.15rem] rounded-full transition-all duration-300 ease-in-out"></span>
-                  </Show>
-                </p>
-                <p
-                  onClick={() => {
-                    setView("comments");
-                    swapFeed("Replies");
-                    setFeed("Replies");
-                    navigate(`/u/${u.id}?feed=Replies`);
-                  }}
-                  class="flex flex-col  cursor-pointer"
-                >
-                  Replies
-                  <Show when={view() === "comments"}>
-                    <span class="bg-blue-500 w-full text-white p-[0.15rem] rounded-full  "></span>
-                  </Show>
-                </p>
-                <p
-                  onClick={() => {
-                    setView("Likes");
-                    swapFeed("Likes");
-                    setFeed("likes");
-                    navigate(`/u/${u.id}?feed=likes`);
-                  }}
-                  class="flex flex-col  cursor-pointer"
-                >
-                  Likes
-                  <Show when={view() === "Likes"}>
-                    <span class="bg-blue-500 w-full text-white p-[0.15rem] rounded-full  "></span>
-                  </Show>
-                </p>
-                <p
-                  class="flex flex-col cursor-pointer"
-                  onClick={() => {
-                    setView("snippets");
-                    swapFeed("snippets");
-                    setFeed("snippets");
-                    navigate(`/u/${u.id}?feed=snippets`);
-                  }}
-                >
-                  Snippets
-                  <Show when={view() === "snippets"}>
-                    <span class="bg-blue-500 w-full text-white p-[0.15rem] rounded-full  "></span>
-                  </Show>
-                </p>
+              <div class="flex border-b border-gray-200 dark:border-gray-700 px-4 sm:px-6">
+                <div class="flex space-x-8 justify-between">
+                  <button
+                    class={joinClass(
+                      "py-3 px-1 border-b-2 font-medium text-sm transition-all duration-200 transform hover:scale-105",
+                      view() === "posts" 
+                        ? "border-blue-500 text-blue-500" 
+                        : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                    )}
+                    onClick={() => {
+                      setView("posts");
+                      swapFeed("posts");
+                      setFeed("posts");
+                      navigate(`/u/${u.id}?feed=posts`);
+                    }}
+                  >
+                    Posts
+                  </button>
+                  <button
+                    class={joinClass(
+                      "py-3 px-1 border-b-2 font-medium text-sm transition-all duration-200 transform hover:scale-105",
+                      view() === "comments" 
+                        ? "border-blue-500 text-blue-500" 
+                        : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                    )}
+                    onClick={() => {
+                      setView("comments");
+                      swapFeed("Replies");
+                      setFeed("Replies");
+                      navigate(`/u/${u.id}?feed=Replies`);
+                    }}
+                  >
+                    Replies
+                  </button>
+                  <button
+                    class={joinClass(
+                      "py-3 px-1 border-b-2 font-medium text-sm transition-all duration-200 transform hover:scale-105",
+                      view() === "Likes" 
+                        ? "border-blue-500 text-blue-500" 
+                        : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                    )}
+                    onClick={() => {
+                      setView("Likes");
+                      swapFeed("Likes");
+                      setFeed("likes");
+                      navigate(`/u/${u.id}?feed=likes`);
+                    }}
+                  >
+                    Likes
+                  </button>
+                  <button
+                    class={joinClass(
+                      "py-3 px-1 border-b-2 font-medium text-sm transition-all duration-200 transform hover:scale-105",
+                      view() === "snippets" 
+                        ? "border-blue-500 text-blue-500" 
+                        : "border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300"
+                    )}
+                    onClick={() => {
+                      setView("snippets");
+                      swapFeed("snippets");
+                      setFeed("snippets");
+                      navigate(`/u/${u.id}?feed=snippets`);
+                    }}
+                  >
+                    Snippets
+                  </button>
+                </div>
               </div>
-              <div class="flex  flex-col">
+              <div class="flex flex-col">
                 <Switch>
                   <Match when={feedLoading()}>
-                    <For each={Array.from({ length: 10 })}>
-                      {() => <LoadingIndicator />}
-                    </For>
+                    <div class="px-4 py-8">
+                      <For each={Array.from({ length: 5 })}>
+                        {(_, index) => (
+                          <div class="animate-pulse mb-4">
+                            <div class="flex items-start space-x-3">
+                              <div class="w-12 h-12 bg-gray-200 dark:bg-gray-700 rounded-full"></div>
+                              <div class="flex-1 space-y-3">
+                                <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-24"></div>
+                                <div class="space-y-2">
+                                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded"></div>
+                                  <div class="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </For>
+                    </div>
                   </Match>
                   <Match when={!feedLoading()}>
                     {posts().length > 0 ? (
@@ -846,27 +832,17 @@ export default function User() {
                         }}
                       </For>
                     ) : (
-                      <div class="flex flex-col  p-5  mb-5 items-center justify-center">
-                        <h1 class="text-3xl">
-                          No{" "}
-                          {feed() === "posts"
-                            ? "Posts"
-                            : feed() === "Replies"
-                              ? "Replies"
-                              : feed() === "likes"
-                                ? "Likes"
-                                : "Snippets"}{" "}
-                          Found
-                        </h1>
-                        <p>
-                          {user().username}{" "}
-                          {feed() === "posts"
-                            ? "hasn't posted anything yet."
-                            : feed() === "Replies"
-                              ? "hasn't replied to any posts yet."
-                              : feed() === "likes"
-                                ? "hasn't liked any posts yet."
-                                : "hasn't posted any snippets yet."}
+                      <div class="flex flex-col items-center justify-center py-16 px-4 text-center">
+                        <div class="mb-4">
+                          <svg class="w-16 h-16 text-gray-300 dark:text-gray-600 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                          </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                          No {feed() === "posts" ? "Posts" : feed() === "Replies" ? "Replies" : feed() === "likes" ? "Likes" : "Snippets"} Found
+                        </h3>
+                        <p class="text-gray-500 dark:text-gray-400 max-w-md">
+                          {user().username} {feed() === "posts" ? "hasn't posted anything yet" : feed() === "Replies" ? "hasn't replied to any posts yet" : feed() === "likes" ? "hasn't liked any posts yet" : "hasn't posted any snippets yet"}.
                         </p>
                       </div>
                     )}
@@ -874,7 +850,7 @@ export default function User() {
                 </Switch>
               </div>
             </Show>
-          </div>
+          </div> 
         </Match>
       </Switch>
       <Portal>

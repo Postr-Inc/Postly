@@ -25,8 +25,7 @@ export default function Home() {
       _for: "home",
     });
 
-  const { mobile } = useDevice();
-  console.log(mobile());
+  const { mobile } = useDevice(); 
   const [newPostAppended, setNewPostAppended] = createSignal(false);
   const [recentPosts, setRecentPosts] = createSignal<any[]>([]);
   onMount(() => {

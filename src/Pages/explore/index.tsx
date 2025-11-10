@@ -2,11 +2,12 @@
 
 import { api } from "@/src";
 import useNavigation from "@/src/Utils/Hooks/useNavigation";
+import { For, Show, createSignal, onMount, createEffect } from "solid-js";
 import useTheme from "@/src/Utils/Hooks/useTheme";
 import { joinClass } from "@/src/Utils/Joinclass";
+import { A } from "@solidjs/router";
+import Search from "@/components/Icons/search";
 import Page from "@/components/ui/Page";
-import { createSignal, createMemo, onMount, For, Show } from "solid-js";
-
 const getTopicIcon = (icon: string) => {
   switch (icon) {
     case "biology":
@@ -248,7 +249,7 @@ const MoreHorizontalIcon = (props: any) => (
 const LOCAL_STORAGE_KEY = "subscribedTopics";
 
 export default function ExplorePage() {
-  const { route, navigate } = useNavigation();
+  const { route, navigate, params } = useNavigation()
   const [subscribedTopics, setSubscribedTopics] = createSignal<
     [{ name: string; slug: string; icon: string }]
   >([]);
@@ -256,6 +257,13 @@ export default function ExplorePage() {
   let [TOPICS, setTopics] = createSignal([]);
   const { theme } = useTheme();
   const [search, setSearch] = createSignal("");
+  const [expanded, setExpanded] = createSignal(false);
+  const [featuredPosts, setFeaturedPosts] = createSignal<any[]>([]);
+  const [popularCreators, setPopularCreators] = createSignal<any[]>([]);
+  const [activeTab, setActiveTab] = createSignal("for-you");
+  const [trendingTopics, setTrendingTopics] = createSignal<any[]>([]);
+  const [loading, setLoading] = createSignal(true);
+  const [hasFetchedTrendingTopics, setHasFetchedTrendingTopics] = createSignal(false);
 
   const filteredTopics = () =>
     (TOPICS() || []).filter((topic) => {
@@ -272,29 +280,92 @@ export default function ExplorePage() {
   }
   // Load from localStorage on mount
   onMount(async () => {
-    const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
-    let topics = await api.collection("topics").list(1, 20, {
-      cacheKey: `topics`,
-      filter: ``,
-      expand: ["Users_Subscribed"],
-    });
-    console.log(topics);
-    setTopics(topics.items);
-    if (stored) {
-      try {
-        setSubscribedTopics(JSON.parse(stored));
-      } catch {
-        setSubscribedTopics([]);
+    setLoading(true);
+    try {
+      const stored = localStorage.getItem(LOCAL_STORAGE_KEY);
+      let topics = await api.collection("topics").list(1, 20, {
+        cacheKey: `topics`,
+        filter: ``,
+        expand: ["Users_Subscribed"],
+      });
+      console.log(topics);
+      setTopics(topics.items);
+      if (stored) {
+        try {
+          setSubscribedTopics(JSON.parse(stored));
+        } catch {
+          setSubscribedTopics([]);
+        }
       }
-    }
 
-    getTrendingHashTags();
+      await Promise.all([
+        getTrendingHashTags(),
+        fetchFeaturedContent(),
+        fetchPopularCreators(),
+      ]);
+    } finally {
+      setLoading(false);
+    }
   });
+
+  // Lazily fetch trending topics only when the Trending tab is viewed
+  createEffect(() => {
+    if (activeTab() === "trending" && !hasFetchedTrendingTopics()) {
+      setHasFetchedTrendingTopics(true);
+      fetchTrendingTopics();
+    }
+  });
+
+  const fetchFeaturedContent = async () => {
+    try {
+      // Fetch trending posts from last 24 hours
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      
+      const posts = await api.collection("posts").list(1, 6, {
+        filter: `created > "${yesterday.toISOString()}"`,
+        sort: "-likes",
+        expand:   ["author", "comments", "likes"],
+      });
+      
+      setFeaturedPosts(posts.items);
+    } catch (error) {
+      console.error("Error fetching featured posts:", error);
+      setFeaturedPosts([]);
+    }
+  };
+
+  const fetchPopularCreators = async () => {
+    try {
+      const creators = await api.collection("users").list(1, 5, {
+        sort: "followers",
+        filter: "followers > 0",
+      });
+      
+      setPopularCreators(creators.items);
+    } catch (error) {
+      console.error("Error fetching popular creators:", error);
+    }
+  };
+
+  const fetchTrendingTopics = async () => {
+    try {
+      const topics = await api.collection("topics").list(1, 8, {
+        sort: "-posts",
+        filter: "posts > 5",
+      });
+      setTrendingTopics(topics.items);
+    } catch (error) {
+      console.error("Error fetching trending topics:", error);
+    }
+  };
 
   // Toggle subscription for a topic
   const toggleSubscription = async (topic: {
     id: string;
     slug: string;
+    name: string;
+    icon: string;
     [key: string]: any;
   }) => {
     let current = subscribedTopics() || [];
@@ -350,275 +421,524 @@ export default function ExplorePage() {
 
   const isSubscribed = (slug: string) =>
     subscribedTopics().some((t) => t.slug === slug);
-
-  const [expanded, setExpanded] = createSignal(false);
+ 
   const visibleTopics = () => {
     const all = filteredTopics();
     return expanded() ? all : all.slice(0, 6);
   };
   return (
-    <Page {...{ route, navigate }}>
-      <div class="w-full p-2  py-2  my-8">
-        {/* Topics Section */}
-        <Show when={api.authStore.model.username}>
-          <div class="   rounded-2xl  ">
-            <h2 class="text-3xl font-bold mb-8   tracking-tight">
-              Topics to Subscribe
-            </h2>
-            <div
-              class={joinClass("max-h-[70vh] overflow-y-auto scrollbar-hide")}
-            >
-              <input
-                type="text"
-                placeholder="Search topics..."
-                value={search()}
-                onInput={(e) => setSearch(e.currentTarget.value)}
-                class={joinClass(
-                  "mb-4 px-4 py-2 w-full border rounded-full focus:outline-none   dark:bg-gray-900 text-sm dark:text-white",
-                  theme() == "dark" && "bg-base-300 border-none",
-                )}
-              />
-              <For each={visibleTopics()}>
-                {(topic) => (
-                  <div
-                    key={topic.slug}
-                    class={joinClass(
-                      "group flex items-center justify-between  p-5 py-3  mb-2 rounded-xl transition-all duration-200 cursor-pointer border",
-                      theme() === "dark"
-                        ? "bg-gray-800/50 border-gray-700/50 hover:bg-gray-800 hover:border-gray-600"
-                        : "bg-gray-50/80 border-gray-200/50 hover:bg-gray-100 hover:border-gray-300",
-                    )}
-                  >
-                    {/* Left side - Icon and Topic Info */}
-                    <div class="flex items-center space-x-3 flex-1 min-w-0">
-                      {/* Icon */}
-                      <div
-                        class={joinClass(
-                          "flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200",
-                        )}
-                      >
-                        <div
-                          class={joinClass(
-                            "transition-colors duration-200   fill-white",
-                          )}
-                        >
-                          {getTopicIcon(topic.icon)}
-                        </div>
-                      </div>
-
-                      {/* Topic Info */}
-                      <div class="flex-1 min-w-0">
-                        <div class="flex items-center space-x-2">
-                          {/* Topic Name */}
-                          <h3
-                            class={joinClass(
-                              "font-semibold text-sm truncate transition-colors duration-200",
-                              theme() === "dark"
-                                ? "text-gray-100 group-hover:text-white"
-                                : "text-gray-900 group-hover:text-black",
-                            )}
-                          >
-                            {topic.name.startsWith("#")
-                              ? topic.name
-                              : `#${topic.name}`}
-                          </h3>
-                        </div>
-
-                        {/* Category and Stats */}
-                        <div class="flex items-center space-x-2 mt-1">
-                          <span
-                            class={joinClass(
-                              "text-xs font-medium capitalize",
-                              theme() === "dark"
-                                ? "text-blue-400"
-                                : "text-blue-600",
-                            )}
-                          >
-                            {topic.category || "Trending"}
-                          </span>
-                          <span
-                            class={joinClass(
-                              "text-xs",
-                              theme() === "dark"
-                                ? "text-white"
-                                : "text-gray-500",
-                            )}
-                          >
-                            •
-                          </span>
-                          <span
-                            class={joinClass(
-                              "text-xs",
-                              theme() === "dark"
-                                ? "text-white"
-                                : "text-gray-500",
-                            )}
-                          >
-                            {topic.posts.length} posts
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Right side - Subscribe Button */}
-                    <button
-                      onClick={() => toggleSubscription(topic)}
-                      class={joinClass(
-                        "relative overflow-hidden px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 transform active:scale-95 ml-3 flex-shrink-0",
-                        isSubscribed(topic.slug)
-                          ? theme() === "dark"
-                            ? "bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 shadow-lg shadow-green-500/20"
-                            : "bg-green-500 text-white hover:bg-green-600 focus:ring-green-400 shadow-lg shadow-green-500/25"
-                          : theme() === "dark"
-                            ? "bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white focus:ring-gray-500 border border-gray-600"
-                            : "bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-400 border border-gray-300 shadow-sm",
-                      )}
-                    >
-                      <span class="relative z-10">
-                        {isSubscribed(topic.slug) ? "✓ Following" : "Follow"}
-                      </span>
-
-                      {/* Subtle shine effect */}
-                      <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-500"></div>
-                    </button>
-                  </div>
-                )}
-              </For>
-            </div>
-            <Show when={filteredTopics().length > 6}>
-              <button
-                onClick={() => setExpanded(!expanded())}
-                class="mt-4 text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
-              >
-                {expanded() ? "Show Less" : "Show More"}
-              </button>
-            </Show>
-          </div>
-        </Show>
-
-        {/* Trending Section */}
-        <div
-          class={joinClass(
-            "mt-5 mb-12  ",
-            theme() === "dark" ? "border-gray-800" : "border-slate-200",
-          )}
-        >
-          <h2
-            class={joinClass(
-              "text-2xl font-bold mb-6",
-              theme() === "dark" ? "text-gray-100" : "text-gray-900",
-            )}
-          >
-            Trending Hashtags
-          </h2>
-
-          <div class={joinClass("max-h-[70vh] overflow-y-auto scrollbar-hide")}>
-            <For each={trendingHashtags()}>
-              {(tag) => (
-                <div
-                  key={tag.name}
-                  onClick={() => {
-                    navigate(`/search?q=${tag.name}`);
-                  }}
-                  class={joinClass(
-                    "group flex items-center justify-between px-4 py-4 mx-2 mb-2 rounded-xl transition-all duration-200 cursor-pointer border",
-                    theme() === "dark"
-                      ? "bg-gray-800/50 border-gray-700/50 hover:bg-gray-800 hover:border-gray-600"
-                      : "bg-gray-50/80 border-gray-200/50 hover:bg-gray-100 hover:border-gray-300",
-                  )}
-                >
-                  {/* Left side - Hashtag Info */}
-                  <div class="flex-1 min-w-0 pr-3">
-                    {/* Hashtag Name */}
-                    <div class="flex items-center space-x-2 mb-1">
-                      <h3
-                        class={joinClass(
-                          "font-semibold text-sm transition-colors duration-200",
-                          theme() === "dark"
-                            ? "text-gray-100 group-hover:text-white"
-                            : "text-gray-900 group-hover:text-black",
-                        )}
-                      >
-                        #{tag.name.charAt(0).toUpperCase() + tag.name.slice(1)}
-                      </h3>
-
-                      {/* Trending indicator */}
-                      <div
-                        class={joinClass(
-                          "px-2 py-0.5 rounded-full text-xs font-medium",
-                          theme() === "dark"
-                            ? "bg-blue-500/20 text-blue-400"
-                            : "bg-blue-50 text-blue-600",
-                        )}
-                      >
-                        Trending
-                      </div>
-                    </div>
-
-                    {/* Latest Post Preview */}
-                    <p
-                      class={joinClass(
-                        "text-sm line-clamp-2 mb-2 transition-colors duration-200",
-                        theme() === "dark"
-                          ? "text-gray-300 group-hover:text-gray-200"
-                          : "text-gray-600 group-hover:text-gray-700",
-                      )}
-                    >
-                      {tag.expand.posts[0].content}
-                    </p>
-
-                    {/* Post Count */}
-                    <div class="flex items-center space-x-2">
-                      <span
-                        class={joinClass(
-                          "text-xs font-medium",
-                          theme() === "dark"
-                            ? "text-blue-400"
-                            : "text-blue-600",
-                        )}
-                      >
-                        Trending
-                      </span>
-                      <span
-                        class={joinClass(
-                          "text-xs",
-                          theme() === "dark"
-                            ? "text-gray-500"
-                            : "text-gray-500",
-                        )}
-                      >
-                        •
-                      </span>
-                      <span
-                        class={joinClass(
-                          "text-xs",
-                          theme() === "dark"
-                            ? "text-gray-400"
-                            : "text-gray-500",
-                        )}
-                      >
-                        {tag.expand.posts.length} posts
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Right side - More Options Button */}
-                  <button
-                    class={joinClass(
-                      "flex-shrink-0 p-2 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 transform active:scale-95",
-                      theme() === "dark"
-                        ? "hover:bg-gray-700 focus:ring-gray-500 text-gray-400 hover:text-gray-300"
-                        : "hover:bg-gray-200 focus:ring-gray-300 text-gray-500 hover:text-gray-700",
-                    )}
-                  >
-                    <MoreHorizontalIcon class="w-5 h-5" />
-                  </button>
-                </div>
-              )}
-            </For>
+    <Page {...{ navigate, params, route: route }}> 
+     <div class="min-h-screen bg-white dark:bg-gray-900">
+      {/* Loading State */}
+      <Show when={loading()}>
+        <div class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+          <div class="bg-white dark:bg-gray-800 rounded-2xl p-8 flex flex-col items-center space-y-4">
+            <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <p class="text-gray-600 dark:text-gray-300 font-medium">Loading amazing content...</p>
           </div>
         </div>
+      </Show>
+
+      <div class="max-w-7xl mx-auto px-4 py-8">
+        {/* Header with Search */}
+        <div class="mb-8">
+          <div class="text-center mb-6">
+            <h1 class={joinClass(
+              "text-6xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"
+            )}>
+              Explore
+            </h1>
+            <div class="mb-8">
+              <div class={joinClass(
+                "inline-flex items-center px-4 py-2 rounded-full text-sm font-medium",
+                theme() === "dark" ? "bg-blue-500/20 text-blue-400" : "bg-blue-50 text-blue-600"
+              )}>
+                <span class="w-2 h-2 bg-blue-500 rounded-full mr-2 animate-pulse"></span>
+                Discover trending content
+              </div>
+            </div>
+            <p class={joinClass(
+              "text-xl max-w-2xl mx-auto",
+              theme() === "dark" ? "text-gray-300" : "text-gray-600"
+            )}>
+              Discover amazing content, trending topics, and connect with like-minded people from around the world
+            </p>
+          </div>
+          
+          {/* Enhanced Search Bar */}
+          <div class="relative max-w-2xl mx-auto">
+            <input
+              type="text"
+              placeholder="Search topics, hashtags, or users..."
+              value={search()}
+              onInput={(e) => setSearch(e.currentTarget.value)}
+              class={joinClass(
+                "w-full px-6 py-4 pl-12 rounded-xl border-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-lg",
+                theme() === "dark"
+                  ? "bg-gray-800 border-gray-700 text-white placeholder-gray-400"
+                  : "bg-white border-gray-300 text-gray-900 placeholder-gray-500"
+              )}
+            />
+            <div class="absolute left-4 top-1/2 transform -translate-y-1/2">
+              <Search class="w-6 h-6 text-gray-400" />
+            </div>
+          </div>
+        </div>
+
+        {/* Navigation Tabs */}
+        <div class="flex justify-center mb-8">
+          <div class={joinClass(
+            "flex space-x-1 p-1 rounded-xl",
+            theme() === "dark" ? "bg-gray-800" : "bg-gray-100"
+          )}>
+            <button
+              onClick={() => setActiveTab("for-you")}
+              class={joinClass(
+                "px-6 py-3 rounded-xl font-medium transition-all duration-200",
+                activeTab() === "for-you"
+                  ? theme() === "dark"
+                    ? "bg-blue-600 text-white shadow-lg"
+                    : "bg-blue-500 text-white shadow-lg"
+                  : theme() === "dark"
+                    ? "text-gray-300 hover:text-white hover:bg-gray-700"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-200"
+              )}
+            >
+              For You
+            </button>
+            <button
+              onClick={() => setActiveTab("trending")}
+              class={joinClass(
+                "px-6 py-3 rounded-xl font-medium transition-all duration-200",
+                activeTab() === "trending"
+                  ? theme() === "dark"
+                    ? "bg-blue-600 text-white shadow-lg"
+                    : "bg-blue-500 text-white shadow-lg"
+                  : theme() === "dark"
+                    ? "text-gray-300 hover:text-white hover:bg-gray-700"
+                    : "text-gray-600 hover:text-gray-900 hover:bg-gray-200"
+              )}
+            >
+              Trending
+            </button>
+             
+          </div>
+        </div>
+
+        {/* Content Sections */}
+        <div class="space-y-12">
+          {/* For You Tab Content */}
+          <Show when={activeTab() === "for-you"}>
+            {/* Topics to Subscribe */}
+            <Show when={api.authStore.model.username}>
+              <div class="rounded-2xl">
+                <h2 class="text-3xl font-bold mb-8 tracking-tight">
+                  Topics to Subscribe
+                </h2>
+                <div class={joinClass("max-h-[70vh] overflow-y-auto scrollbar-hide")}>
+                 
+                  <For each={visibleTopics()}>
+                    {(topic) => (
+                      <div
+                        key={topic.slug}
+                        class={joinClass(
+                          "group flex items-center justify-between p-5 py-3 mb-2 rounded-xl transition-all duration-200 cursor-pointer border",
+                          theme() === "dark"
+                            ? "bg-gray-800/50 border-gray-700/50 hover:bg-gray-800 hover:border-gray-600"
+                            : "bg-gray-50/80 border-gray-200/50 hover:bg-gray-100 hover:border-gray-300",
+                        )}
+                      >
+                        {/* Left side - Icon and Topic Info */}
+                        <div class="flex items-center space-x-3 flex-1 min-w-0">
+                          {/* Icon */}
+                          <div class={joinClass("flex items-center justify-center w-10 h-10 rounded-lg transition-all duration-200")}>
+                            <div class={joinClass("transition-colors duration-200 fill-white")}>
+                              {getTopicIcon(topic.icon)}
+                            </div>
+                          </div>
+
+                          {/* Topic Info */}
+                          <div class="flex-1 min-w-0">
+                            <div class="flex items-center space-x-2">
+                              {/* Topic Name */}
+                              <h3 class={joinClass(
+                                "font-semibold text-sm truncate transition-colors duration-200",
+                                theme() === "dark"
+                                  ? "text-gray-100 group-hover:text-white"
+                                  : "text-gray-900 group-hover:text-black",
+                              )}>
+                                {topic.name.startsWith("#") ? topic.name : `#${topic.name}`}
+                              </h3>
+                            </div>
+
+                            {/* Category and Stats */}
+                            <div class="flex items-center space-x-2 mt-1">
+                              <span class={joinClass(
+                                "text-xs font-medium capitalize",
+                                theme() === "dark" ? "text-blue-400" : "text-blue-600",
+                              )}>
+                                {topic.category || "Trending"}
+                              </span>
+                              <span class={joinClass("text-xs", theme() === "dark" ? "text-white" : "text-gray-500")}>
+                                •
+                              </span>
+                              <span class={joinClass("text-xs", theme() === "dark" ? "text-white" : "text-gray-500")}>
+                                {topic.posts.length} posts
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Right side - Subscribe Button */}
+                        <button
+                          onClick={() => toggleSubscription(topic)}
+                          class={joinClass(
+                            "relative overflow-hidden px-4 py-1.5 rounded-full text-xs font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 transform active:scale-95 ml-3 flex-shrink-0",
+                            isSubscribed(topic.slug)
+                              ? theme() === "dark"
+                                ? "bg-green-600 text-white hover:bg-green-700 focus:ring-green-500 shadow-lg shadow-green-500/20"
+                                : "bg-green-500 text-white hover:bg-green-600 focus:ring-green-400 shadow-lg shadow-green-500/25"
+                              : theme() === "dark"
+                                ? "bg-gray-700 text-gray-300 hover:bg-gray-600 hover:text-white focus:ring-gray-500 border border-gray-600"
+                                : "bg-white text-gray-700 hover:bg-gray-50 focus:ring-blue-400 border border-gray-300 shadow-sm",
+                          )}
+                        >
+                          <span class="relative z-10">
+                            {isSubscribed(topic.slug) ? "✓ Following" : "Follow"}
+                          </span>
+                          <div class="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-500"></div>
+                        </button>
+                      </div>
+                    )}
+                  </For>
+                </div>
+                <Show when={filteredTopics().length > 6}>
+                  <button
+                    onClick={() => setExpanded(!expanded())}
+                    class="mt-4 text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline"
+                  >
+                    {expanded() ? "Show Less" : "Show More"}
+                  </button>
+                </Show>
+              </div>
+            </Show>
+
+            {/* Featured Posts */}
+             <div class="mb-12">
+               <h2 class="text-3xl font-bold mb-8 tracking-tight">Featured Posts</h2>
+               <Show
+                 when={featuredPosts().length > 0}
+                 fallback={
+                   <div class={joinClass(
+                     "text-center py-12 rounded-xl",
+                     theme() === "dark" ? "bg-gray-800/50" : "bg-gray-50"
+                   )}>
+                     <p class={joinClass(
+                       "text-lg",
+                       theme() === "dark" ? "text-gray-400" : "text-gray-600"
+                     )}>
+                       No featured posts available right now. Check back later!
+                     </p>
+                   </div>
+                 }
+               >
+                 <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                   <For each={featuredPosts()}>
+                     {(post) => (
+                       <div
+                         onClick={() => navigate(`/view/posts/${post.id}`)}
+                         class={joinClass(
+                           "p-6 rounded-xl cursor-pointer transition-all duration-200 border hover:shadow-lg hover:scale-105",
+                           theme() === "dark"
+                             ? "bg-gray-800/50 border-gray-700/50 hover:bg-gray-800 hover:border-gray-600"
+                             : "bg-gray-50/80 border-gray-200/50 hover:bg-gray-100 hover:border-gray-300",
+                         )}
+                       >
+                         <div class="flex items-center space-x-3 mb-4">
+                           <img
+                             src={post.expand?.author?.avatar || "/default-avatar.png"}
+                             alt={post.expand?.author?.username}
+                             class="w-10 h-10 rounded-full"
+                           />
+                           <div>
+                             <h3 class="font-semibold">{post.expand?.author?.name || post.expand?.author?.username}</h3>
+                             <p class={joinClass("text-sm", theme() === "dark" ? "text-gray-400" : "text-gray-600")}>
+                               @{post.expand?.author?.username}
+                             </p>
+                           </div>
+                         </div>
+                         <p class={joinClass("text-sm line-clamp-3", theme() === "dark" ? "text-gray-300" : "text-gray-700")}>
+                           {post.content}
+                         </p>
+                         <div class="flex items-center space-x-4 mt-4 text-xs text-gray-500">
+                           <span>{post.likes?.length || 0} likes</span>
+                           <span>•</span>
+                           <span>{post.comments?.length || 0} comments</span>
+                         </div>
+                       </div>
+                     )}
+                   </For>
+                 </div>
+               </Show>
+             </div>
+          </Show>
+
+          {/* Trending Tab Content */}
+          <Show when={activeTab() === "trending"}>
+            <div class={joinClass("mt-5 mb-12", theme() === "dark" ? "border-gray-800" : "border-slate-200")}>
+              <h2 class={joinClass("text-2xl font-bold mb-6", theme() === "dark" ? "text-gray-100" : "text-gray-900")}>
+                Trending Hashtags
+              </h2>
+              <div class={joinClass("max-h-[70vh] overflow-y-auto scrollbar-hide")}>
+                <For each={trendingHashtags()}>
+                  {(tag) => (
+                    <div
+                      key={tag.name}
+                      onClick={() => navigate(`/search?q=${tag.name}`)}
+                      class={joinClass(
+                        "group flex items-center justify-between px-4 py-4 mx-2 mb-2 rounded-xl transition-all duration-200 cursor-pointer border",
+                        theme() === "dark"
+                          ? "bg-gray-800/50 border-gray-700/50 hover:bg-gray-800 hover:border-gray-600"
+                          : "bg-gray-50/80 border-gray-200/50 hover:bg-gray-100 hover:border-gray-300",
+                      )}
+                    >
+                      {/* Left side - Hashtag Info */}
+                      <div class="flex-1 min-w-0 pr-3">
+                        {/* Hashtag Name */}
+                        <div class="flex items-center space-x-2 mb-1">
+                          <h3 class={joinClass(
+                            "font-semibold text-sm transition-colors duration-200",
+                            theme() === "dark"
+                              ? "text-gray-100 group-hover:text-white"
+                              : "text-gray-900 group-hover:text-black",
+                          )}>
+                            #{tag.name.charAt(0).toUpperCase() + tag.name.slice(1)}
+                          </h3>
+                          <div class={joinClass(
+                            "px-2 py-0.5 rounded-full text-xs font-medium",
+                            theme() === "dark"
+                              ? "bg-blue-500/20 text-blue-400"
+                              : "bg-blue-50 text-blue-600",
+                          )}>
+                            Trending
+                          </div>
+                        </div>
+
+                        {/* Latest Post Preview */}
+                        <p class={joinClass(
+                          "text-sm line-clamp-2 mb-2 transition-colors duration-200",
+                          theme() === "dark"
+                            ? "text-gray-300 group-hover:text-gray-200"
+                            : "text-gray-600 group-hover:text-gray-700",
+                        )}>
+                          {tag.expand.posts[0].content}
+                        </p>
+
+                        {/* Post Count */}
+                        <div class="flex items-center space-x-2">
+                          <span class={joinClass("text-xs font-medium", theme() === "dark" ? "text-blue-400" : "text-blue-600")}>
+                            Trending
+                          </span>
+                          <span class={joinClass("text-xs", theme() === "dark" ? "text-gray-500" : "text-gray-500")}>
+                            •
+                          </span>
+                          <span class={joinClass("text-xs", theme() === "dark" ? "text-gray-400" : "text-gray-500")}>
+                            {tag.expand.posts.length} posts
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Right side - More Options Button */}
+                      <button
+                        class={joinClass(
+                          "flex-shrink-0 p-2 rounded-full transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 transform active:scale-95",
+                          theme() === "dark"
+                            ? "hover:bg-gray-700 focus:ring-gray-500 text-gray-400 hover:text-gray-300"
+                            : "hover:bg-gray-200 focus:ring-gray-300 text-gray-500 hover:text-gray-700",
+                        )}
+                      >
+                        <MoreHorizontalIcon class="w-5 h-5" />
+                      </button>
+                    </div>
+                  )}
+                </For>
+              </div>
+            </div>
+
+            {/* Trending Topics */}
+            <div class="mb-12">
+              <h2 class="text-3xl font-bold mb-8 tracking-tight">Trending Topics</h2>
+              <Show
+                when={trendingTopics().length > 0}
+                fallback={
+                  <div class={joinClass(
+                    "text-center py-12 rounded-xl",
+                    theme() === "dark" ? "bg-gray-800/50" : "bg-gray-50"
+                  )}>
+                    <p class={joinClass(
+                      "text-lg",
+                      theme() === "dark" ? "text-gray-400" : "text-gray-600"
+                    )}>
+                      No trending topics right now. Start a conversation!
+                    </p>
+                  </div>
+                }
+              >
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <For each={trendingTopics()}>
+                    {(topic, index) => (
+                      <div
+                        onClick={() => navigate(`/topics/${topic.slug}`)}
+                        class={joinClass(
+                          "p-4 rounded-xl cursor-pointer transition-all duration-200 border hover:shadow-lg hover:scale-105",
+                          theme() === "dark"
+                            ? "bg-gray-800/50 border-gray-700/50 hover:bg-gray-800 hover:border-gray-600"
+                            : "bg-gray-50/80 border-gray-200/50 hover:bg-gray-100 hover:border-gray-300",
+                        )}
+                      >
+                        <div class="flex items-center space-x-3 mb-2">
+                          <div class="flex-shrink-0">
+                            <div class={joinClass(
+                              "w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold",
+                              theme() === "dark" ? "bg-blue-600 text-white" : "bg-blue-500 text-white"
+                            )}>
+                              {index() + 1}
+                            </div>
+                          </div>
+                          <div class="w-8 h-8 rounded-lg flex items-center justify-center">
+                            {getTopicIcon(topic.icon)}
+                          </div>
+                          <h3 class="font-semibold text-sm truncate">{topic.name}</h3>
+                        </div>
+                        <p class={joinClass("text-xs", theme() === "dark" ? "text-gray-400" : "text-gray-600")}>
+                          {topic.posts} posts this week
+                        </p>
+                      </div>
+                    )}
+                  </For>
+                </div>
+              </Show>
+            </div>
+          </Show>
+
+          {/* Creators Tab Content */}
+          <Show when={activeTab() === "creators"}>
+            <div class="mb-12">
+              <div class="text-center mb-12">
+                <h2 class="text-4xl font-bold mb-4 tracking-tight bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                  Popular Creators
+                </h2>
+                <p class={joinClass("text-lg", theme() === "dark" ? "text-gray-300" : "text-gray-600")}>
+                  Discover amazing creators and their content
+                </p>
+              </div>
+              
+              <Show
+                when={popularCreators().length > 0}
+                fallback={
+                  <div class={joinClass(
+                    "text-center py-16 rounded-xl",
+                    theme() === "dark" ? "bg-gray-800/50" : "bg-gray-50"
+                  )}>
+                    <div class="mb-4">
+                      <Users class="w-16 h-16 mx-auto opacity-50" />
+                    </div>
+                    <p class={joinClass(
+                      "text-lg",
+                      theme() === "dark" ? "text-gray-400" : "text-gray-600"
+                    )}>
+                      No popular creators found right now. Check back later!
+                    </p>
+                  </div>
+                }
+              >
+                <div class="flex gap-5">
+                  <For each={popularCreators()}>
+                  {(creator) => {
+                    const avatarUrl = creator.avatar ? 
+                      (creator.avatar.startsWith('http') ? creator.avatar : api.cdn.getUrl("users", creator.id, creator.avatar)) :
+                       "/icons/usernotfound/image.png"
+                    
+                    return (
+                      <div
+                        onClick={() => navigate(`/u/${creator.username}`)}
+                        class={joinClass(
+                          "p-8 rounded-xl cursor-pointer transition-all duration-200 border hover:shadow-lg hover:scale-105",
+                          theme() === "dark"
+                            ? "bg-gray-800/50 border-gray-700/50 hover:bg-gray-800 hover:border-gray-600"
+                            : "bg-gray-50/80 border-gray-200/50 hover:bg-gray-100 hover:border-gray-300",
+                        )}
+                      >
+                        <div class="flex items-center space-x-6 mb-6">
+                          <img
+                            src={avatarUrl}
+                            alt={creator.username}
+                            class="w-16 h-16 rounded-full object-cover border-2"
+                            onError={(e) => {
+                              e.currentTarget.src = "/default-avatar.png";
+                            }}
+                          />
+                          <div class="flex-1 min-w-0">
+                            <h3 class={joinClass("font-bold text-xl truncate", theme() === "dark" ? "text-white" : "text-gray-900")}>
+                              {creator.name || creator.username}
+                            </h3>
+                            <p class={joinClass("text-base font-medium", theme() === "dark" ? "text-gray-400" : "text-gray-600")}>
+                              @{creator.username}
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between">
+                          <div class="flex items-center space-x-6">
+                            <div class="text-center">
+                              <div class={joinClass("text-xl font-bold", theme() === "dark" ? "text-white" : "text-gray-900")}>
+                                {creator.followers?.toLocaleString() || 0}
+                              </div>
+                              <div class={joinClass("text-sm", theme() === "dark" ? "text-gray-400" : "text-gray-600")}>
+                                followers
+                              </div>
+                            </div>
+                            <div class="w-px h-8 bg-gray-300 dark:bg-gray-600"></div>
+                            <div class="text-center">
+                              <div class={joinClass("text-xl font-bold", theme() === "dark" ? "text-white" : "text-gray-900")}>
+                                {creator.posts?.toLocaleString() || 0}
+                              </div>
+                              <div class={joinClass("text-sm", theme() === "dark" ? "text-gray-400" : "text-gray-600")}>
+                                posts
+                              </div>
+                            </div>
+                          </div>
+                          
+                          <button
+                            class={joinClass(
+                              "px-4 py-2 rounded-lg font-medium transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2",
+                              theme() === "dark"
+                                ? "bg-blue-600 hover:bg-blue-700 text-white focus:ring-blue-500"
+                                : "bg-blue-500 hover:bg-blue-600 text-white focus:ring-blue-400"
+                            )}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              navigate(`/u/${creator.username}`);
+                            }}
+                          >
+                            View Profile
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  }}
+                </For>
+                </div>
+              </Show>
+            </div>
+          </Show>
+        </div>
       </div>
+    </div>
+  
+        
+ 
+      
     </Page>
   );
 }

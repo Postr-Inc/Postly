@@ -1,4 +1,4 @@
-import {
+ import {
   createSignal,
   createEffect,
   For,
@@ -13,6 +13,7 @@ import Page from "@/components/ui/Page";
 import { api } from "@/src";
 import useNavigation from "@/src/Utils/Hooks/useNavigation";
 import Post from "@/components/ui/PostRelated/Post";
+
 // Utility: Get query param from URL
 const getQueryParam = () =>
   new URLSearchParams(window.location.search).get("q") || "";
@@ -27,12 +28,12 @@ function useQueryParam() {
 }
 
 async function fetchSearch(
-  query: string,
+  query: string
 ): Promise<{ users: any[]; posts: any[] }> {
   if (!query.trim()) return { users: [], posts: [] };
   try {
     const res = await api.deepSearch(["users", "posts"], query.trim());
-    return res;
+    return res.results;
   } catch (err) {
     console.error("Search fetch error:", err);
     return { users: [], posts: [] };
@@ -47,15 +48,13 @@ function UserResultItem({
   navigate: (p: string) => void;
 }) {
   const handleNavigate = (e: any) => {
-    if (e.target.tagName !== "BUTTON") {
-      navigate(`/u/${user.username}`);
-    }
+    if (e.target.tagName !== "BUTTON") navigate(`/u/${user.username}`);
   };
 
   return (
     <div
       onClick={handleNavigate}
-      class="flex items-start gap-3 px-4 py-3 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer"
+      class="flex items-start gap-3 px-4 py-3 rounded-xl hover:bg-zinc-100/80 dark:hover:bg-zinc-800/80 cursor-pointer transition-transform duration-200 hover:scale-[1.01] shadow-sm hover:shadow-md backdrop-blur-sm"
     >
       <img
         src={api.cdn.getUrl("users", user.id, user.avatar)}
@@ -105,9 +104,9 @@ export default function Search() {
     setLoading(true);
     setError(null);
     fetchSearch(q)
-      .then((res) => {
-        const safeUsers = Array.isArray(res?.users) ? res.users : [];
-        const safePosts = Array.isArray(res?.posts) ? res.posts : [];
+      .then((res: any[]) => {
+        const safeUsers = Array.isArray(res[0]?.users) ? res[0].users : [];
+        const safePosts = Array.isArray(res[1]?.posts) ? res[1].posts : [];
         setUsers(safeUsers);
         setPosts(safePosts);
       })
@@ -119,9 +118,7 @@ export default function Search() {
       .finally(() => setLoading(false));
   });
 
-  createEffect(() => {
-    setInput(queryParam());
-  });
+  createEffect(() => setInput(queryParam()));
 
   const onSubmit = (e: Event) => {
     e.preventDefault();
@@ -132,36 +129,46 @@ export default function Search() {
 
   return (
     <Page {...{ route, navigate }}>
-      <div class="p-3 border-b border-zinc-200 dark:border-zinc-800">
+      {/* Sticky frosted search bar */}
+      <div class="p-3 sticky top-0 z-30 bg-white/80 dark:bg-black/80 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 shadow-sm">
         <form onSubmit={onSubmit}>
           <input
             type="text"
             placeholder="Search"
             value={input()}
             onInput={(e) => setInput(e.currentTarget.value)}
-            class="w-full p-2 rounded-full bg-zinc-100 dark:bg-zinc-900 border border-zinc-300 dark:border-zinc-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 transition"
+            class="w-full px-4 py-2 rounded-full bg-zinc-50/80 dark:bg-zinc-900/80 border border-zinc-300 dark:border-zinc-700 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-300 backdrop-blur"
           />
         </form>
       </div>
 
-      <div class="sticky top-[56px] border-b border-zinc-200 dark:border-zinc-800 flex bg-white/80 dark:bg-black/80 backdrop-blur-md z-20">
-        {["Top", "Latest", "People", "Media", "Lists"].map((tab) => (
-          <button
-            class={`flex-1 text-center py-3 text-sm font-bold transition-colors ${
-              activeTab() === tab
-                ? "border-b-2 border-blue-500 text-zinc-900 dark:text-white"
-                : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
-            }`}
-            onClick={() => setActiveTab(tab)}
-          >
-            {tab}
-          </button>
-        ))}
+      {/* Animated Tabs */}
+      <div class="sticky top-[56px] flex border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-black/80 backdrop-blur-md z-20">
+        <div class="relative flex w-full">
+          {["Top", "Latest", "People", "Media", "Lists"].map((tab) => (
+            <button
+              onClick={() => setActiveTab(tab)}
+              class={`relative flex-1 text-center py-3 text-sm font-bold transition-colors ${
+                activeTab() === tab
+                  ? "text-blue-600 dark:text-blue-400"
+                  : "text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200"
+              }`}
+            >
+              {tab}
+              <Show when={activeTab() === tab}>
+                <div class="absolute bottom-0 left-0 w-full h-[2px] bg-blue-500 rounded-full animate-slideIn"></div>
+              </Show>
+            </button>
+          ))}
+        </div>
       </div>
 
-      <div>
+      {/* Results Section */}
+      <div class="min-h-[calc(100vh-120px)] bg-gradient-to-b from-zinc-50/60 dark:from-zinc-950/60 to-transparent">
         <Show when={loading()}>
-          <div class="p-4 text-center text-sm text-zinc-500">Loading...</div>
+          <div class="p-4 text-center text-sm text-zinc-500 animate-pulse">
+            Loading results...
+          </div>
         </Show>
 
         <Show when={error()}>
@@ -170,6 +177,7 @@ export default function Search() {
 
         <Show when={!loading() && !error()}>
           <Switch>
+            {/* People Tab */}
             <Match when={activeTab() === "People"}>
               <Show
                 when={users().length > 0}
@@ -179,12 +187,22 @@ export default function Search() {
                   </div>
                 }
               >
-                <For each={users()}>
-                  {(user) => <UserResultItem user={user} navigate={navigate} />}
-                </For>
+                <div class="space-y-2">
+                  <For each={users()}>
+                    {(user, i) => (
+                      <div
+                        class="fade-in"
+                        style={{ "animation-delay": `${i() * 50}ms` }}
+                      >
+                        <UserResultItem user={user} navigate={navigate} />
+                      </div>
+                    )}
+                  </For>
+                </div>
               </Show>
             </Match>
 
+            {/* Top Tab */}
             <Match when={activeTab() === "Top"}>
               <Show
                 when={users().length > 0 || posts().length > 0}
@@ -200,8 +218,13 @@ export default function Search() {
                       People
                     </div>
                     <For each={users().slice(0, 3)}>
-                      {(user) => (
-                        <UserResultItem user={user} navigate={navigate} />
+                      {(user, i) => (
+                        <div
+                          class="fade-in"
+                          style={{ "animation-delay": `${i() * 50}ms` }}
+                        >
+                          <UserResultItem user={user} navigate={navigate} />
+                        </div>
                       )}
                     </For>
                   </Show>
@@ -211,13 +234,21 @@ export default function Search() {
                       Posts
                     </div>
                     <For each={posts()}>
-                      {(post) => <Post {...post} navigate={navigate} />}
+                      {(post, i) => (
+                        <div
+                          class="fade-in"
+                          style={{ "animation-delay": `${i() * 50}ms` }}
+                        >
+                          <Post {...post} navigate={navigate} />
+                        </div>
+                      )}
                     </For>
                   </Show>
                 </div>
               </Show>
             </Match>
 
+            {/* Latest Tab */}
             <Match when={activeTab() === "Latest"}>
               <Show
                 when={posts().length > 0}
@@ -229,12 +260,20 @@ export default function Search() {
               >
                 <div class="divide-y divide-zinc-200 dark:divide-zinc-800">
                   <For each={posts()}>
-                    {(post) => <Post {...post} navigate={navigate} />}
+                    {(post, i) => (
+                      <div
+                        class="fade-in"
+                        style={{ "animation-delay": `${i() * 50}ms` }}
+                      >
+                        <Post {...post} navigate={navigate} />
+                      </div>
+                    )}
                   </For>
                 </div>
               </Show>
             </Match>
 
+            {/* Media & Lists Tabs */}
             <Match when={["Media", "Lists"].includes(activeTab())}>
               <div class="p-8 text-center text-sm text-zinc-500">
                 <h3 class="font-bold text-lg text-zinc-800 dark:text-zinc-200">
@@ -246,6 +285,28 @@ export default function Search() {
           </Switch>
         </Show>
       </div>
+
+      {/* Animation Styles */}
+      <style>
+        {`
+        @keyframes fadeInUp {
+          from { opacity: 0; transform: translateY(10px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+          animation: fadeInUp 0.3s ease both;
+        }
+
+        @keyframes slideIn {
+          from { transform: scaleX(0); opacity: 0; }
+          to { transform: scaleX(1); opacity: 1; }
+        }
+        .animate-slideIn {
+          animation: slideIn 0.25s ease forwards;
+          transform-origin: center;
+        }
+        `}
+      </style>
     </Page>
   );
 }
