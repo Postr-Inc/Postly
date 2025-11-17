@@ -13,7 +13,6 @@
 - [ ] Buisness Accounts, allow buisnesses to create content that promotes their brand! 
 - [ ] Ability to mute & block creators
 - [ ] Notifications
-- [ ] Search
 - [ ] Improve the use of collections
 - [ ] Selective updates
 - [ ] Private Creator Dashboards & analytics 
@@ -27,6 +26,7 @@
 - [x] Reposting & Replies 
 - [x] Embedding outside content from different platforms
 - [x] Create content with images
+- [X] Search
 - [x] View user profiles 
 - [x] Polls 
 - [x] Fast navigation
