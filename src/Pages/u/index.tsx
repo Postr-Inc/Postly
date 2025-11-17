@@ -384,8 +384,7 @@ export default function User() {
     "Nov",
     "Dec",
   ];
-
-  console.log(user()?.avatar)
+ 
 
   return (
     <Page {...{ params, route, navigate, id: "user" }}>
@@ -449,7 +448,7 @@ export default function User() {
                 <div class="absolute bottom-0 left-4 sm:left-6 transform translate-y-1/2">
                   <div class="relative group">
                      <img
-                      src={api.cdn.getUrl("users", user()?.id, user()?.avatar) || "/images/default-avatar.png"}
+                      src={`${api.authStore.model.avatar ? api.cdn.getUrl("users", api.authStore.model.id, api.authStore.model.avatar || "") : "/icons/usernotfound/image.png"}`}
                       alt="Avatar"
                       class="w-32 object-cover h-32 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-gray-900 shadow-2xl group-hover:scale-105 transition-transform duration-300"
                     />
