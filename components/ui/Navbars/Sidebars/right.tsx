@@ -78,6 +78,7 @@ export function SideBarRight(props: {
       );
       //@ts-ignore
       document.getElementById("searchInput").value = "";
+      setSearchQuery("");
       setHasSearched(false);
     },
   );
@@ -87,7 +88,7 @@ export function SideBarRight(props: {
   createEffect(() => {
     const query = searchQuery().trim();
     clearTimeout(debounceTimeout);
-    if (!query) {
+    if (!query || query.length < 2) {
       setHasSearched(false);
       setSearchResults({ posts: [], users: [] });
       return;
@@ -113,11 +114,22 @@ export function SideBarRight(props: {
     setHasSearched(true);
 
     try {
-      const results = (await api.deepSearch(
-        ["users", "posts"],
-        searchQuery(),
-      )) as any;
-      setSearchResults(results);
+      const res = (await api.deepSearch([
+        "users",
+        "posts",
+      ], searchQuery().trim())) as any;
+      // Normalize shape to { users: [], posts: [] }
+      const users = Array.isArray(res?.results?.[0]?.users)
+        ? res.results[0].users
+        : Array.isArray(res?.users)
+        ? res.users
+        : [];
+      const posts = Array.isArray(res?.results?.[1]?.posts)
+        ? res.results[1].posts
+        : Array.isArray(res?.posts)
+        ? res.posts
+        : [];
+      setSearchResults({ users, posts });
 
       const query = searchQuery();
       if (!recentSearches().includes(query)) {
