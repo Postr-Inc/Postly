@@ -453,7 +453,11 @@ export default function User() {
                       class="w-32 object-cover h-32 sm:w-32 sm:h-32 rounded-full border-4 border-white dark:border-gray-900 shadow-2xl group-hover:scale-105 transition-transform duration-300"
                     />
                     <div class="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
-                      <span class="text-white opacity-0 group-hover:opacity-100 text-xs font-medium transition-opacity duration-300">View Photo</span>
+                      <span class="text-white opacity-0 group-hover:opacity-100 text-xs font-medium transition-opacity duration-300 cursor-pointer"
+                      onClick={() => {
+                         window.open(`${api.cdn.getUrl("users", api.authStore.model.id, api.authStore.model.avatar || "")}`)
+                      }}
+                      >View Photo</span>
                     </div>
                   </div>
                 </div>
