@@ -455,7 +455,7 @@ export default function User() {
                     <div class="absolute inset-0 rounded-full bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center">
                       <span class="text-white opacity-0 group-hover:opacity-100 text-xs font-medium transition-opacity duration-300 cursor-pointer"
                       onClick={() => {
-                         window.open(`${api.cdn.getUrl("users", api.authStore.model.id, api.authStore.model.avatar || "")}`)
+                         window.open(`${api.cdn.getUrl("users", user().id, user().avatar || "")}`)
                       }}
                       >View Photo</span>
                     </div>
