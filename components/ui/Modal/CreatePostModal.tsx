@@ -1,4 +1,3 @@
- // CreatePostModal.tsx — Enhanced Animated Version
 import { createSignal, For, createEffect, onMount, onCleanup, Show, Switch, Match } from "solid-js";
 import { Portal } from "solid-js/web";
 import useTheme from "@/src/Utils/Hooks/useTheme";
@@ -10,9 +9,7 @@ import { getFileType, prepareFile } from "@/src/Utils/BetterHandling";
 import { dispatchAlert } from "@/src/Utils/SDK";
 import { GeneralTypes } from "@/src/Utils/SDK/Types/GeneralTypes";
 
-// --- Icons (same as before, omitted for brevity) ---
-/* keep all your SVG icon components here exactly as you have them (CloseIcon, MediaIcon, etc.) */
-
+ 
 function extractFirstURL(text: string): string | null {
   const urlRegex = /(https?:\/\/[^\s]+)/g;
   const matches = text.match(urlRegex);
@@ -114,6 +111,98 @@ export default function CreatePostModal() {
   const [topics, setTopics] = createSignal<any[]>([]);
   const [showGifPicker, setShowGifPicker] = createSignal(false);
   const [showEmojiPicker, setShowEmojiPicker] = createSignal(false);
+  let contentInputRef: HTMLTextAreaElement;
+  let emojiButtonRef: HTMLButtonElement;
+  let emojiDropdownRef: HTMLDivElement;
+ const EMOJIS = [
+  "😀","😃","😄","😁","😆","😂","🤣","😊","😍","😘","😎","🤓",
+  "🙌","🎉","❤️","🔥","✨","👍","👀","🧠","💡","🚀","🥳","😅",
+  "🤯","😇","🙏","😢","🥺","🤗","😉","😌","😴","🤤","😤","😡","🤬",
+  
+  // More Smileys & Emotion
+  "🙂","🙃","😏","😒","😞","😔","😕","☹️","😣","😖","😩","😫","😭",
+  "😳","🥵","🥶","😱","😨","😰","😥","😪","😓","🤒","🤕","🤢","🤮",
+  "🤧","😇","🤠","🥸","😈","👿","💀","☠️","🤡","👻","👽","🤖",
+  
+  // Hands & Gestures
+  "👏","🤝","✌️","👌","🤌","🤏","🤘","🤙","🫶","🤲","👐","✋","🖐️",
+  "🙏","🤜","🤛","💪","🫴","🫱","🫲",
+  
+  // Hearts & Symbols
+  "💖","💗","💓","💞","💕","💘","💝","💟","💔","💙","💚","💛","💜","🖤","🤍","🤎",
+  "💯","💢","💥","💫","💦","💨","🕊️",
+
+  // Animals
+  "🐶","🐱","🐭","🐹","🐰","🦊","🐻","🐼","🐨","🐯","🦁","🐮","🐷","🐸",
+  "🐵","🐔","🐧","🐦","🦅","🦆","🦉","🦇",
+  "🐢","🐍","🦖","🦕","🐙","🦑","🦐","🦞","🐡","🐠","🐳","🐬",
+  
+  // Food & Drinks
+  "🍏","🍎","🍐","🍊","🍋","🍉","🍇","🍓","🫐","🍒","🍑","🥭",
+  "🍍","🥥","🥝","🍅","🥑","🍆","🥦","🥕","🌽","🥔","🍞","🥐","🥯",
+  "🍕","🍔","🍟","🌭","🌮","🌯","🥗","🍣","🍤","🍜","🍝","🥡",
+  "🍪","🍩","🍰","🧁","🍫","🍿","🍬","🍭",
+  "🥤","🧋","☕","🍵","🍺","🍻","🥂","🍷","🍸","🍹",
+  
+  // Travel & Locations
+  "🌍","🌎","🌏","🗺️","🏔️","🏝️","🏜️","🌋","🏞️",
+  "🏙️","🏡","🏠","🛖","🕌","⛩️","🏰","🗽","🗼",
+  "✈️","🚁","🚀","🛸","🚗","🚙","🛻","🚚","🚛","🏎️",
+  "🚲","🛵","🏍️","🛴","🚌","🚎","🚂","🚆","🚇","⛵","🚤","🛥️",
+  
+  // Weather & Nature
+  "☀️","🌤️","⛅","🌥️","🌦️","🌧️","⛈️","🌩️","❄️","☃️","🌬️","🌪️",
+  "🌈","🌊","🔥","🌋","🌙","⭐","🌟","✨","☄️",
+  
+  // Objects
+  "💻","🖥️","⌨️","🖱️","💽","💾","📱","📲","📞","☎️",
+  "🎧","🎤","📷","📸","📹","🎥",
+  "💡","🔦","🕯️","📦","📌","📍","📎","🖊️","🖋️","✏️","📝",
+  
+  // Money & Work
+  "💰","💸","💵","💴","💶","💷","🪙","💳","🏦",
+  "📈","📉","📊","🧾","🗂️","📁","📝","🗃️",
+  
+  // Fantasy & Fun
+  "🐉","🦄","🧚‍♂️","🧜‍♀️","🧞‍♂️","🧙‍♂️","🧝‍♂️",
+  "⚔️","🛡️","🪄","🔮","🧸",
+  
+  // Activities
+  "⚽","🏀","🏈","⚾","🎾","🏐","🏉","🥏","🏓","🏸",
+  "🥊","🥋","🎱","🎳","🎮","🕹️","♟️",
+  "🎨","🖌️","🧵","🎹","🎸","🥁","🎺","🎻",
+  "🎬","📚","📖","📰","🧩","🎯",
+  
+  // Flags (popular)
+  "🇺🇸","🇨🇦","🇬🇧","🇯🇵","🇰🇷","🇲🇽","🇧🇷","🇫🇷","🇩🇪","🇮🇳",
+  
+  // More reactions
+  "😐","😑","😶","😮","😲","🤐","😬","😮‍💨","🥱",
+  "😵","😵‍💫","🤠","😺","😸","😹",
+  
+  // Extra fun/random
+  "🛑","⚠️","❗","❓","🔔","🔕","🔒","🔓","🔑",
+  "🎁","🎀","🎊","🎎","🎏","🎐","🪅","🪩","🎈",
+  "🛒","💍","💎","🕶️","🎒","⌚","⏰","📡","🧭"
+];
+
+  function insertEmoji(emoji: string) {
+    const content = postData().content || "";
+    if (contentInputRef) {
+      const start = contentInputRef.selectionStart ?? content.length;
+      const end = contentInputRef.selectionEnd ?? content.length;
+      const next = content.slice(0, start) + emoji + content.slice(end);
+      setPostData({ ...postData(), content: next });
+      queueMicrotask(() => {
+        contentInputRef.focus();
+        const caret = start + emoji.length;
+        contentInputRef.selectionStart = caret;
+        contentInputRef.selectionEnd = caret;
+      });
+    } else {
+      setPostData({ ...postData(), content: content + emoji });
+    }
+  }
   const [gifSearchQuery, setGifSearchQuery] = createSignal("");
   const [gifs, setGifs] = createSignal<any[]>([]);
   const [isLoadingGifs, setIsLoadingGifs] = createSignal(false);
@@ -175,7 +264,15 @@ export default function CreatePostModal() {
   }
 
   onMount(async () => {
-    
+    const handleDocClick = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (!showEmojiPicker()) return;
+      if (emojiDropdownRef && emojiDropdownRef.contains(target)) return;
+      if (emojiButtonRef && emojiButtonRef.contains(target)) return;
+      setShowEmojiPicker(false);
+    };
+    document.addEventListener("click", handleDocClick);
+    onCleanup(() => document.removeEventListener("click", handleDocClick));
   });
 
   function closeAndReset() {
@@ -243,6 +340,7 @@ export default function CreatePostModal() {
                       maxLength={400}
                       placeholder="Share something interesting..."
                       class="w-full bg-transparent text-lg sm:text-xl text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500 resize-none outline-none transition-all focus:scale-[1.01]"
+                      ref={contentInputRef}
                       onInput={(e: any) => {
                         setPostData({ ...postData(), content: e.target.value });
                         e.target.style.height = "auto";
@@ -298,7 +396,7 @@ export default function CreatePostModal() {
               </div>
 
               {/* Footer Toolbar */}
-              <div class="flex items-center justify-between px-5 py-3 border-t border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/70 backdrop-blur-sm rounded-b-2xl">
+              <div class="relative flex items-center justify-between px-5 py-3 border-t border-gray-200 dark:border-gray-800 bg-white/80 dark:bg-gray-900/70 backdrop-blur-sm rounded-b-2xl">
                 <div class="flex items-center space-x-3">
                   <input type="file" hidden id="files" multiple accept="image/*,video/*" onInput={(e: any) => setFiles([...e.target.files])} />
                   <button onClick={() => document.getElementById("files")?.click()} class="p-2 rounded-full hover:scale-110 transition-transform text-blue-500">
@@ -307,9 +405,23 @@ export default function CreatePostModal() {
                   <button onClick={() => setShowGifPicker(!showGifPicker())} class="p-2 rounded-full hover:scale-110 transition-transform text-blue-500">
                     <GifIcon />
                   </button>
-                  <button onClick={() => setShowEmojiPicker(!showEmojiPicker())} class="p-2 rounded-full hover:scale-110 transition-transform text-blue-500">
+                  <button ref={emojiButtonRef} onClick={() => setShowEmojiPicker(!showEmojiPicker())} class="p-2 rounded-full hover:scale-110 transition-transform text-blue-500">
                     <EmojiIcon />
                   </button>
+                  <Show when={showEmojiPicker()}>
+                    <div ref={emojiDropdownRef} class="absolute bottom-14 left-5 z-50 w-64 max-h-56 overflow-y-auto p-2 rounded-xl border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-800 shadow-xl animate-slideUp">
+                      <div class="grid grid-cols-8 gap-2">
+                        <For each={EMOJIS}>{(emj) => (
+                          <button
+                            class="text-xl leading-none p-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700"
+                            onClick={() => insertEmoji(emj)}
+                          >
+                            {emj}
+                          </button>
+                        )}</For>
+                      </div>
+                    </div>
+                  </Show>
                 </div>
 
                 <div class="flex items-center space-x-3">
