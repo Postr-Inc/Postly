@@ -126,7 +126,7 @@ export function SideBarLeft(props: {
                   }
                 }}
                 class={joinClass(
-                  "w-full rounded-full text-lg font-semibold transition-all duration-200",
+                  "w-full rounded-full text-sm p-5 font-semibold transition-all duration-200",
                   "bg-blue-500 hover:bg-blue-600 text-white",
                   "hover:shadow-lg hover:scale-105 active:scale-95",
                   "flex items-center justify-center gap-2 py-3"
@@ -157,7 +157,7 @@ export function SideBarLeft(props: {
                 )}
                 {!api.authStore.model.id && (
                   <>
-                    <span>Join The Community!</span>
+                    <span   >Join The Community!</span>
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
                       fill="none"
