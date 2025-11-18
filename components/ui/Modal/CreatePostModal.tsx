@@ -250,7 +250,9 @@ export default function CreatePostModal() {
 
     try {
       if (files().length > 0) data.files = await Promise.all(files().map((f) => prepareFile(f)));
-      const res = await api.collection(collection()).create(data);
+     const res = await api.collection(collection()).create(data, {
+        invalidateCache: [`/u/${data.author}_posts`],
+      });
       setIsPosting(false);
       setFiles([]);
       setPostData({ ...postData(), content: "" });
