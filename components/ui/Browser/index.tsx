@@ -24,12 +24,14 @@ export default function FileBrowser() {
     }
   })
 
+  const originalWindowOpen = window.open
+  
   createEffect(() => {
     const originalWindowOpen = window.open
 
     // Override window.open to handle forbidden domains or open in viewer
     // @ts-ignore
-    window.open = (targetUrl: string) => {
+     window.open = (targetUrl: string, needsExternal: boolean) => {
       const forbidden = [
         "github.com",
         "linkedin.com",
@@ -45,9 +47,9 @@ export default function FileBrowser() {
         "snapchat.com",
       ]
 
-      const needsExternal = forbidden.some((domain) => targetUrl.includes(domain))
+      const _needsExternal = forbidden.some((domain) => targetUrl.includes(domain)) || needsExternal
 
-      if (needsExternal) {
+      if (_needsExternal) {
         originalWindowOpen(targetUrl, "_blank")
       } else {
         setUrl(targetUrl)
@@ -160,7 +162,7 @@ export default function FileBrowser() {
 
   const openExternal = () => {
     if (url()) {
-      window.open(url(), "_blank")
+      window.open(url(),  true as any)
     }
   }
 
